@@ -1,0 +1,86 @@
+## useDynLib(scam, .registration = TRUE)
+
+export(scam, bfgs_gcv.ubre, 
+       derivative.smooth, 
+       gcv.ubre_grad,
+       scam.check,
+       scam.fit, 
+       plot.scam, predict.scam,
+       print.scam,
+       check.analytical,
+       summary.scam, print.summary.scam,
+       residuals.scam,
+       marginal.matrices.tesmi1.ps,
+       marginal.matrices.tesmi2.ps,
+       Predict.matrix.mdcv.smooth,
+       Predict.matrix.mdcx.smooth,
+       Predict.matrix.micv.smooth,
+       Predict.matrix.micx.smooth,
+       Predict.matrix.mpd.smooth,
+       Predict.matrix.mpi.smooth,
+       Predict.matrix.tedmd.smooth,
+       Predict.matrix.tedmi.smooth,
+       Predict.matrix.tesmd1.smooth,
+       Predict.matrix.tesmd2.smooth,
+       Predict.matrix.tesmi1.smooth,
+       Predict.matrix.tesmi2.smooth,
+       smooth.construct.mdcv.smooth.spec,
+       smooth.construct.mdcx.smooth.spec,
+       smooth.construct.micv.smooth.spec,
+       smooth.construct.micx.smooth.spec,
+       smooth.construct.mpd.smooth.spec,
+       smooth.construct.mpi.smooth.spec,
+       smooth.construct.tedmd.smooth.spec,
+       smooth.construct.tedmi.smooth.spec,
+       smooth.construct.tesmd1.smooth.spec,
+       smooth.construct.tesmd2.smooth.spec,
+       smooth.construct.tesmi1.smooth.spec,
+       smooth.construct.tesmi2.smooth.spec)
+
+importFrom(mgcv,gam,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct)
+importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors)
+importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)
+importFrom(stats,.checkMFClasses,.getXlevels, as.formula, anova,anova.glmlist,coef,cooks.distance,cor,
+           delete.response,family,fitted,formula,
+           gaussian,glm,influence,lm,logLik,median,model.frame,model.matrix,model.offset,na.pass,napredict,naresid,nlm,optim,
+           pchisq,pf,pnorm,pt,
+            predict,printCoefmat ,quantile,qqnorm, reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, uniroot, var,vcov)
+
+S3method(plot, scam)
+S3method(print, scam)
+S3method(print, summary.scam)
+S3method(summary, scam)
+
+S3method(smooth.construct,mdcv.smooth.spec)
+S3method(smooth.construct,mdcx.smooth.spec)
+S3method(smooth.construct,micv.smooth.spec)
+S3method(smooth.construct, micx.smooth.spec)
+S3method(smooth.construct, mpd.smooth.spec)
+S3method(smooth.construct, mpi.smooth.spec)
+S3method(smooth.construct, tedmd.smooth.spec)
+S3method(smooth.construct, tedmi.smooth.spec)
+S3method(smooth.construct, tesmd1.smooth.spec)
+S3method(smooth.construct, tesmd2.smooth.spec)
+S3method(smooth.construct, tesmi1.smooth.spec)
+S3method(smooth.construct, tesmi2.smooth.spec)
+
+
+S3method(Predict.matrix,mdcv.smooth)
+S3method(Predict.matrix,mdcx.smooth)
+S3method(Predict.matrix,micv.smooth)
+S3method(Predict.matrix,micx.smooth)
+S3method(Predict.matrix,mpd.smooth)
+S3method(Predict.matrix,mpi.smooth)
+S3method(Predict.matrix,tedmd.smooth)
+S3method(Predict.matrix,tedmi.smooth)
+S3method(Predict.matrix,tesmd1.smooth)
+S3method(Predict.matrix,tesmd2.smooth)
+S3method(Predict.matrix,tesmi1.smooth)
+S3method(Predict.matrix,tesmi2.smooth)
+
+
+
+
+
+
+
