@@ -31,7 +31,7 @@ gcv.ubre.derivative <- function(rho,G, gamma,ee,eb,esp,SVD,
  # q0 - number of the parameters of the strictly parametric model
  # p.ident - vector of 0's & 1's for the model parameters identification: 
  # 1's stand for the parameters which will be exponentiated, 0's - otherwise
- # n.terms - number of the smooth terms in the SCAM
+ # n.terms - number of the smooth terms in the mono-GAM
  # gamma - an ad hoc parametrer of the GCV
  # check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
  # del - increment for finite differences when checking analytical gradients
@@ -95,12 +95,22 @@ gcv.ubre.derivative <- function(rho,G, gamma,ee,eb,esp,SVD,
     {w1.rho[,j]<--a2*eta.rho[,j]
      T1_rho[,j]<-c(w1.rho[,j]/b$w1) 
      Q_rho[,j]<-{(N_rho[,j]*X2)%*%z2+X2%*%(T1_rho[,j]*z2)+
-             X2%*%(a1*eta.rho[,j])-X2%*%eta.rho[,j]}}  
-     KtILK<-t(b$K)%*%(b$L*b$I.plus*b$K)
+             X2%*%(a1*eta.rho[,j])-X2%*%eta.rho[,j]}}
+#  KPt<-b$K%*%t(b$P)
+#  KKt<-b$K%*%t(b$K)
+   KtILK<-t(b$K)%*%(b$L*b$I.plus*b$K)
     # derivative of the trace of A
   trA.rho<-rep(0,n.pen)
   for (j in 1:n.pen)
-    { trA.rho[j]<-{-sum((t(b$P)%*%(N_rho[,j]*t(wX1)))*t((b$I.plus*b$K)%*%KtILK))-
+    {# trA.rho[j]<-{-sum(diag((b$L*b$I.plus*KPt)%*%(N_rho[,j]*t(wX1))%*%(b$I.plus*KKt)))-
+   # sum(diag((b$L*b$I.plus*KKt)%*%(T_rho[,j]*KKt)))-
+   # sum(diag((b$L*b$I.plus*KKt)%*%(b$I.plus*wX1)%*%(N_rho[,j]*t(KPt))))-
+  #  sp[j]*sum(diag((b$L*b$I.plus*KPt)%*%b$S[[j]]%*%t(KPt)))+
+  #  sum(diag((b$L*b$I.plus*KPt)%*%(c(Q_rho[,j])*t(KPt))))+
+  #  sum(diag((b$L*b$I.plus*KPt)%*%(N_rho[,j]*t(wX1))))+
+  #  sum(diag(b$L*b$I.plus*T1_rho[,j]*KKt))+
+  #  sum(diag((N_rho[,j]*t(KPt))%*%(b$L*b$I.plus*wX1)))}
+  trA.rho[j]<-{-sum((t(b$P)%*%(N_rho[,j]*t(wX1)))*t((b$I.plus*b$K)%*%KtILK))-
     sum((t(b$K)%*%(T_rho[,j]*b$K))*t(KtILK))-
     sum((t(b$K)%*%(b$I.plus*wX1))*t((N_rho[,j]*b$P)%*%KtILK))-   
     sp[j]*sum((t(b$P)%*%b$S[[j]]%*%b$P)*t(KtILK))+
@@ -154,8 +164,8 @@ gcv.ubre.derivative <- function(rho,G, gamma,ee,eb,esp,SVD,
           check.grad <- 100*(gcv.ubre.rho-dgcv.ubre.check)/dgcv.ubre.check
   }      
 
-# end of checking the derivatives ------------------------------
-# --------------------------------------------------------------
+# end of checking the derivatives -------------------------------------------
+# ---------------------------------------------------------------------------
 
   return(gcv.ubre.rho)
 }
@@ -171,7 +181,7 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
  # q0 - number of the parameters of the strictly parametric model
  # p.ident - vector of 0's & 1's for the model parameters identification: 
  # 1's stand for the parameters which will be exponentiated, 0's - otherwise
- # n.terms - number of the smooth terms in the SCAM
+ # n.terms - number of the smooth terms in the mono-GAM
  # gamma - an ad hoc parametrer of the GCV
  # check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
  # del - increment for finite differences when checking analytical gradients
@@ -236,11 +246,21 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
      T1_rho[,j]<-c(w1.rho[,j]/b$w1) 
      Q_rho[,j]<-{(N_rho[,j]*X2)%*%z2+X2%*%(T1_rho[,j]*z2)+
              X2%*%(a1*eta.rho[,j])-X2%*%eta.rho[,j]}}
-  KtILK<-t(b$K)%*%(b$L*b$I.plus*b$K)
+#  KPt<-b$K%*%t(b$P)
+#  KKt<-b$K%*%t(b$K)
+   KtILK<-t(b$K)%*%(b$L*b$I.plus*b$K)
     # derivative of the trace of A
   trA.rho<-rep(0,n.pen)
   for (j in 1:n.pen)
-    { trA.rho[j]<-{-sum((t(b$P)%*%(N_rho[,j]*t(wX1)))*t((b$I.plus*b$K)%*%KtILK))-
+    {# trA.rho[j]<-{-sum(diag((b$L*b$I.plus*KPt)%*%(N_rho[,j]*t(wX1))%*%(b$I.plus*KKt)))-
+   # sum(diag((b$L*b$I.plus*KKt)%*%(T_rho[,j]*KKt)))-
+   # sum(diag((b$L*b$I.plus*KKt)%*%(b$I.plus*wX1)%*%(N_rho[,j]*t(KPt))))-
+  #  sp[j]*sum(diag((b$L*b$I.plus*KPt)%*%b$S[[j]]%*%t(KPt)))+
+  #  sum(diag((b$L*b$I.plus*KPt)%*%(c(Q_rho[,j])*t(KPt))))+
+  #  sum(diag((b$L*b$I.plus*KPt)%*%(N_rho[,j]*t(wX1))))+
+  #  sum(diag(b$L*b$I.plus*T1_rho[,j]*KKt))+
+  #  sum(diag((N_rho[,j]*t(KPt))%*%(b$L*b$I.plus*wX1)))}
+  trA.rho[j]<-{-sum((t(b$P)%*%(N_rho[,j]*t(wX1)))*t((b$I.plus*b$K)%*%KtILK))-
     sum((t(b$K)%*%(T_rho[,j]*b$K))*t(KtILK))-
     sum((t(b$K)%*%(b$I.plus*wX1))*t((N_rho[,j]*b$P)%*%KtILK))-   
     sp[j]*sum((t(b$P)%*%b$S[[j]]%*%b$P)*t(KtILK))+
@@ -249,8 +269,8 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
     sum((b$L*b$I.plus*T1_rho[,j]*b$K)*b$K)+
     sum((N_rho[,j]*b$P)*t(t(b$K)%*%(b$L*b$I.plus*wX1)))}
       } 
-# Calculating the derivatives of the trA is completed here ------
-# --------------------------------------------------------------
+# Calculating the derivatives of the trA is completed here -----------------
+# --------------------------------------------------------------------------
  if (scale.known){ #  derivative of Mallow's Cp/UBRE/AIC wrt log(sp) ....
        ubre.rho <- rep(0,n.pen) 
        for (j in 1:n.pen)
@@ -294,13 +314,13 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
   }      
 
 # end of checking the derivatives ------------------------------
-# ---------------------------------------------------------------
+# -------------------------------------------------------
   attr(gcv.ubre,"gradient") <- gcv.ubre.rho
   gcv.ubre
 }
 
 
-#### estimate.scgam()....
+#### estimate.scam()....
 
 
 estimate.scam <- function(G,optimizer,optim.method,rho, gamma=1,
@@ -414,4 +434,5 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma=1,
    object$S <- G$S
    object
 }
+
 

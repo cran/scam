@@ -1,5 +1,5 @@
 \name{scam-package}
-%\Rdversion{1.0}
+%\Rdversion{1.1}
 \alias{scam-package}
 \docType{package}
 \title{Shape constrained additive models 

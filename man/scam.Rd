@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.0}
+% \Rdversion{1.1}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -224,7 +224,30 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 
 \examples{
+##**********************************
+## Gaussian model ....
+   ## simulating data...
 
+set.seed(2)
+n <- 200
+x1 <- runif(n)*6-3
+f1 <- 3*exp(-x1^2) # unconstrained term
+f1 <- (f1-min(f1))/(max(f1)-min(f1)) # function scaled to have range [0,1]
+x2 <- runif(n)*4-1;
+f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
+f2 <- (f2-min(f2))/(max(f2)-min(f2)) # function scaled to have range [0,1]
+f <- f1+f2
+y <- f+rnorm(n)*0.1
+dat <- data.frame(x1=x1,x2=x2,y=y)
+  ## fit model, results, and plot...
+b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2),
+    family=gaussian(link="identity"),data=dat)
+print(b)
+summary(b)
+plot(b,pages=1)
+
+
+##************************************
 ## Gaussian model ....
    ## simulating data...
 
@@ -237,7 +260,7 @@ f2 <- exp(-3*x2)/15  # monotone decreasing and convex smooth
 f <- f1+f2
 y <- f+ rnorm(n)*0.2
 dat <- data.frame(x1=x1,x2=x2,y=y)
-## fit model, results, and plot...
+  ## fit model, results, and plot...
 b <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
     family=gaussian(link="identity"),data=dat)
 print(b)
@@ -262,29 +285,7 @@ b3 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
 summary(b3)
 }
 
-##**********************************
-\dontrun{
-## Gaussian model ....
-   ## simulating data...
 
-set.seed(2)
-n <- 200
-x1 <- runif(n)*6-3
-f1 <- 3*exp(-x1^2) # unconstrained term
-f1 <- (f1-min(f1))/(max(f1)-min(f1)) # function scaled to have range [0,1]
-x2 <- runif(n)*4-1;
-f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
-f2 <- (f2-min(f2))/(max(f2)-min(f2)) # function scaled to have range [0,1]
-f <- f1+f2
-y <- f+rnorm(n)*0.1
-dat <- data.frame(x1=x1,x2=x2,y=y)
-## fit model, results, and plot...
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2),
-    family=gaussian(link="identity"),data=dat)
-print(b)
-summary(b)
-plot(b,pages=1)
-}
 ##************************************
 \dontrun{
 ## Poisson model ....
@@ -298,7 +299,7 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 f <- f1+f2
 y <- rpois(n,exp(f))
 dat <- data.frame(x1=x1,x2=x2,y=y)
-## fit model, results, and plot...
+  ## fit model, results, and plot...
 b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2),
       family=poisson(link="log"),data=dat,optimizer="nlm.fd")
 print(b)

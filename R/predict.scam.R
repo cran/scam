@@ -185,7 +185,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       for (i in 1:n.pterms)
       { ii <- ind[object$assign==i]
 
-#### CORRECTIONS FOR SCAM....
+#### CORRECTIONS FOR mono-GAM....
         fit[start:stop,i] <- as.matrix(X[,ii])%*%object$coefficients.t[ii]
         if (se.fit) se[start:stop,i]<-
         sqrt(rowSums((as.matrix(X[,ii])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii])))
@@ -342,4 +342,5 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (type=="terms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 }
+
 

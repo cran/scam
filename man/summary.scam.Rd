@@ -1,5 +1,5 @@
 \name{summary.scam}
-%\Rdversion{1.0}
+%\Rdversion{1.1}
 \alias{summary.scam}
 \alias{print.summary.scam}
 

@@ -173,13 +173,15 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
             while (ppp * (pages - 1) >= n.plots) pages <- pages - 
                 1
         }
-        c <- r <- trunc(sqrt(ppp))
+        c <- trunc(sqrt(ppp))
         if (c < 1) 
-            r <- c <- 1
-        if (c * r < ppp) 
-            c <- c + 1
-        if (c * r < ppp) 
-            r <- r + 1
+            c <- 1
+        r <- ppp%/%c
+        if (r < 1) 
+            r <- 1
+        while (r * c < ppp) r <- r + 1
+        while (r * c - ppp > c && r > 1) r <- r - 1
+        while (r * c - ppp > r && c > 1) c <- c - 1
         oldpar <- par(mfrow = c(r, c))
     }
     else {
@@ -219,49 +221,47 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 first <- x$smooth[[i]]$first.para
                 last <- x$smooth[[i]]$last.para
                 p <- x$coefficients[first:last]
-            #    intercept <- 0
+                intercept <- 0
 ### additions for shape-constrained smooths ...
                 if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", 
                    "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         q <- ncol(X)
-                      #  beta.c <- c(0,exp(p))
-                         p <- c(0,exp(p))
-                      #  fit.c <- X%*%beta.c # fitted values for the mono P-splines identifiability constraints
+                        beta.c <- c(0,exp(p))
+                        fit.c <- X%*%beta.c # fitted values for the mono P-splines identifiability constraints
                           # get an intercept - difference between the fit with monoP-splne constraints and 
                             # fit with the centering constraint...
-                 #       intercept <- -sum(fit.c)/n 
-                  #      onet <- matrix(rep(1,n),1,n)
-                   #     A <- onet%*%X 
-                    #    qrX <- qr(X)
-                    #    R <- qr.R(qrX) # matrix R from QR decomposition
-                     #   qrA <- qr(t(A))
+                        intercept <- -sum(fit.c)/n 
+                        onet <- matrix(rep(1,n),1,n)
+                        A <- onet%*%X 
+                        qrX <- qr(X)
+                        R <- qr.R(qrX) # matrix R from QR decomposition
+                        qrA <- qr(t(A))
                      #   RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
                      #   RZatRZa.inv <- solve(t(RZa)%*%RZa)
                      #   beta.a <- RZatRZa.inv%*%t(RZa)%*%R%*%beta.c
-                    #    R <- R[-1,]
-                     #   RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
-                      #  RZa.inv <- solve(RZa)
-                       # RZaR <- RZa.inv%*%R
-                       # beta.a <- RZaR%*%beta.c
-                       # p <- c(0,beta.a)
-                       # p <- qr.qy(qrA,p)
+                        R <- R[-1,]
+                        RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
+                        RZa.inv <- solve(RZa)
+                        RZaR <- RZa.inv%*%R
+                        beta.a <- RZaR%*%beta.c
+                        p <- c(0,beta.a)
+                        p <- qr.qy(qrA,p)
                    #    fit <- X%*%p
                 }
                 offset <- attr(X, "offset")
                 if (is.null(offset)) 
-                  fit <- X %*% p 
-                else fit <- X %*% p + offset
+                  fit <- X %*% p - intercept
+                else fit <- X %*% p + offset - intercept
                 if (se) {
                   if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", 
                     "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
-                 #       XZa <- t(qr.qty(qrA,t(X)))[,2:q]
-                  #      Ga <- XZa%*%RZaR
+                        XZa <- t(qr.qty(qrA,t(X)))[,2:q]
+                        Ga <- XZa%*%RZaR
                         Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
                         Vp.c <- Vp
                         Vp.c[,1] <- rep(0,nrow(Vp))
                         Vp.c[1,] <- rep(0,ncol(Vp))
-                   #     se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
-                          se.fit <- sqrt(rowSums((X%*%Vp.c)*X))      
+                        se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
                   }
                   else {
                       if (seWithMean && inherits(attr(x$smooth[[i]], 
@@ -345,7 +345,6 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                         {if (p.ident[j]==1) {iv[k]<-j; k<-k+1}}
                      p[iv] <- exp(p[iv])
                      beta <- x$smooth[[i]]$Zc%*%p
-                    ## 
                      fit.c <- X%*%beta # fitted values for the mono P-splines identifiability constraints
                           # get an fit1intercept - difference between the fit with monoP-splne constraints and 
                             # fit with the centering constraint...
@@ -386,11 +385,7 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                           XZa <- t(qr.qty(qrA,t(X)))[,2:ncol(X)]
                           Ga <- XZa%*%RZaR%*%x$smooth[[i]]$Zc
                           Vp <- x$Vp.t[first:last,first:last] 
-                   #       Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
-                   #     Vp.c <- Vp
-                    #    Vp.c[,1] <- rep(0,nrow(Vp))
-                    #    Vp.c[1,] <- rep(0,ncol(Vp))
-                        se.fit <- sqrt(rowSums((Ga%*%Vp)*Ga))
+                          se.fit <- sqrt(rowSums((Ga%*%Vp)*Ga))
                    }
                    else {
                       if (seWithMean && inherits(attr(x$smooth[[i]], 
@@ -674,4 +669,5 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
     if (pages > 0) 
         par(oldpar)
 }
+
 
