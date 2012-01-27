@@ -14,8 +14,8 @@ together with the automatic smoothness selection.
 \tabular{ll}{
 Package: \tab scam\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2012-17-01\cr
+Version: \tab 1.1-1\cr
+Date: \tab 2012-27-01\cr
 License: \tab GPL (version 2 or later) See file LICENSE\cr
 LazyLoad: \tab yes\cr
 }

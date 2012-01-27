@@ -1,4 +1,4 @@
-2f9bf88f5cc8e6ee3eef0ed1b79fd533 *DESCRIPTION
+4e886d46d2a3414693ad3905d1ff695b *DESCRIPTION
 d1bd4434b465d892195c89b0ad2c599d *NAMESPACE
 bf852ad0ae3e89fdfba9c78eab269067 *R/bfgs.R
 562b76ff30102d978fce7124c8755c40 *R/bivar.smooth.const.R
@@ -12,7 +12,7 @@ d7aa04f72152a26ae05814229251632f *R/plot.scam.R
 0a32a0aabdbe7dd0f6644a08dbd2b2a7 *R/scam.R
 6a08bc8f43efd02c1ac77e5de8994f47 *R/scam.check.R
 f684bb85d51ee769fb524febd0e23aaf *R/summary.scam.R
-d44619cf41dd0fd54896a25ec819cc70 *R/uni.smooth.const.R
+714efdbf90553fc132c74706cce68701 *R/uni.smooth.const.R
 67ad18e5088be51f5db2dd9aa7962f37 *man/Predict.matrix.mpi.smooth.Rd
 0b6dfeacc51bd164c696870a10629d78 *man/bfgs_gcv.ubre.Rd
 1c615001c34e9be8d793d1da6b112ca2 *man/check.analytical.Rd
@@ -25,11 +25,11 @@ c6a9bedbd7a36de8385f2b6271ab433f *man/marginal.matrices.tesmi2.ps.Rd
 3675cccc81e657eda61eea4d9a1e5068 *man/predict.scam.Rd
 dd11384047e2b01bd6cdae870dd96a69 *man/print.scam.Rd
 21aa18c17e08efbb95788000607cde00 *man/residuals.scam.Rd
-336a41129d28136f0500164be0d82500 *man/scam-package.Rd
+f939d9c02b1ded37bdcb2d505787bce1 *man/scam-package.Rd
 a4985ed06f4a01cefef985515b28e80b *man/scam.Rd
 3542667b0a27222fdfb52afe012d5808 *man/scam.check.Rd
 ab983ce7cfad419e40451eb0f7488688 *man/scam.fit.Rd
-6b377b604e8a752097bff3ce63caebb6 *man/smooth.construct.mdcv.smooth.spec.Rd
+2773d1e2495e07fbdb713f667c500fda *man/smooth.construct.mdcv.smooth.spec.Rd
 2e2558eca61204492ab0c26e62a289c5 *man/smooth.construct.mdcx.smooth.spec.Rd
 1a5bf62a8901a0179c6f22fd82f65fd0 *man/smooth.construct.micv.smooth.spec.Rd
 1cc9a34972324c2d1ff408dc46b2c9ad *man/smooth.construct.micx.smooth.spec.Rd

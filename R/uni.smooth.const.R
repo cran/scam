@@ -35,7 +35,7 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
      # elements of matrix Sigma for increasing smooth
   for (i in 1:(q-1))  Sig[i,1:i]<-1
   X <- X1[,2:q]%*%Sig # model submatrix for the monotone term
-X <- sweep(X,2,colMeans(X))
+# X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$P <- list()
   object$S <- list()
@@ -80,7 +80,7 @@ Predict.matrix.mpi.smooth<-function(object,data)
   for (i in 1:q)  Sig[i,1:i]<-1
  # X<-X1[,2:ncol(X1)]%*%Sig 
   X<-X1%*%Sig 
-# X <- sweep(X,2,colMeans(X)) # no identifiability constraints for predict method
+# X <- sweep(X,2,colMeans(X)) # identifiability constraints for predict method
   X # return the prediction matrix
 }
 
@@ -120,7 +120,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
       # elements of matrix Sigma for decreasing smooth
   for (i in 1:(q-1))  Sig[i,1:i]<- -1
   X <- X1[,2:q]%*%Sig # model submatrix for the monotone term
-  X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$Sigma <- Sig
   object$P <- list()
@@ -164,7 +164,7 @@ Predict.matrix.mpd.smooth<-function(object,data)
   Sig[,1] <- 1
   for (i in 2:q)  Sig[i,2:i]<- -1
   X <- X1%*%Sig 
-#  X <- sweep(X,2,colMeans(X))
+ # X <- sweep(X,2,colMeans(X))
   X # return the prediction matrix
 }
 
@@ -210,7 +210,7 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
      # for monotone decreasing & concave smooth
   for (i in 1:(q-1)) Sig[i:(q-1),i]<--c(1:(q-i))
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$Sigma <- Sig
   object$P <- list()
@@ -304,7 +304,7 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
          Sig[i,(q-i+1):(q-1)]<--c((i-1):1)
   }
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$Sigma <- Sig
   object$P <- list()
@@ -356,7 +356,7 @@ Predict.matrix.mdcx.smooth<-function(object,data)
   Sig[,1] <- rep(1,q)
   Sig [2:q,2:q] <- Sig1
   X <- X1%*%Sig 
-#  X <- sweep(X,2,colMeans(X))
+ # X <- sweep(X,2,colMeans(X))
   X # return the prediction matrix
 }
 
@@ -404,7 +404,7 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
        Sig[i,(q-i+1):(q-1)]<-c((i-1):1)
   }
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$Sigma <- Sig
   object$P <- list()
@@ -456,7 +456,7 @@ Predict.matrix.micv.smooth<-function(object,data)
   Sig[,1] <- rep(1,q)
   Sig [2:q,2:q] <- Sig1
   X <- X1%*%Sig 
- # X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   X # return the prediction matrix
 }
 
@@ -498,7 +498,7 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
      # for monotone increasing & convex smooth
   for (i in 1:(q-1)) Sig[i:(q-1),i]<-c(1:(q-i))
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  X <- sweep(X,2,colMeans(X))
+#  X <- sweep(X,2,colMeans(X))
   object$X<-X # the finished model matrix
   object$Sigma <- Sig
   object$P <- list()

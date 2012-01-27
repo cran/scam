@@ -57,13 +57,12 @@ Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. Univer
   ## simulating data...
    set.seed(2)
    n <- 100
-   x <- sort(runif(n)*99+1)
-   f1 <- -log(x)
-   f <- (f1-min(f1))/(max(f1)-min(f1))
+   x <- sort(runif(n))
+   f <- -x^4
    y <- f+rnorm(n)*0.10
    dat <- data.frame(x=x,y=y)
  ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mdcx",m=2),family=gaussian(link="identity"),data=dat)
+   b <- scam(y~s(x,k=15,bs="mdcv",m=2),family=gaussian(link="identity"),data=dat)
 
 # UNCONSTRAINED FIT *****************
    b1 <- scam(y~s(x,k=15,bs="ps",m=2),family=gaussian(link="identity"),data=dat)
