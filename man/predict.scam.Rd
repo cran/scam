@@ -9,7 +9,10 @@ It takes a fitted \code{scam} object produced by \code{scam()}
 and produces predictions given a new set of values for the model covariates 
 or the original values used for the model fit. Predictions can be accompanied
 by standard errors, based on the posterior distribution of the model
-coefficients. }
+coefficients. 
+
+For extrapolation of the response variable values in case of a single univariate shape constrained term see \code{\link{extrapolate.uni.scam}}. 
+}
 
 \usage{
 \method{predict}{scam}(object,newdata,type="link",se.fit=FALSE,terms=NULL,
@@ -124,6 +127,13 @@ pred <- predict.scam(b,newd)
 pred
 predict(b,newd,type="terms",se=TRUE)
 plot(b,se=TRUE,residuals=TRUE,pages=1)
+
+## obtaining a 'prediction matrix'...
+
+newd <- data.frame(x1=c(-2,-1),x2=c(0,1))
+Xp <- predict(b,newdata=newd,type="lpmatrix")
+fv <- Xp%*%b$beta.t
+fv
  }
 }
 

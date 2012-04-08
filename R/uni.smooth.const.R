@@ -551,6 +551,189 @@ Predict.matrix.micx.smooth<-function(object,data)
 }
 
 
+############################################################
+### Smooth construct for the convex/concave smooths ......
+###########################################################
+
+###########################################################
+### Adding concave P-spline construction *************
+###########################################################
+
+smooth.construct.cv.smooth.spec<- function(object, data, knots)
+## construction of the concave smooth
+{ 
+  require(splines)
+  m <- object$p.order[1]
+  if (is.na(m)) m <- 2 ## default 
+  if (m<1) stop("silly m supplied")
+  if (object$bs.dim<0) object$bs.dim <- 10 ## default
+  q <- object$bs.dim 
+  nk <- q+m+2 ## number of knots
+  if (nk<=0) stop("k too small for m")
+  x <- data[[object$term]]  ## the data
+#  x.shift <- mean(x) # shift used to enhance stability
+  xk <- knots[[object$term]] ## will be NULL if none supplied
+  if (is.null(xk)) # space knots through data
+  { n<-length(x)
+    xk<-rep(0,q+m+2)
+    xk[(m+2):(q+1)]<-seq(min(x),max(x),length=q-m)
+    for (i in 1:(m+1)) {xk[i]<-xk[m+2]-(m+2-i)*(xk[m+3]-xk[m+2])}
+    for (i in (q+2):(q+m+2)) {xk[i]<-xk[q+1]+(i-q-1)*(xk[m+3]-xk[m+2])}
+  }
+  if (length(xk)!=nk) # right number of knots?
+  stop(paste("there should be ",nk," supplied knots"))
+#  x <- x - x.shift # basis stabilizing shift
+#  xk <- xk - x.shift # knots treated the same
+  #  get model matrix-------------
+  X1 <- splineDesign(xk,x,ord=m+2)
+  # use matrix Sigma and remove the first column for the monotone smooth
+  Sig <- matrix(0,(q-1),(q-1))  # Define Sigma for concave smooth
+  Sig[1:(q-1),1]<- c(1:(q-1))
+  for (i in 2:(q-1)) Sig[i:(q-1),i]<--c(1:(q-i))
+  
+  X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
+#  X <- sweep(X,2,colMeans(X))
+  object$X<-X # the finished model matrix
+  object$Sigma <- Sig
+  object$P <- list()
+  object$S <- list()
+
+  if (!object$fixed) # create the penalty matrix
+  { P <- diff(diag(q-2),difference=1)
+    object$P[[1]] <- P
+    S <- matrix(0,q-1,q-1)
+    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    object$S[[1]] <- S
+  }
+  b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
+  object$p.ident <- b  
+  object$rank <- ncol(object$X)-1  # penalty rank
+  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
+  
+  ## store "cv" specific stuff ...
+  object$knots <- xk;
+  object$m <- m;
+#  object$x.shift <- x.shift
+ 
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+  class(object)<-"cv.smooth"  # Give object a class
+  object
+}
+
+
+## Prediction matrix for the `cv` smooth class******************
+
+Predict.matrix.cv.smooth<-function(object,data)
+## prediction method function for the `cv' smooth class
+{ x <- data[[object$term]]
+  m <- object$m;     # spline order (3=cubic)
+  q <- object$df +1
+  xk <- object$knots    # knot locations
+  nk <- length(xk)      # number of knots
+  X1 <- splineDesign(xk,x,ord=m+2)
+  # use matrix Sigma and remove the first column for the monotone smooth
+  Sig1 <- matrix(0,(q-1),(q-1))   # Define Sigma concave smooth
+  Sig1[1:(q-1),1]<- c(1:(q-1))
+  for (i in 2:(q-1)) Sig1[i:(q-1),i]<--c(1:(q-i))
+  Sig <- matrix(0,q,q)
+  Sig[,1] <- rep(1,q)
+  Sig [2:q,2:q] <- Sig1 
+  X <- X1%*%Sig 
+#  X <- sweep(X,2,colMeans(X))
+  X # return the prediction matrix
+}
+
+
+###########################################################
+### Adding convex P-spline construction *************
+##########################################################
+
+smooth.construct.cx.smooth.spec<- function(object, data, knots)
+## construction of the convex smooth
+{ 
+  require(splines)
+  m <- object$p.order[1]
+  if (is.na(m)) m <- 2 ## default 
+  if (m<1) stop("silly m supplied")
+  if (object$bs.dim<0) object$bs.dim <- 10 ## default
+  q <- object$bs.dim 
+  nk <- q+m+2 ## number of knots
+  if (nk<=0) stop("k too small for m")
+  x <- data[[object$term]]  ## the data
+#  x.shift <- mean(x) # shift used to enhance stability
+  xk <- knots[[object$term]] ## will be NULL if none supplied
+  if (is.null(xk)) # space knots through data
+  { n<-length(x)
+    xk<-rep(0,q+m+2)
+    xk[(m+2):(q+1)]<-seq(min(x),max(x),length=q-m)
+    for (i in 1:(m+1)) {xk[i]<-xk[m+2]-(m+2-i)*(xk[m+3]-xk[m+2])}
+    for (i in (q+2):(q+m+2)) {xk[i]<-xk[q+1]+(i-q-1)*(xk[m+3]-xk[m+2])}
+  }
+  if (length(xk)!=nk) # right number of knots?
+  stop(paste("there should be ",nk," supplied knots"))
+#  x <- x - x.shift # basis stabilizing shift
+#  xk <- xk - x.shift # knots treated the same
+  #  get model matrix-------------
+  X1 <- splineDesign(xk,x,ord=m+2)
+  # use matrix Sigma and remove the first column for the monotone smooth
+  Sig <- matrix(0,(q-1),(q-1))   # Define Sigma for convex smooth
+  Sig[1:(q-1),1]<- -c(1:(q-1))
+  for (i in 2:(q-1)) Sig[i:(q-1),i]<- c(1:(q-i))
+  
+  X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
+#  X <- sweep(X,2,colMeans(X))
+  object$X<-X # the finished model matrix
+  object$Sigma <- Sig
+  object$P <- list()
+  object$S <- list()
+
+  if (!object$fixed) # create the penalty matrix
+  { P <- diff(diag(q-2),difference=1)
+    object$P[[1]] <- P
+    S <- matrix(0,q-1,q-1)
+    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    object$S[[1]] <- S
+  }
+  b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
+  object$p.ident <- b  
+  object$rank <- ncol(object$X)-1  # penalty rank
+  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
+  
+  ## store "cx" specific stuff ...
+  object$knots <- xk;
+  object$m <- m;
+#  object$x.shift <- x.shift
+ 
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+  class(object)<-"cx.smooth"  # Give object a class
+  object
+}
+
+
+## Prediction matrix for the `cx` smooth class *************************
+
+Predict.matrix.cx.smooth<-function(object,data)
+## prediction method function for the `cx' smooth class
+{ x <- data[[object$term]]
+  m <- object$m;     # spline order (3=cubic)
+  q <- object$df +1
+  xk <- object$knots    # knot locations
+  nk <- length(xk)      # number of knots
+  X1 <- splineDesign(xk,x,ord=m+2)
+  # use matrix Sigma and remove the first column for the monotone smooth
+  Sig1 <- matrix(0,(q-1),(q-1))   # Define Sigma convex smooth
+  Sig1[1:(q-1),1]<- -c(1:(q-1))
+  for (i in 2:(q-1)) Sig1[i:(q-1),i]<- c(1:(q-i))
+  Sig <- matrix(0,q,q)
+  Sig[,1] <- rep(1,q)
+  Sig [2:q,2:q] <- Sig1 
+  X <- X1%*%Sig 
+#  X <- sweep(X,2,colMeans(X))
+  X # return the prediction matrix
+}
+
 
 
 

@@ -43,6 +43,8 @@ Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. Univer
 \seealso{
 \code{\link{smooth.construct.mpi.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}, 
+\code{\link{smooth.construct.cx.smooth.spec}}, 
+\code{\link{smooth.construct.cv.smooth.spec}}, 
 \code{\link{smooth.construct.mdcv.smooth.spec}}, 
 \code{\link{smooth.construct.micx.smooth.spec}}, 
 \code{\link{smooth.construct.micv.smooth.spec}}

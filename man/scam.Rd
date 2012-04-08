@@ -1,9 +1,9 @@
 \name{scam}
-% \Rdversion{1.1}
+% \Rdversion{1.1-2}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
-\description{This function fits a SCAM to data. Univariate smooths subject to monotonicity or monotonicity plus convexity are available as model terms, as well as
+\description{This function fits a SCAM to data. Univariate smooths subject to monotonicity, convexity, or monotonicity plus convexity are available as model terms, as well as
    bivariate smooths with double or single monotonicity. Smoothness selection is estimated as part of the fitting. 
    Confidence/credible intervals are available for each smooth term.    
 
@@ -12,6 +12,8 @@
   separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, 
   \code{\link{bfgs_gcv.ubre}}. Any unconstrained smooth available in \code{gam} can be taken 
   as model terms. 
+
+ A function \code{\link{extrapolate.uni.scam}}  to predict future values of the response variable in case of a single univariate shape constrained term has been added. 
 
 }
 \usage{
@@ -27,7 +29,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
  This is exactly like the formula for a GAM (see \code{formula.gam} of the \code{mgcv} library) except that monotone smooth terms,
  can be added in the expression of the form \cr
  \code{s(x1,k=12,bs="mpi",by=z),}\cr  where \code{bs} indicates the basis to use for the constrained smooth: 
- the built in options for the monotonic smooths are described in \code{\link{monotonic.smooth.terms}}, 
+ the built in options for the monotonic smooths are described in \code{\link{shape.constrained.smooth.terms}}, 
 } 
 
   \item{family}{A family object specifying the distribution and link to use in
@@ -86,11 +88,13 @@ where the independent response variables \eqn{Y_i}{Y_i} follow Poisson distribut
 \eqn{f_1}{f_1}, \eqn{m_2}{m_2}, and \eqn{f_3}{f_3} are smooth functions of the corresponding covariates, and \eqn{m_2}{m_2} 
 is subject to monotone increasing constraint.  
 
-All available shape constrained smooths are decsribed in \code{\link{monotonic.smooth.terms}}.
+All available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
 
 
 }
 \value{The function returns an object of class \code{"scam"} with the following elements (this agrees with \code{gamObject}):
+
+\item{aic}{AIC of the fitted model: the degrees of freedom used to calculate this are the effective degrees of freedom of the model, and the likelihood is evaluated at the maximum of the penalized likelihood, not at the MLE.}
 
 \item{assign}{Array whose elements indicate which model term (listed in
            \code{pterms}) each parameter relates to: applies only to non-smooth terms.}
@@ -217,9 +221,11 @@ Wood, S.N. (2006b) On confidence intervals for generalized additive models based
 Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 }
-\seealso{\code{\link{scam-package}}, \code{\link{monotonic.smooth.terms}}, 
+\seealso{\code{\link{scam-package}}, \code{\link{shape.constrained.smooth.terms}}, 
     \code{\link{gam}}, \code{\link{s}},
-    \code{\link{plot.scam}}, \code{\link{summary.scam}}, \code{\link{scam.check}}
+    \code{\link{plot.scam}}, \code{\link{summary.scam}}, \code{\link{scam.check}}, \code{\link{predict.scam}}, \code{\link{extrapolate.uni.scam}}
+
+
 }
 
 

@@ -2,6 +2,8 @@
 %\Rdversion{1.0}
 \alias{Predict.matrix.mpi.smooth}
 \alias{Predict.matrix.mpd.smooth}
+\alias{Predict.matrix.cx.smooth}
+\alias{Predict.matrix.cv.smooth}
 \alias{Predict.matrix.micx.smooth}
 \alias{Predict.matrix.micv.smooth}
 \alias{Predict.matrix.mdcx.smooth}
@@ -21,6 +23,8 @@
 \usage{
 \method{Predict.matrix}{mpi.smooth}(object, data)
 \method{Predict.matrix}{mpd.smooth}(object, data)
+\method{Predict.matrix}{cv.smooth}(object, data)
+\method{Predict.matrix}{cx.smooth}(object, data)
 \method{Predict.matrix}{micx.smooth}(object, data)
 \method{Predict.matrix}{micv.smooth}(object, data)
 \method{Predict.matrix}{mdcx.smooth}(object, data)

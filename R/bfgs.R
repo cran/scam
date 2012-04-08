@@ -32,7 +32,7 @@ gcv.ubre_grad <- function(rho, G, gamma,ee,eb,esp,SVD=TRUE,
   if (length(rho)!=n.pen) stop (paste("length of rho and # penalties has to be the same"))
   sp<-exp(rho)
  # fit the model with the given values of the smoothing parameters ----------
-  b<- scam.fit(G=G,sp=sp,SVD,ee,eb,esp)
+  b<- scam.fit(G=G,sp=sp,SVD=SVD,ee=ee,eb=eb,esp=esp)
                   
   n<-nrow(b$X)
   q<-ncol(b$X)

@@ -1,5 +1,5 @@
 \name{smooth.construct.tesmi1.smooth.spec}
-%\Rdversion{1.0}
+%\Rdversion{1.1}
 \alias{smooth.construct.tesmi1.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Tensor product smoothing constructor for a bivariate function monotone increasing

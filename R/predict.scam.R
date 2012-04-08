@@ -1,7 +1,7 @@
 predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
 {
-# This function is used for predicting from a GAM. object is a gam object, newdata a dataframe to
+# This function is used for predicting from a SCAM. object is a scam object, newdata a dataframe to
 # be used in prediction......
 #
 # Type == "link"     - for linear predictor
@@ -38,6 +38,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     type<-"terms"
   }
   if (!inherits(object,"scam")) stop("predict.scam can only be used to predict from scam objects")
+  if (max(newdata) > max(object$data[,2])) stop("predict.scam can only be used for data within the range of observed values, please use extrapolate.scam otherwise")
   ## to mimic behaviour of predict.lm, some resetting is required ...
   if (missing(newdata)) na.act <- object$na.action else
   { if (is.null(na.action)) na.act <- NULL 
@@ -161,8 +162,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     { Xfrag <- PredictMat(object$smooth[[k]],data)	
 
 ### added....
-	if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", 
-       "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","tedmi.smooth","tedmd.smooth")))
+	if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",   "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","tedmi.smooth","tedmd.smooth")))
            X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
       else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tesmi2.smooth","tesmd1.smooth",
                   "tesmd2.smooth")))  # for single monotonicity...
@@ -199,8 +199,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", 
-                      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",                     "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                           if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))
                           else 

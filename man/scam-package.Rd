@@ -1,5 +1,5 @@
 \name{scam-package}
-%\Rdversion{1.1}
+%\Rdversion{1.1-2}
 \alias{scam-package}
 \docType{package}
 \title{Shape constrained additive models 
@@ -9,18 +9,20 @@
 shape constrained smooths, so the unconstrained smooths can be of more than one variable, and other 
 user defined smooths can be included.  Penalized log likelihood maximization is used to fit the model
 together with the automatic smoothness selection.
+
+A function \code{\link{extrapolate.uni.scam}}  to predict future values of the response variable in case of a single univariate shape constrained term has been added. Also univariate smooths subject to convexity/concavity constraints are available now as model terms.
 }
 \details{
 \tabular{ll}{
 Package: \tab scam\cr
 Type: \tab Package\cr
-Version: \tab 1.1-1\cr
-Date: \tab 2012-27-01\cr
+Version: \tab 1.1-2\cr
+Date: \tab 2012-04-08\cr
 License: \tab GPL (version 2 or later) See file LICENSE\cr
 LazyLoad: \tab yes\cr
 }
 The package provides generalized additive modelling under shape constraints on the component functions of the linear predictor. 
-\code{\link{scam}} and \code{\link{plot.scam}}. These functions are based on the functions of the 
+\code{\link{scam}} and \code{\link{plot.scam}} functions are based on the functions of the 
 unconstrained GAM \code{mgcv(gam)} and \code{mgcv(plot.gam)} and similar in use.  
 \code{\link{summary.scam}} allows to extract the results of the model fitting in the same way 
 as in \code{summary.gam}. A Bayesian approach is used to obtain a covariance matrix of the model

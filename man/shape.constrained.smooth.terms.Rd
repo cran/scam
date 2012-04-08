@@ -1,5 +1,5 @@
-\name{monotonic.smooth.terms}
-\alias{monotonic.smooth.terms}
+\name{shape.constrained.smooth.terms}
+\alias{shape.constrained.smooth.terms}
 \title{Shape preserving smooth terms in SCAM}
 \description{
 As in \code{mgcv(gam)}, shape preserving smooth terms are specified in a \code{\link{scam}} formula using \code{\link{s}} 
@@ -16,6 +16,12 @@ For details see
 \item{Monotone decreasing P-splines}{ \code{bs="mpd"}. To achieve monotone decreasing smooths these reparametrize the coefficients 
 so that they form a decreasing sequence. A first order difference penalty applied to the basis coefficients starting with the 
 second is used for the monotone increasing and decreasing cases.}
+
+\item{Convex P-splines}{ \code{bs="cx"}. These reparametrize the coefficients so that the second order differences of the basis coefficients are greater than zero. For details see 
+\code{\link{smooth.construct.cx.smooth.spec}}.} 
+
+\item{Concave P-splines}{ \code{bs="cv"}. These reparametrize the coefficients so that the second order differences of the basis coefficients are less than zero. For details see 
+\code{\link{smooth.construct.cv.smooth.spec}}.} 
 
 \item{Monotone increasing and convex P-splines}{ \code{bs="micx"}. These reparametrize the coefficients 
 so that the first and the second order differences of the basis coefficients are greater than zero. 
@@ -69,7 +75,9 @@ Double penalties for the monotonic tensor product smooths are obtained from the 
 }
 
 \seealso{\code{\link{s}}, \code{\link{smooth.construct.mpi.smooth.spec}}, 
-\code{\link{smooth.construct.mpd.smooth.spec}}, 
+\code{\link{smooth.construct.mpd.smooth.spec}},
+\code{\link{smooth.construct.cx.smooth.spec}}, 
+\code{\link{smooth.construct.cv.smooth.spec}},
 \code{\link{smooth.construct.micx.smooth.spec}},
 \code{\link{smooth.construct.micv.smooth.spec}},
 \code{\link{smooth.construct.mdcx.smooth.spec}}, 

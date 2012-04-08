@@ -113,7 +113,7 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
       best <- re
       object$gcv.ubre <- re$gcv.ubre
       object$dgcv.ubre <- re$dgcv.ubre
-      
+      object$aic <- re$aic
       best$p.ident <- Q$p.ident
       best$S <- Q$S
       object$termcode <- re$termcode
@@ -124,6 +124,7 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
   }
   else { ## no GCV minimization if sp is given...
       best <- scam.fit(G=G, sp=sp,SVD=TRUE,ee,eb,esp,epsilon=epsilon)
+      object$aic <- best$aic
   }
  
   ## post-fitting values...
@@ -161,6 +162,7 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
   object$assign <- G$assign
   object$nsdf <- G$nsdf
   object$y <- G$y
+  object$data <- G$mf
   object$offset <- G$offset
   object$scale.known <- scale.known # to be passed in the summary function
   object$prior.weights <-weights # prior weights on observations
@@ -378,7 +380,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
   if (!is.function(variance) || !is.function(linkinv)) 
           stop("'family' argument seems not to be a valid family object")
   dev.resids <- family$dev.resids
- # aic <- family$aic
+  aic <- family$aic
   mu.eta <- family$mu.eta
   mu.eta <- family$mu.eta
   if (!is.function(variance) || !is.function(linkinv)) 
@@ -417,6 +419,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
       GCV <- nobs * alpha/(nobs - gamma * trA)^2
       UBRE <- alpha/nobs - scale + 2 * gamma/n * trA
       scale.est <- alpha/(nobs - trA)
+      aic.model <- aic(y, n, mu, weights, dev) +  2 * trA
   } ### end if (EMPTY)
   else {
       eta <- if (!is.null(etastart)) 
@@ -475,7 +478,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
           beta.t<-beta               # current beta tilde
           beta.t[iv]<-exp(beta[iv])  # values of beta tilde of the monotone term
       }
-      ## Initialization of parameters finish here 
+      ## Initialization of parameters finishes here 
       #-------------------------------------------
       eta <- X%*%beta.t + offset     # define initial linear predictor
       mu <- linkinv(eta)  # define initial fitted model
@@ -767,6 +770,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
         dbeta.rho[,j]<--sp[j]*PPt%*%(S[[j]]%*%beta) # derivative of beta wrt rho[j]
      }
      # end of calculating the parameters derivatives
+     aic.model <- aic(y, n, mu, weights, dev) +  2 * sum(edf)
      assign("start",beta,envir=ee)
      assign("dbeta.start",dbeta.rho,envir=eb)
      assign("sp.last",sp,envir=esp)
@@ -779,7 +783,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
       dvar.mu=dv$dvar(mu),d2var.mu=dv$d2var(mu),deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=alpha,d3link.mu=dg$d3link(mu),eta=eta, edf=edf,iter=iter,
       svd.d=svd.s$d,Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,
-      residuals=residuals,z=g.deriv*(y-mu)+X1%*%beta,dbeta.rho=dbeta.rho)
+      residuals=residuals,z=g.deriv*(y-mu)+X1%*%beta,dbeta.rho=dbeta.rho, aic=aic.model)
 }
 
 

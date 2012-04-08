@@ -223,8 +223,7 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 p <- x$coefficients[first:last]
                 intercept <- 0
 ### additions for shape-constrained smooths ...
-                if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", 
-                   "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+                if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",                   "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         q <- ncol(X)
                         beta.c <- c(0,exp(p))
                         fit.c <- X%*%beta.c # fitted values for the mono P-splines identifiability constraints
@@ -253,8 +252,7 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                   fit <- X %*% p - intercept
                 else fit <- X %*% p + offset - intercept
                 if (se) {
-                  if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", 
-                    "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+                  if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",                    "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         XZa <- t(qr.qty(qrA,t(X)))[,2:q]
                         Ga <- XZa%*%RZaR
                         Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
@@ -333,8 +331,7 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 p <- x$coefficients[first:last]
                 intercept <- 0
 ### addition for double and single monotonicity...
-                if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", 
-                    "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth")))
+                if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth",                     "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth")))
                    { p.ident <- x$p.ident[first:last]
                      count<-0 # count the number of exponentiated parameters 
                      for (j in 1:length(p))
@@ -380,8 +377,7 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 else fit <- X %*% p + offset - intercept
                 fit[exclude] <- NA
                 if (se) {
-                   if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", 
-                    "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth"))) {
+                   if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth",                     "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth"))) {
                           XZa <- t(qr.qty(qrA,t(X)))[,2:ncol(X)]
                           Ga <- XZa%*%RZaR%*%x$smooth[[i]]$Zc
                           Vp <- x$Vp.t[first:last,first:last] 

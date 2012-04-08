@@ -5,13 +5,15 @@ export(scam, bfgs_gcv.ubre,
        gcv.ubre_grad,
        scam.check,
        scam.fit, 
-       plot.scam, predict.scam,
+       plot.scam, predict.scam, extrapolate.uni.scam,
        print.scam,
        check.analytical,
        summary.scam, print.summary.scam,
        residuals.scam,
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
+       Predict.matrix.cv.smooth,
+       Predict.matrix.cx.smooth,
        Predict.matrix.mdcv.smooth,
        Predict.matrix.mdcx.smooth,
        Predict.matrix.micv.smooth,
@@ -24,6 +26,8 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.tesmd2.smooth,
        Predict.matrix.tesmi1.smooth,
        Predict.matrix.tesmi2.smooth,
+       smooth.construct.cv.smooth.spec,
+       smooth.construct.cx.smooth.spec,
        smooth.construct.mdcv.smooth.spec,
        smooth.construct.mdcx.smooth.spec,
        smooth.construct.micv.smooth.spec,
@@ -52,6 +56,8 @@ S3method(print, summary.scam)
 S3method(summary, scam)
 
 S3method(smooth.construct,mdcv.smooth.spec)
+S3method(smooth.construct,cv.smooth.spec)
+S3method(smooth.construct,cx.smooth.spec)
 S3method(smooth.construct,mdcx.smooth.spec)
 S3method(smooth.construct,micv.smooth.spec)
 S3method(smooth.construct, micx.smooth.spec)
@@ -65,6 +71,8 @@ S3method(smooth.construct, tesmi1.smooth.spec)
 S3method(smooth.construct, tesmi2.smooth.spec)
 
 
+S3method(Predict.matrix,cv.smooth)
+S3method(Predict.matrix,cx.smooth)
 S3method(Predict.matrix,mdcv.smooth)
 S3method(Predict.matrix,mdcx.smooth)
 S3method(Predict.matrix,micv.smooth)

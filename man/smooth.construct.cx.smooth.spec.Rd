@@ -1,18 +1,18 @@
-\name{smooth.construct.mpi.smooth.spec}
-%\Rdversion{1.0}
-\alias{smooth.construct.mpi.smooth.spec}
+\name{smooth.construct.cx.smooth.spec}
+% \Rdversion{1.1-2}
+\alias{smooth.construct.cx.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Constructor for monotone increasing P-splines in SCAMs
+\title{Constructor for convex P-splines in SCAMs
 }
 \description{This is a special method function
-  for creating smooths subject to a monotone increasing constraint which is built by 
+  for creating smooths subject to convexity constraint which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed using monotonic P-splines. This smooth is specified via model terms suach as 
-  \code{s(x,k,bs="mpi",m=2)}, 
+  It is constructed using the mixed constrained P-splines. This smooth is specified via model terms such as
+  \code{s(x,k,bs="cx",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 }
 \usage{
-smooth.construct.mpi.smooth.spec(object, data, knots)
+smooth.construct.cx.smooth.spec(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,7 +28,7 @@ smooth.construct.mpi.smooth.spec(object, data, knots)
 %\details{
 %%  ~~ If necessary, more details than the description above ~~
 %}
-\value{ An object of class \code{"mpi.smooth"}. 
+\value{An object of class \code{"cx.smooth"}. 
 }
 \references{
 Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. University of Bath. Department of Mathematical Sciences
@@ -41,43 +41,55 @@ Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. Univer
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{smooth.construct.mpd.smooth.spec}},
 \code{\link{smooth.construct.cv.smooth.spec}},
-\code{\link{smooth.construct.cx.smooth.spec}},
- \code{\link{smooth.construct.mdcv.smooth.spec}}, 
+\code{\link{smooth.construct.mpi.smooth.spec}}, \code{\link{smooth.construct.mdcv.smooth.spec}}, 
 \code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micv.smooth.spec}}, 
-\code{\link{smooth.construct.micx.smooth.spec}}
+\code{\link{smooth.construct.mpd.smooth.spec}}
 
 }
 \examples{
+ \dontrun{
  
-## Monotone increasing P-splines example 
+## Convex P-splines example 
   ## simulating data...
-   set.seed(12)
+   set.seed(1)
    n <- 100
-   x <- runif(n)*4-1
-   f <- 4*exp(4*x)/(1+exp(4*x))
-   y <- rpois(n,exp(f))
+   x <- sort(2*runif(n)-1)
+   f <- 4*x^2
+   y <- f + rnorm(n)*0.4
    dat <- data.frame(x=x,y=y)
- ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mpi",m=2),family=poisson(link="log"),
-       data=dat,sp=NULL)
-
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="ps",m=2),family=poisson(link="log"),
-         data=dat,sp=NULL)
+   b <- scam(y~s(x,k=15,bs="cx",m=2),family=gaussian,data=dat)
+   # UNCONSTRAINED FIT *****************
+   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=gaussian, data=dat)
 
 ## plot results ...
    plot(x,y,xlab="x",ylab="y")
-   x1 <- sort(x,index=TRUE)
-   lines(x1$x,exp(f)[x1$ix])      ## the true function
-   lines(x1$x,b$fitted.values[x1$ix],col=2)  ## monotone fit 
-   lines(x1$x,b1$fitted.values[x1$ix],col=3) ## unconstrained fit 
+   lines(x,f)      ## the true function
+   lines(x,b$fitted,col=2)  ## constrained fit 
+   lines(x,b1$fitted,col=3) ## unconstrained fit 
+
+## Poisson version...
+   y <- rpois(n,exp(f))
+   dat <- data.frame(x=x,y=y)
+ ## fit model ...
+   b <- scam(y~s(x,k=15,bs="cx",m=2),family=poisson(link="log"),data=dat)
+
+# UNCONSTRAINED FIT *****************
+   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=poisson(link="log"), data=dat)
+
+## plot results ...
+   plot(x,y,xlab="x",ylab="y")
+   lines(x,exp(f))      ## the true function
+   lines(x,b$fitted,col=2)  ## constrained fit 
+   lines(x,b1$fitted,col=3) ## unconstrained fit 
  
+ }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models} \keyword{regression}%-- one or more ..
+
+
 
 
 

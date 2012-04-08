@@ -1,8 +1,8 @@
 Package: scam
 Type: Package
 Title: Shape constrained additive models
-Version: 1.1-1
-Date: 2012-27-01
+Version: 1.1-2
+Date: 2012-04-08
 Author: Natalya Pya
 Maintainer: Natalya Pya <n.y.pya@bath.ac.uk>
 Description: Routines for generalized additive modelling under shape
@@ -19,6 +19,6 @@ Imports: mgcv, graphics, stats
 Suggests: mgcv, splines, Matrix
 License: GPL (>= 2)
 LazyLoad: yes
-Packaged: 2012-01-27 19:07:17 UTC; natalya
+Packaged: 2012-08-04 07:46:59 UTC; natalya
 Repository: CRAN
-Date/Publication: 2012-01-28 17:08:06
+Date/Publication: 2012-08-05 13:44:33
