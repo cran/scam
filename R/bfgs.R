@@ -144,17 +144,15 @@ gcv.ubre_grad <- function(rho, G, gamma,ee,eb,esp,SVD=TRUE,
   }      
 
 # end of checking the derivatives -------------------------------
-# --------------------------------------------------------
-
  list(dgcv.ubre=gcv.ubre.rho,gcv.ubre=gcv.ubre, scale.est=b$dev/(n-b$trA), 
        check.grad=check.grad, dgcv.ubre.check=dgcv.ubre.check, object = b)
 }
 
 
-## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-## BFGS for gcv miminization
+#####################################################
+## BFGS for gcv miminization...                    ##
+#####################################################
 
 bfgs_gcv.ubre <- function(fn=gcv.ubre_grad,rho,ini.fd=TRUE,G,gamma=1,
            ee,eb,esp,SVD=TRUE, n.pen=length(rho),
@@ -395,8 +393,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad,rho,ini.fd=TRUE,G,gamma=1,
                B <- B - rr*(B %*% yg) %*% t(step) + rr * step %*% t(step)
            }
  
-     
- 
+      
       ## check the termination condition ...
       termcode <- 0
       if (retcode ==1) 

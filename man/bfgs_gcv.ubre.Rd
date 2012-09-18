@@ -1,5 +1,4 @@
 \name{bfgs_gcv.ubre}
-%\Rdversion{1.0}
 \alias{bfgs_gcv.ubre}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Multiple Smoothing Parameter Estimation by GCV/UBRE}

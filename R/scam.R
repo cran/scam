@@ -1,6 +1,8 @@
 
 
-## the wrapper overall Function to fit scam...
+#############################################################
+## the wrapper overall Function to fit scam...             ##
+#############################################################
 
 scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
             weights=NULL,offset=NULL,optimizer="bfgs", 
@@ -18,7 +20,7 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
   ##             "grad" - to use analytical gradient of gcv/ubre
   ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
   ## del - increment for finite differences when checking analytical gradients
- ### ------------------------------------------------------------------
+ ### --------------------------------------------------------
 
   ## Setting from mgcv(gam).......
   require(mgcv)
@@ -146,7 +148,6 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = G$offset,
                     intercept=intercept,weights=weights,scale.known=scale.known)
   
-
   object$null.deviance <- post$nulldev 
   object$Ve <- post$Ve
   object$Vp <- post$Vb
@@ -203,7 +204,6 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
       }
   }
    
-
   if (scale.known)
       object$method <- "UBRE"
   else
@@ -232,8 +232,9 @@ scam <- function(formula,family=gaussian(),data=list(),gamma=1,sp=NULL,
 }
 
 
-##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-## function to get initial estimates of smoothing parameters...
+################################################################
+## function to get initial estimates of smoothing parameters..##
+################################################################
 
 initial.sp.scam <- function(G,Q,q.f,n.terms,family,SVD,
               ee,eb,esp,intercept,offset,weights,epsilon)  {
@@ -242,9 +243,7 @@ initial.sp.scam <- function(G,Q,q.f,n.terms,family,SVD,
     b <- scam.fit(G=G,sp=rep(0.5,length(G$off)),SVD=TRUE,
               ee,eb,esp,epsilon=epsilon)
 
-   svd.Xw <- try(svd(b$wX1),silent=TRUE)
-   if (inherits(svd.Xw, "try-error"))
-          svd.Xw <- try(svd(b$wX1,LINPACK = TRUE),silent=TRUE)
+   svd.Xw <- svd(b$wX1)
    H <- svd.Xw$v%*%(svd.Xw$d^2*t(svd.Xw$v)) - b$E   ## unpenalized Hessian
    ## step 2:...
    n.p <- length(Q$S) ## number of penalty matrices
@@ -274,9 +273,11 @@ initial.sp.scam <- function(G,Q,q.f,n.terms,family,SVD,
 }
 
 
-##------------------------------------------------------------------------
-## function to get list of penalty matrices and 
-## vector of parameter identifications .....
+#########################################################
+## function to get list of penalty matrices and        ## 
+## vector of parameter identifications .....           ##
+#########################################################
+
 
 penalty_pident <- function(object)
 ## function to get the list of penalties and vector of model patameters 
@@ -338,9 +339,8 @@ penalty_pident <- function(object)
 
 
 
-#----------------------------------------------------------------------------
-# ***************************************************************************
-# Function to fit mono-GAM based on Full Newton method ******************
+#############################################################
+## Function to fit mono-GAM based on Full Newton method    ##      #############################################################
 
 scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
                 start=NULL, etastart=NULL, mustart=NULL)
@@ -482,8 +482,8 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
       #-------------------------------------------
       eta <- X%*%beta.t + offset     # define initial linear predictor
       mu <- linkinv(eta)  # define initial fitted model
-      # end of the initialization ------------------------------------------------
-      # --------------------------------------------------------------------------
+      # end of the initialization ----------------------
+      # ------------------------------------------------
       dev <- sum(dev.resids(y,mu,weights)) # define initial norm
       pdev<- dev + sum((rS%*%beta)^2) # define initial norm + penalty
       old.pdev <- pdev       # initialize convergence control for norm + penalty
@@ -500,8 +500,8 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
       Dp.gnorm <- max(abs(Dp.g)) # set convergence on the max value of the Dp.g
       old.beta <- beta
       conv <- FALSE
-     # --------------------------------------------------------------------------
-     # MAIN ITERATIONS START HERE ----------------------------------------------
+     # -----------------------------------------------
+     # MAIN ITERATIONS START HERE --------------------
      ## while (abs(pnorm-old.pnorm)>1e-10*pnorm)  # repeat un-converged
      ##  while (Dp.gnorm>1e-8)  # repeat un-converged
      for (iter in 1:maxit)  {
@@ -524,10 +524,10 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
               break
          }
          ## END of ADDED CODE...... 
-         C[ia] <- beta.t[iv]  # diagonal elements of C corresponding to the monotone terms
-         C1[ia] <- beta.t[iv] # diagonal elements of C1 corresponding to the monotone terms
+         C[ia] <- beta.t[iv]  # diagonal elements of C corresponding to the shape constrained terms
+         C1[ia] <- beta.t[iv] # diagonal elements of C1 corresponding to the shape constrained terms
          X1 <- X%*%C 
-         g.deriv<-1/mu.eta(eta)            # diag(G)
+         g.deriv<-1/mu.eta(eta)  # diag(G)
          w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1)
          alpha<-1+(y-mu)*(dv$dvar(mu)/variance(mu)+dg$d2link(mu)/g.deriv) # alpha elements of W
          w<-w1*alpha          # diag(W)
@@ -542,12 +542,9 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
          wX1<-sqrt(abs.w)[1:nobs]*X1
          wX11<-rbind(wX1,rS) # augmented model matrix 
          if (SVD) {
-             # svd.s<-svd(wX11)
-             svd.s <- try(svd(wX11),silent = TRUE) 
-             if (inherits(svd.s, "try-error"))
-                   svd.s <- try(svd(wX11,LINPACK = TRUE),silent = TRUE) 
+             svd.s<-svd(wX11)
              d.inv<-rep(0,q) # initial vector of inverse singular values
-             for (i in 1:q) {       # corrected vector of inverse singular values 
+             for (i in 1:q) { # corrected vector of inverse singular values 
                 if (svd.s$d[i] < max(svd.s$d)*sqrt(.Machine$double.eps)) {
                        d.inv[i]<-0}   
                 else d.inv[i]<-1/svd.s$d[i]
@@ -556,12 +553,12 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
              Q <- svd.s$u[,good]
              R <- svd.s$d[good]*t(svd.s$v[,good])
              R.inv<-svd.s$v[,good]%*%diag(d.inv[good])# inverse of R 
-             tR.inv<-d.inv[good]*t(svd.s$v[,good])    # inverse of transpose of R
+             tR.inv<-d.inv[good]*t(svd.s$v[,good]) # inverse of R transpose 
          } ### end if (SVD)
          else {
-             qrst<-qr(wX11)        # QR decomposition of the augmented model matrix
-             R<-qr.R(qrst)         # matrix R from QR decomposition
-             Q<-qr.Q(qrst)         # matrix Q from QR decomposition
+             qrst<-qr(wX11)  # QR decomposition of the augmented model matrix
+             R<-qr.R(qrst)   # matrix R from QR decomposition
+             Q<-qr.Q(qrst)   # matrix Q from QR decomposition
              tR.inv<-backsolve(t(R),diag(1,q),upper.tri=FALSE)  # inverse of transpose of R
              R.inv<-backsolve(R,diag(1,q))      # inverse of R 
          }
@@ -571,7 +568,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
          ok1 <- FALSE
          for (i in 1:length(d)) {     # checking positive semi-definiteness      
                if (d[i]>1) ok1 <- TRUE}
-         if (ok1==TRUE) {# Fisher step in case of not positive semi-definiteness 
+         if (ok1==TRUE) {# Fisher step in case of not +ve semi-definiteness 
                   # of penalized loglikelihood
                   # set alpha =1
              eta.t<-X1%*%beta     # eta tilde for pseudodata 
@@ -580,9 +577,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
              z<-g.deriv*(y-mu)+eta.t      # pseudodata
              wz<-sqrt(w1)*z               # weighted pseudodata
              wz.aug<-c(wz,rep(0,nrow(rS)))   # augmented pseudodata
-             s1 <- try(svd(wX11),silent=TRUE)   # SVD of the augmented model matrix
-             if (inherits(s1, "try-error"))
-                   s1 <- try(svd(wX11,LINPACK = TRUE),silent=TRUE)
+             s1 <- svd(wX11)   # SVD of the augmented model matrix
              d.inv1 <- rep(0,q)  # initial vector of inverse singular values  
              for (i in 1:q) { # corrected vector of sv and inverse sv 
                  if (s1$d[i] < max(s1$d)*(.Machine$double.eps)^(1/2))
@@ -600,7 +595,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
              }
              P<-R.inv%*%ei$vectors%*%diag(Id.inv.r) # define matrix P
              K<-Q[1:nobs,]%*%(ei$vectors%*%diag(Id.inv.r))  # define matrix K 
-             wz1<-sqrt(abs.w)*z1     # the first term of the weighted pseudodata
+             wz1<-sqrt(abs.w)*z1  # the first term of the weighted pseudodata
              ## old.beta<-beta  # store for 'step reduction'
              beta<-c(old.beta)+P%*%(t(K)%*%wz1)-P%*%(t(P)%*%(S.t%*%old.beta))
          }  ###  end of if (!ok1) - Newton step
@@ -615,7 +610,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
          ## old.pdev<-pdev                 # store for convergence test
          pdev<- dev + sum((rS%*%beta)^2) # deviance + penalty of the working model
                
-         ## `step reduction' approach starts here ------------------------------------
+         ## `step reduction' approach starts here ---------------------
          ii <- 1 
          div.thresh <- 10*(0.1 +abs(old.pdev))*.Machine$double.eps^0.5
          ##  while (!(valideta(eta) && validmu(mu))){ # `step reduction'
@@ -632,7 +627,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
              dev <- sum(dev.resids(y,mu,weights))# update deviance of the working model
              pdev <- dev+sum((rS%*%beta)^2) # update deviance + penalty of the working model
          }
-         ## `step reduction' finishes here -------------------------------------------
+         ## `step reduction' finishes here -----------------------
      
          Dp.g <- -t(X1)%*%(w1*g.deriv*(y-mu))+S.t%*%beta # the gradient vector of the penalized deviance
          Dp.gnorm<-max(abs(Dp.g)) 
@@ -655,16 +650,14 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
              old.pdev <- pdev
              old.beta <- beta
          }
-     } ### main iteration procedure is completed here --------------------------------
-     # ---------------------------------------------------------------------------
-  
-     # ___________________________________________________________________________
-
-     # ---------------------------------------------------------------------------
-     # define matrices at their converged values from the full Newtom method------
+     } ### main iteration procedure is completed here ------------
+  ##______________________________________________________________
+  ## --------------------------------------------------------------
+  ## define matrices at their converged values 
+  ## from the full Newton method------
   
      dev <- sum(dev.resids(y,mu,weights))
-     beta.t <- beta                # estimates of beta tilde
+     beta.t <- beta               # estimates of beta tilde
      beta.t[iv]<- exp(beta[iv])   # values of beta tilde of the monotone term
      eta <- X%*%beta.t + offset      # linear predictor  
      mu <- linkinv(eta)         # fitted values
@@ -684,11 +677,8 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
      wX1 <- sqrt(abs.w)[1:nobs]*X1
      wX11 <- rbind(wX1,rS) # augmented model matrix 
      if (SVD) {
-        # svd.s<-svd(wX11)
-        svd.s <- try(svd(wX11),silent = TRUE) 
-        if (inherits(svd.s, "try-error"))
-                 svd.s <- try(svd(wX11,LINPACK = TRUE),silent = TRUE) 
-        d.inv <- rep(0,q)        # initial vector of inverse singular values
+        svd.s<-svd(wX11)
+        d.inv <- rep(0,q)  # initial vector of inverse singular values
         illcond <- FALSE
         for (i in 1:q) {  # corrected vector of inverse singular values 
             if (svd.s$d[i] < max(svd.s$d)*sqrt(.Machine$double.eps))
@@ -720,9 +710,7 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
          eta.t<-X1%*%beta  # eta tilde for pseudodata 
          wX1<-sqrt(w1)[1:nobs]*X1
          wX11<-rbind(wX1,rS)
-         s1 <- try(svd(wX11),silent=TRUE)   # SVD of the augmented model matrix
-         if (inherits(s1, "try-error"))
-                 s1 <- try(svd(wX11,LINPACK = TRUE),silent=TRUE)
+         s1 <- svd(wX11) # SVD of the augmented model matrix
          d.inv1<-c(0,q)  # initial vector of inverse singular values  
          for (i in 1:q) {  # corrected vector of sv and inverse sv 
              if (s1$d[i] < max(s1$d)*(.Machine$double.eps)^(1/2))
@@ -741,12 +729,12 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
          P <- R.inv%*%ei$vectors%*%diag(Id.inv.r) # define matrix P
          K <- Q[1:nobs,]%*%(ei$vectors%*%diag(Id.inv.r))  # define matrix K 
      }  ## end of if (!ok1)
-     # end of calculation of the matrices at their converged values --------------
-     # ---------------------------------------------------------------------------
+     # end of calculation of the matrices at their converged values ------
+     # -------------------------------------------------------------
      Dp.g <- -t(X1)%*%(w1*g.deriv*(y-mu))+S.t%*%beta # the gradient vector of the penalized deviance
      Dp.gnorm<-max(abs(Dp.g)) 
 
-     # calculating tr(A) ---------------------------------------------------------
+     # calculating tr(A) ----------------------------------------------
      I.plus<-rep(1,nobs)   # define diagonal elements of the matrix I^{+}
      for (i in 1:nobs) {
           if (w[i]<0) I.plus[i]<--1}
@@ -788,7 +776,9 @@ scam.fit <- function(G,sp, SVD=TRUE,ee,eb,esp, maxit=200,epsilon=1e-8,
 
 
 
-## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#######################################################################
+## function to get null deviance and covariance matrices after fit   ##
+#######################################################################
 
 
 scam.fit.post <- function(y,X,object,sig2,offset=rep(0, nrow(X)),
@@ -811,9 +801,7 @@ scam.fit.post <- function(y,X,object,sig2,offset=rep(0, nrow(X)),
   ## get the inverse of the expected Hessian...
   wX1 <- sqrt(object$w1)[1:n]*object$X1
   wX11 <- rbind(wX1,object$rS)
-  s1 <- try(svd(wX11),silent=TRUE)   # SVD of the augmented model matrix
-  if (inherits(s1, "try-error"))
-        s1 <- try(svd(wX11,LINPACK = TRUE),silent=TRUE)
+  s1 <- svd(wX11)   # SVD of the augmented model matrix
   q <- ncol(X)
   d.inv1 <- rep(0,q)  # initial vector of inverse singular values  
   for (i in 1:q) {  # corrected vector of sv and inverse sv 

@@ -1,9 +1,10 @@
 ## an attempt to predict future data for scam...
 
 
-##############################################################
-### function to predict future values of the response variable in case of a single univariate shape constrained term ....
-################################################################
+#############################################################################
+## function to predict future values of the response variable in case of a ##
+## single univariate shape constrained term ....                           ##
+#############################################################################
 
 extrapolate.uni.scam <- function(object, newdata){
 ## object is a scam object,

@@ -1,6 +1,7 @@
 
-
-# Function to return gcv/ubre ********************
+#########################################################
+# Function to return gcv/ubre ...                      ##
+#########################################################
 
 gcv.ubre <- function(rho,G,gamma,ee,eb,esp,SVD){
    ## function to get GCV.UBRE value for optim()...
@@ -17,9 +18,9 @@ gcv.ubre <- function(rho,G,gamma,ee,eb,esp,SVD){
     return(gcv.ubre)
 }
 
-# END of the function *********************************
-
-## function to get the gradient of the gcv/ubre.....
+#########################################################
+## function to get the gradient of the gcv/ubre.....   ##
+#########################################################
 
 gcv.ubre.derivative <- function(rho,G, gamma,ee,eb,esp,SVD,
                             check.analytical=FALSE, del)
@@ -165,12 +166,14 @@ gcv.ubre.derivative <- function(rho,G, gamma,ee,eb,esp,SVD,
   }      
 
 # end of checking the derivatives -------------------------------------------
-# ---------------------------------------------------------------------------
-
   return(gcv.ubre.rho)
 }
 
-## for nlm() function to get the gcv/ubre and gradient of the gcv/ubre.....
+
+
+#############################################################################
+## for nlm() function to get the gcv/ubre and gradient of the gcv/ubre.....##
+#############################################################################
 
 dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
                             check.analytical=FALSE, del){## gradient of the gcv/ubre function
@@ -320,7 +323,9 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,SVD,
 }
 
 
-#### estimate.scam()....
+#######################################################
+#### estimate.scam()....                             ##
+#######################################################
 
 
 estimate.scam <- function(G,optimizer,optim.method,rho, gamma=1,

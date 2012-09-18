@@ -1,5 +1,6 @@
-
-## printing the results of the scam...
+############################################
+## printing the results of the scam...    ##
+############################################
 
 print.scam <- function (x,...) 
    {
