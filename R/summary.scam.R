@@ -1,5 +1,5 @@
 
-## summary function for scam()...
+## summary function for scam() (clone of summary.gam())...
 ##### function to get all the summary information....
 
 summary.scam <- function (object,dispersion = NULL,freq = FALSE,alpha = 0,...) 
@@ -199,8 +199,6 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,alpha = 0,...)
     nobs <- nrow(object$X)
     r.sq <- 1 - sum(w^2 * (object$y - object$fitted.values)^2)/
                    (var(w * object$y) * residual.df)
-  ##  r.sq <- 1 - var(w * (object$y - object$fitted.values)) * 
-  ##         (nobs - 1)/(var(w * object$y) * residual.df)
     dev.expl <- (object$null.deviance - object$deviance)/object$null.deviance
     ret <- list(p.coeff = p.coeff, se = se, p.t = p.t, p.pv = p.pv, 
         residual.df = residual.df, m = m, chi.sq = chi.sq, s.pv = s.pv, 
@@ -286,7 +284,7 @@ eigXVX <- function (X, V, rank = NULL, tol = .Machine$double.eps^0.5)
 }
 
 
-##### print.summary.gam .....
+##### print.summary.scam .....
 print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3), signif.stars = getOption("show.signif.stars"), 
     ...) 
 {
@@ -312,9 +310,7 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3), sig
             sep = "")
     cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
         flag = "-"), "  n = ", x$n, "\n", sep = "")
-   # if (!is.null(x$dgcv.ubre[1])) { # print termination condition for bfgs(scam)
-    #    if (!is.null(x$bfgs.info[[1]]))
-     if (x$optimizer == "bfgs"){
+    if (x$optimizer == "bfgs"){
                if (x$termcode!= 1) {
                    dgcv.ubre <- max(abs(x$dgcv.ubre)*max(abs(log(x$sp)),1)/max(abs(x$gcv.ubre),1))
                   cat("\nBFGS termination condition:\n", dgcv.ubre,"\n",sep = "")

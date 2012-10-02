@@ -1,6 +1,6 @@
-############################################
-## printing the results of the scam...    ##
-############################################
+###################################################################
+## printing the results of the scam (clone of print.gam())...    ##
+###################################################################
 
 print.scam <- function (x,...) 
    {
@@ -23,15 +23,6 @@ print.scam <- function (x,...)
         cat(" total =", x$trA, "\n")
     }
     cat("\n",x$method," score: ", x$gcv.ubre, "\n", sep = "")
-#    dgcv <- 0
-#    cat("\nGCV gradient:\n")
-#    for (i in 1:length(x$sp)) dgcv[i] <- x$gcv.g[i]
-#    dgcv.str <- format(dgcv, digits = 5)
-#    for (i in 1:length(x$sp)) {
-#       cat(dgcv.str[i], " ", sep = "")
-#       if (i%%7 == 0) 
-#           cat("\n")
-#    }
     cat("\n")
     invisible(x)
 }

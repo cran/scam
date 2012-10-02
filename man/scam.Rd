@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.1-3}
+% \Rdversion{1.1-4}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -20,7 +20,7 @@
 scam(formula, family = gaussian(), data = list(), gamma = 1, 
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
-      scale = 0, epsilon = 1e-08, check.analytical=FALSE,
+      scale = 0, devtol = 1e-08, steptol= 1e-8, check.analytical=FALSE,
      del=1e-4, start= NULL, etastart, mustart)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -65,8 +65,11 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
      Negative value indicates that the scale paraemter is unknown. 0 indicates that the scale parameter is 1  for Poisson and binomial
     and unknown otherwise. This conforms to the behaviour of \code{gam}.} 
 
-  \item{epsilon}{A positive scalar giving the convergence control for the model fitting algorithm.}
-
+  \item{devtol}{A positive scalar giving the convergence control for the model fitting algorithm}
+  
+   \item{steptol}{A positive scalar giving the tolerance at which the scaled distance between
+        two successive iterates is considered close enough to zero to terminate the model fitting algorithm.}
+ 
   \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated.} 
 
   \item{del}{A positive scalar (default is 1e-4) giving an increment for finite difference approximation when 
@@ -231,8 +234,9 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 \examples{
 ##**********************************
-## Gaussian model ....
+## Gaussian model, 2 terms, 1 monotonic increasing....
    ## simulating data...
+require(scam)
 
 set.seed(2)
 n <- 200
@@ -254,7 +258,7 @@ plot(b,pages=1)
 
 
 ##************************************
-## Gaussian model ....
+## Gaussian model, 2 terms, increasing + decreasing convex ....
    ## simulating data...
 
 set.seed(2)
@@ -293,7 +297,6 @@ summary(b3)
 
 
 ##************************************
-\dontrun{
 ## Poisson model ....
    ## simulating data...
 set.seed(2)
@@ -335,6 +338,7 @@ summary(b)
 par(mfrow=c(2,2))
 plot(b)
 
+\dontrun{
 ## bivariate example...
  ## simulating data...
    set.seed(2)

@@ -1,4 +1,6 @@
 
+## similar to residuals.gam()....
+
 residuals.scam <-function(object, type = c("deviance", "pearson","scaled.pearson", "working", "response"),...)
 # calculates residuals for scam object the same as residulas.gam()...
 { type <- match.arg(type)

@@ -223,21 +223,17 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 p <- x$coefficients[first:last]
                 intercept <- 0
 ### additions for shape-constrained smooths ...
-                if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",                   "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+                if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         q <- ncol(X)
                         beta.c <- c(0,exp(p))
-                        fit.c <- X%*%beta.c # fitted values for the mono P-splines identifiability constraints
-                          # get an intercept - difference between the fit with monoP-splne constraints and 
-                            # fit with the centering constraint...
+                        fit.c <- X%*%beta.c # fitted values for the SCOP-splines identifiability constraints
+                          # get an intercept that is a difference between the fit with SCOP-spline constraints and with the centering constraint...
                         intercept <- -sum(fit.c)/n 
                         onet <- matrix(rep(1,n),1,n)
                         A <- onet%*%X 
                         qrX <- qr(X)
-                        R <- qr.R(qrX) # matrix R from QR decomposition
+                        R <- qr.R(qrX) 
                         qrA <- qr(t(A))
-                     #   RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
-                     #   RZatRZa.inv <- solve(t(RZa)%*%RZa)
-                     #   beta.a <- RZatRZa.inv%*%t(RZa)%*%R%*%beta.c
                         R <- R[-1,]
                         RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
                         RZa.inv <- solve(RZa)
@@ -245,7 +241,6 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                         beta.a <- RZaR%*%beta.c
                         p <- c(0,beta.a)
                         p <- qr.qy(qrA,p)
-                   #    fit <- X%*%p
                 }
                 offset <- attr(X, "offset")
                 if (is.null(offset)) 
@@ -333,18 +328,16 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
 ### addition for double and single monotonicity...
                 if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth",                     "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth")))
                    { p.ident <- x$p.ident[first:last]
-                     count<-0 # count the number of exponentiated parameters 
-                     for (j in 1:length(p))
-                          {if (p.ident[j]==1) count<-count+1}
+                     ii <- p.ident == 1
+                     count <- sum(ii) ## the number of exponentiated parameters 
                      iv<-array(0, dim=c(count,1)) # index vector for the exponent. parameters
                      k<-1
                      for (j in 1:length(p))
                         {if (p.ident[j]==1) {iv[k]<-j; k<-k+1}}
                      p[iv] <- exp(p[iv])
                      beta <- x$smooth[[i]]$Zc%*%p
-                     fit.c <- X%*%beta # fitted values for the mono P-splines identifiability constraints
-                          # get an fit1intercept - difference between the fit with monoP-splne constraints and 
-                            # fit with the centering constraint...
+                     fit.c <- X%*%beta # fitted values for the SCOP-spline identifiability constraints
+                     # get an intercept as a difference between the fit with SCOP-spline constraints and fit with the centering constraint...
                      intercept <- -sum(fit.c)/(length(fit.c)) 
                      onet <- matrix(rep(1,nrow(X)),1,nrow(X))
                      A <- onet%*%X

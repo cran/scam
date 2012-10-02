@@ -1,5 +1,5 @@
 \name{scam-package}
-%\Rdversion{1.1-3}
+%\Rdversion{1.1-4}
 \alias{scam-package}
 \docType{package}
 \title{Shape constrained additive models 
@@ -16,8 +16,8 @@ A function \code{\link{extrapolate.uni.scam}}  to predict future values of the r
 \tabular{ll}{
 Package: \tab scam\cr
 Type: \tab Package\cr
-Version: \tab 1.1-3\cr
-Date: \tab 2012-09-18\cr
+Version: \tab 1.1-4\cr
+Date: \tab 2012-10-02\cr
 License: \tab GPL (version 2 or later) See file LICENSE\cr
 LazyLoad: \tab yes\cr
 }

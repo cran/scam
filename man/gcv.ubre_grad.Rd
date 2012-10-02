@@ -13,7 +13,7 @@ with respect to the log smoothing parameter using the method of Wood (2009).
 The function is not normally called directly, but rather service routines for \code{\link{bfgs_gcv.ubre}}.
 }
 \usage{
-gcv.ubre_grad(rho, G, gamma, ee, eb, esp, SVD=TRUE, 
+gcv.ubre_grad(rho, G, gamma, ee, eb, esp, 
                              check.analytical, del)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -31,9 +31,7 @@ gcv.ubre_grad(rho, G, gamma, ee, eb, esp, SVD=TRUE,
 
   \item{esp}{Get the enviroment for the smoothing parameter.}
 
-  \item{SVD}{If TRUE then svd is applied to the augmented working model matrix, 
-           if \code{SVD} is FALSE then qr decomposition will be used (not recommended).}
-
+  
   \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated,
                          otherwise \code{NULL}.} 
 

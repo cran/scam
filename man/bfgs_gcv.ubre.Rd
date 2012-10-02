@@ -12,7 +12,7 @@ The function is not normally called directly, but rather service routines for \c
 }
 \usage{
 bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb, 
-         esp, SVD=TRUE, n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
+         esp, n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
         steptol= 1e-7, gradtol = 6.0554*1e-06, maxNstep = 5, 
         maxHalf = 30, check.analytical, del) 
 }
@@ -35,9 +35,6 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb,
   \item{eb}{Get the enviroment for the model coefficients derivatives.}
 
   \item{esp}{Get the enviroment for the smoothing parameter.}
-
-  \item{SVD}{If TRUE then svd is applied to the augmented working model matrix when fitting the SCAM, 
-           otherwise qr decomposition will be used.}
 
   \item{n.pen}{Smoothing parameter dimension.}
 

@@ -1,3 +1,7 @@
+
+## clone of the predict.gam(mgcv) .....
+
+
 predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
 {
@@ -38,7 +42,10 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     type<-"terms"
   }
   if (!inherits(object,"scam")) stop("predict.scam can only be used to predict from scam objects")
-  if (max(newdata) > max(object$data[,2])) stop("predict.scam can only be used for data within the range of observed values, please use extrapolate.scam otherwise")
+  if (ncol(attr(object$terms,"factors")) == 1)
+      { if (max(newdata) > max(object$data[,attr(b$terms,"term.labels")])) 
+           stop("predict.scam can only be used for data within the range of observed values, please use extrapolate.scam otherwise")
+      }
   ## to mimic behaviour of predict.lm, some resetting is required ...
   if (missing(newdata)) na.act <- object$na.action else
   { if (is.null(na.action)) na.act <- NULL 
@@ -161,7 +168,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (n.smooth) for (k in 1:n.smooth) 
     { Xfrag <- PredictMat(object$smooth[[k]],data)	
 
-### added....
+### added code specific for scam....
 	if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",   "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","tedmi.smooth","tedmd.smooth")))
            X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
       else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tesmi2.smooth","tesmd1.smooth",
@@ -185,7 +192,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       for (i in 1:n.pterms)
       { ii <- ind[object$assign==i]
 
-#### CORRECTIONS FOR mono-GAM....
+#### CORRECTIONS FOR SCAM....
         fit[start:stop,i] <- as.matrix(X[,ii])%*%object$coefficients.t[ii]
         if (se.fit) se[start:stop,i]<-
         sqrt(rowSums((as.matrix(X[,ii])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii])))
@@ -195,7 +202,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       { for (k in 1:n.smooth) # work through the smooth terms 
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
 
-### CORRECTED ...
+### CORRECTED for SCAM ...
 
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
@@ -210,7 +217,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                           onet <- matrix(rep(1,nrow(X0)),1,nrow(X0))
                           A <- onet%*%X0
                           qrX <- qr(X0)
-                          R <- qr.R(qrX) # matrix R from QR decomposition
+                          R <- qr.R(qrX) 
                           qrA <- qr(t(A))
                           R <- R[-1,]
                           RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
@@ -296,7 +303,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     } else # "link" or "response"
     { k<-attr(attr(object$model,"terms"),"offset")
 
-## CORRECTED ...
+## CORRECTED for SCAM...
       fit[start:stop]<-X%*%object$coefficients.t + rowSums(Xoff)
       if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
       if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp.t)*X))

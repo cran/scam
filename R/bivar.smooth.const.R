@@ -1,13 +1,14 @@
+#########################################################################
+### Shape constrained smooth construct for bivariate terms......       ##
+#########################################################################
 
-### Smooth construct for the smooth with two covariates......
-### Adding double monotonicity using tensor product of P-splines construction *************
-### double monotone decreasing ....
 
-
+####################################################################################### 
+### Tensor product P-spline construction with double monotone decreasing constraint  ##
+#######################################################################################
 
 smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
-## construction of the double monotone decreasing smooth surface
-{ 
+{ ## construction of the double monotone decreasing smooth surface
   require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
@@ -16,16 +17,16 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
              ## order of P-splines is provided for both marginal smooths
   else m <- object$p.order
   m[is.na(m)] <- 2  # the default order is 2 (cubic P-spline)
-  if (object$bs.dim[1]==-1) { # set the default values for q1 and q2
-      q1 <- object$bs.dim[1] <- 7
-      q2 <- object$bs.dim[2] <- 7
-  }
+  if (object$bs.dim[1]==-1)  # set the default values for q1 and q2
+     {  q1 <- object$bs.dim[1] <- 7
+        q2 <- object$bs.dim[2] <- 7
+     }
   else if (length(object$bs.dim)==1)
-      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
-  else {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
-  if (is.na(q1)) q1 <- object$bs.dim[1] <- 7  # the default basis dimension is 7
-  if (is.na(q2)) q2 <- object$bs.dim[2] <- 7
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  if (is.na(q1))  q1 <- object$bs.dim[1] <- 7  # the default basis dimension is 7
+  if (is.na(q2))  q2 <- object$bs.dim[2] <- 7
   nk1 <- q1+m[1]+2 ## number of knots for the 1st smooth
   nk2 <- q2+m[2]+2 ## number of knots for the 2nd smooth
   if (nk1<=0 || nk2<=0) stop("either k[1] or k[2] too small for m")
@@ -35,30 +36,29 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   z <- data[[object$term[2]]]  ## the values of the second covariate
   zk <- knots[[object$term[2]]] ## will be NULL if none supplied
   if (is.null(xk)) # space knots through the values of the 1st covariate
-  { n<-length(x)
-    xk<-rep(0,q1+m[1]+2)
-    xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
-    for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
-    for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
-  }
+     {  n<-length(x)
+        xk<-rep(0,q1+m[1]+2)
+        xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
+        for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
+        for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
+     }
   if (n != length(z))
-     stop ("arguments of smooth not same dimension")
+       stop ("arguments of smooth not same dimension")
   if (is.null(zk)) # space knots through the values of the 2nd covariate
-  { zk<-rep(0,q2+m[2]+2)
-    zk[(m[2]+2):(q2+1)]<-seq(min(z),max(z),length=q2-m[2])
-    for (i in 1:(m[2]+1)) {zk[i]<-zk[m[2]+2]-(m[2]+2-i)*(zk[m[2]+3]-zk[m[2]+2])}
-    for (i in (q2+2):(q2+m[2]+2)) {zk[i]<-zk[q2+1]+(i-q2-1)*(zk[m[2]+3]-zk[m[2]+2])}
-  }
+     {  zk<-rep(0,q2+m[2]+2)
+        zk[(m[2]+2):(q2+1)]<-seq(min(z),max(z),length=q2-m[2])
+        for (i in 1:(m[2]+1)) {zk[i]<-zk[m[2]+2]-(m[2]+2-i)*(zk[m[2]+3]-zk[m[2]+2])}
+        for (i in (q2+2):(q2+m[2]+2)) {zk[i]<-zk[q2+1]+(i-q2-1)*(zk[m[2]+3]-zk[m[2]+2])}
+     }
   if (length(xk)!=nk1 || length(zk)!=nk2) # right number of knots?
-      stop(paste("there should be ",nk1, " and ", nk2," supplied knots"))
-
+       stop(paste("there should be ",nk1, " and ", nk2," supplied knots"))
   #  get model matrix-------------
   X1 <- splineDesign(xk,x,ord=m[1]+2)
   X2 <- splineDesign(zk,z,ord=m[2]+2)
   X <- matrix(0,n,q1*q2)  # model matrix
   for ( i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
   # IS[1:q2,1] <- rep(1,q2)
@@ -116,8 +116,7 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
 
 
 Predict.matrix.tedmd.smooth <- function(object, data)
-## prediction method function for the `tedmd' smooth class
-{
+{ ## prediction method function for the `tedmd' smooth class
   x <- data[[object$term[1]]]  
   xk <- object$knots[[1]]
   z <- data[[object$term[2]]]  
@@ -126,14 +125,14 @@ Predict.matrix.tedmd.smooth <- function(object, data)
   if (length(object$bs.dim)==1)
       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
-  else {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
   m <- object$m
   X1 <- splineDesign(xk,x,ord=m[1]+2)
   X2 <- splineDesign(zk,z,ord=m[2]+2)
   X <- matrix(0,n,q1*q2)  # model matrix
   for ( i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
   # IS[1:q2,1] <- rep(1,q2)
@@ -144,21 +143,17 @@ Predict.matrix.tedmd.smooth <- function(object, data)
   Sig[,1] <- rep(1,ncol(Sig))
 
   X <- X%*%Sig
- # # apply identifiability constraint and get model matrix
- # X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-
   X # return the prediction matrix
 }
 
 
-### Smooth construct for the smooth with two covariates......
-### Adding double monotonicity using tensor product of P-splines construction *************
-### double monotone increasing ....
+####################################################################################### 
+### Tensor product P-spline construction with double monotone increasing constraint  ##
+#######################################################################################
 
 
 smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
-## construction of the double monotone increasing smooth surface
-{ 
+{ ## construction of the double monotone increasing smooth surface
   require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
@@ -167,14 +162,14 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
              ## order of P-splines is provided for both marginal smooths
   else m <- object$p.order
   m[is.na(m)] <- 2  # the default order is 2 (cubic P-spline)
-  if (object$bs.dim[1]==-1) { # set the default values fro q1 and q2
-      q1 <- object$bs.dim[1] <- 7
-      q2 <- object$bs.dim[2] <- 7
-  }
+  if (object$bs.dim[1]==-1)  # set the default values fro q1 and q2
+     {  q1 <- object$bs.dim[1] <- 7
+        q2 <- object$bs.dim[2] <- 7
+     }
   else if (length(object$bs.dim)==1)
-      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+         q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
-  else {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
   if (is.na(q1)) q1 <- object$bs.dim[1] <- 7  # the default basis dimension is 7
   if (is.na(q2)) q2 <- object$bs.dim[2] <- 7
   nk1 <- q1+m[1]+2 ## number of knots for the 1st smooth
@@ -186,30 +181,30 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   z <- data[[object$term[2]]]  ## the values of the second covariate
   zk <- knots[[object$term[2]]] ## will be NULL if none supplied
   if (is.null(xk)) # space knots through the values of the 1st covariate
-  { n<-length(x)
-    xk<-rep(0,q1+m[1]+2)
-    xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
-    for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
-    for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
-  }
+     {  n<-length(x)
+        xk<-rep(0,q1+m[1]+2)
+        xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
+        for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
+        for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
+     }
   if (n != length(z))
-     stop ("arguments of smooth not same dimension")
+       stop ("arguments of smooth not same dimension")
   if (is.null(zk)) # space knots through the values of the 2nd covariate
-  { zk<-rep(0,q2+m[2]+2)
-    zk[(m[2]+2):(q2+1)]<-seq(min(z),max(z),length=q2-m[2])
-    for (i in 1:(m[2]+1)) {zk[i]<-zk[m[2]+2]-(m[2]+2-i)*(zk[m[2]+3]-zk[m[2]+2])}
-    for (i in (q2+2):(q2+m[2]+2)) {zk[i]<-zk[q2+1]+(i-q2-1)*(zk[m[2]+3]-zk[m[2]+2])}
-  }
+      {  zk<-rep(0,q2+m[2]+2)
+         zk[(m[2]+2):(q2+1)]<-seq(min(z),max(z),length=q2-m[2])
+         for (i in 1:(m[2]+1)) {zk[i]<-zk[m[2]+2]-(m[2]+2-i)*(zk[m[2]+3]-zk[m[2]+2])}
+         for (i in (q2+2):(q2+m[2]+2)) {zk[i]<-zk[q2+1]+(i-q2-1)*(zk[m[2]+3]-zk[m[2]+2])}
+      }
   if (length(xk)!=nk1 || length(zk)!=nk2) # right number of knots?
-      stop(paste("there should be ",nk1, " and ", nk2," supplied knots"))
+         stop(paste("there should be ",nk1, " and ", nk2," supplied knots"))
 
   #  get model matrix-------------
   X1 <- splineDesign(xk,x,ord=m[1]+2)
   X2 <- splineDesign(zk,z,ord=m[2]+2)
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      }
   # get a matrix Sigma -----------------------
   IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
   IS2[1:q2,1] <- rep(1,q2)
@@ -263,12 +258,12 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   object
 }
 
+
 ####################################################################
 
 
 Predict.matrix.tedmi.smooth <- function(object, data)
-## prediction method function for the `tedmi' smooth class
-{
+{  ## prediction method function for the `tedmi' smooth class
   x <- data[[object$term[1]]]  
   xk <- object$knots[[1]]
   z <- data[[object$term[2]]]  
@@ -283,8 +278,8 @@ Predict.matrix.tedmi.smooth <- function(object, data)
   X2 <- splineDesign(zk,z,ord=m[2]+2)
   X <- matrix(0,n,q1*q2)  # model matrix
   for ( i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      }
   # get a matrix Sigma -----------------------
   IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
   IS2[1:q2,1] <- rep(1,q2)
@@ -295,50 +290,38 @@ Predict.matrix.tedmi.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get model matrix
   X <- X %*%Sig
-
-#  # apply identifiability constraint and get model matrix
-#  X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)] 
- 
   X # return the prediction matrix
 }
 
 
 
-### Smooth construct for the smooth with two covariates......
-### Adding single monotonicity using tensor product of P-splines construction *************
-### monotone decreasing wrt first covariate....
-
-
+############################################################################ 
+## Tensor product P-spline construction with single monotone decreasing   ##
+## constraint wrt the first covariate                                     ##
+############################################################################
+                                                    
 smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
-## construction of the double monotone increasing smooth surface
-{ 
+{ ## construction of the double monotone increasing smooth surface
   require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
- # if (length(attr(object,"class")) !=2){
-   #   warning ("bs has wrong length and P-spline basess are taken for the unconstrained smooth")
- #     bs.uncons <- "ps.smooth.spec"
- # }
-  else 
- #     bs.uncons <- attr(object,"class")[2]
-      
   if (length(object$p.order)==1)
-      {m <- rep(object$p.order, 2) # if a single number is supplied the same
+      { m <- rep(object$p.order, 2) # if a single number is supplied the same
              ## order of P-splines is provided for both marginal smooths
-       object$p.order <- m
-  }
+        object$p.order <- m
+      }
   else m <- object$p.order
   m[is.na(m)] <- 2  # the default order is 2 (cubic P-spline)
   object$p.order[is.na(object$p.order)] <- 2
-  if (object$bs.dim[1]==-1) { # set the default values fro q1 and q2
-      q1 <- object$bs.dim[1] <- 7
-      q2 <- object$bs.dim[2] <- 7
-  }
-  else if (length(object$bs.dim)==1){
-      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
-             ## basis dimension is provided for both marginal smooths
-      object$bs.dim <- rep(object$bs.dim, 2)
-  }
+  if (object$bs.dim[1]==-1)  # set the default values fro q1 and q2
+     {  q1 <- object$bs.dim[1] <- 7
+        q2 <- object$bs.dim[2] <- 7
+     }
+  else if (length(object$bs.dim)==1)
+         {  q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+                   ## basis dimension is provided for both marginal smooths
+            object$bs.dim <- rep(object$bs.dim, 2)
+         }
   else {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
   if (is.na(q1)) q1 <- object$bs.dim[1] <- 7  # the default basis dimension is 7
   if (is.na(q2)) q2 <- object$bs.dim[2] <- 7
@@ -347,45 +330,35 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   nk2 <- q2+m[2]+2 ## number of knots for the 2nd smooth
   if (nk1<=0 || nk2<=0) stop("either k[1] or k[2] too small for m")
 
-
-  # if (bs.uncons == "ps.smooth.spec"){
-  #      nk2 <- q2+m[2]+2 ## number of knots for the 2nd smooth
-  #      if (nk1<=0 || nk2<=0) stop("either k[1] or k[2] too small for m")
-  # }
-
-
   ## the values of the first covariate...   
   x <- data[[object$term[1]]]  
   xk <- knots[[object$term[1]]] ## will be NULL if none supplied
   z <- data[[object$term[2]]]  ## the values of the second covariate
   zk <- knots[[object$term[2]]] ## will be NULL if none supplied
   if (is.null(xk)) # space knots through the values of the 1st covariate
-  { n<-length(x)
-    xk<-rep(0,q1+m[1]+2)
-    xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
-    for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
-    for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
-    knots[[object$term[1]]] <- xk
-  }
+     {  n<-length(x)
+        xk<-rep(0,q1+m[1]+2)
+        xk[(m[1]+2):(q1+1)]<-seq(min(x),max(x),length=q1-m[1])
+        for (i in 1:(m[1]+1)) {xk[i]<-xk[m[1]+2]-(m[1]+2-i)*(xk[m[1]+3]-xk[m[1]+2])}
+        for (i in (q1+2):(q1+m[1]+2)) {xk[i]<-xk[q1+1]+(i-q1-1)*(xk[m[1]+3]-xk[m[1]+2])}
+        knots[[object$term[1]]] <- xk
+     }
   if (n != length(z))
-     stop ("arguments of smooth not same dimension")
+       stop ("arguments of smooth not same dimension")
   if (is.null(zk)) # space knots through the values of the 2nd covariate
-  {      zk<-rep(0,q2+m[2]+2)
+     {   zk<-rep(0,q2+m[2]+2)
          zk[(m[2]+2):(q2+1)]<-seq(min(z),max(z),length=q2-m[2])
          for (i in 1:(m[2]+1)) {zk[i]<-zk[m[2]+2]-(m[2]+2-i)*(zk[m[2]+3]-zk[m[2]+2])}
          for (i in (q2+2):(q2+m[2]+2)) {zk[i]<-zk[q2+1]+(i-q2-1)*(zk[m[2]+3]-zk[m[2]+2])}
          knots[[object$term[2]]] <- zk
-   }
+     }
   if (length(xk)!=nk1 ) # right number of knots?
       stop(paste("there should be ",nk1," supplied knotsfor the x"))
   if (length(zk)!=nk2) # right number of knots?
       stop(paste("there should be ",nk2," supplied knots for z"))
-  
-
   #  get model matrix-------------
   # get marginal model matrices and penalties... 
   bm <- marginal.matrices.tesmi1.ps(x,z,xk,zk,m,q1,q2)
-  
   X1 <- bm$X1
   X2 <- bm$X2
   S <- bm$S      
@@ -394,7 +367,7 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+    }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
   IS[1:q1,1]<-1
@@ -412,7 +385,6 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   object$X <- X # the finished model matrix with identifiability constraint
- 
   object$S <- list()
   object$S[[1]] <- t(D)%*%S[[1]]%*%D
   object$S[[2]] <- t(D)%*%S[[2]]%*%D
@@ -433,8 +405,8 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   else object$knots[[2]] <- zk
   object$m <- m
       
-  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
-  class(object)<-"tesmd1.smooth"  # Give object a class
+  object$df <- ncol(object$X)     # maximum DoF (if unconstrained)
+  class(object) <- "tesmd1.smooth"  # Give object a class
   object
 }
 
@@ -445,8 +417,8 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
 ## Prediction matrix for the `tesmd1` smooth class *************************
 
 Predict.matrix.tesmd1.smooth<-function(object,data)
-## prediction method function for the `tesmd1' smooth class
-{ m <- object$m
+{ ## prediction method function for the `tesmd1' smooth class
+  m <- object$m
   xk <- object$knots[[1]]
   zk <- object$knots[[2]]
   q1 <- object$bs.dim[1]
@@ -461,7 +433,7 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+    }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
   IS[1:q1,1]<-1
@@ -471,24 +443,15 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
 
   # get model matrix
   X <- X%*%Sig
-
-#  # apply identifiability constraint 
-#  D <- diag(q1*q2)
-#  D <- D[,-q2]
-#  D1 <- t(diff(diag(q2)))
-#  D[1:q2,1:(q2-1)] <- D1
-#  X <- X%*%D 
-
   X  # return the prediction matrix
-
 }
 
 
 
-
-### Smooth construct for the smooth with two covariates......
-### Adding single monotonicity using tensor product of P-splines construction *************
-### monotone decreasing wrt the second covariate....
+############################################################################ 
+## Tensor product P-spline construction with single monotone decreasing   ##
+## constraint wrt the second covariate                                     ##
+############################################################################
 
 
 smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
@@ -657,10 +620,9 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
 }
 
 
-####################################################################
 ###########################################################################
-
 ## Prediction matrix for the `tesmd2` smooth class *************************
+
 
 Predict.matrix.tesmd2.smooth<-function(object,data)
 ## prediction method function for the `tesmd2' smooth class
@@ -692,27 +654,14 @@ Predict.matrix.tesmd2.smooth<-function(object,data)
     
   # get model matrix
   X <- X%*%Sig
-
-#  # apply identifiability constraint 
-#  D<- diag(q1*q2)
-#  D<-D[,-((q1-1)*q2+1)]
-#  ind <- rep(0,q1-1) # get index number for the cells to be changed to "-1"
-#  for (i in 1:(q1-1)){
-#        ind[i] <- (i-1)*q2+1
-#        D[ind[i],ind[i]] <- -1
-#  }
-#  for (i in 2:(q1-1))
-#        D[ind[i],ind[i]-q2] <- 1
-#  D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
-#  X <- X%*%D 
-
   X  # return the prediction matrix
 }
 
 
-### Smooth construct for the smooth with two covariates......
-### Adding single monotonicity using tensor product of P-splines construction *************
-### monotone increasing wrt first covariate....
+############################################################################ 
+## Tensor product P-spline construction with single monotone increasing   ##
+## constraint wrt the first covariate                                     ##
+############################################################################
 
 
 smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
@@ -852,7 +801,6 @@ marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
   S[[1]]<- Pm1%x%I2
   S[[1]] <- t(S[[1]])%*%S[[1]]
 
-
   # get penalty for the 2nd smooth
   I2 <- diff(diag(q2),difference=1) 
   I21<- diff(diag(q2),difference=2)
@@ -861,13 +809,12 @@ marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
   S[[2]][1:(q2-2),] <- t(I1[1,])%x%I21
   S[[2]][(q2-1):nrow(S[[2]]),] <- I1[2:q1,]%x%I2
   S[[2]] <- t(S[[2]])%*%S[[2]]
-  
  list(X1=X1, X2=X2, S=S)
 }
 
 
-
 ## Prediction matrix for the `tesmi1` smooth class *************************
+
 
 Predict.matrix.tesmi1.smooth<-function(object,data)
 ## prediction method function for the `tesmi1' smooth class
@@ -897,23 +844,15 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
 
   # get model matrix
   X <- X%*%Sig
-
-#  # apply identifiability constraint 
-#  D <- diag(q1*q2)
-#  D <- D[,-q2]
-#  D1 <- t(diff(diag(q2)))
-#  D[1:q2,1:(q2-1)] <- D1
-#  X <- X%*%D 
-
   X  # return the prediction matrix
 }
 
 
 
-
-### Smooth construct for the smooth with two covariates......
-### Adding single monotonicity using tensor product of P-splines construction *************
-### monotone increasing wrt the second covariate....
+############################################################################ 
+## Tensor product P-spline construction with single monotone decreasing   ##
+## constraint wrt the second covariate                                    ##
+############################################################################
 
 
 smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
@@ -975,19 +914,17 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
       stop(paste("there should be ",nk1," supplied knots for x"))
   
   #  get model matrix-------------
- # get marginal model matrices and penalties... 
+  # get marginal model matrices and penalties... 
   bm <- marginal.matrices.tesmi2.ps(x,z,xk,zk,m,q1,q2)
   
   X1 <- bm$X1
   X2 <- bm$X2
   S <- bm$S  
-
-
   # get the overall model matrix...
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+    }
   # get a matrix Sigma -----------------------
   
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
@@ -1005,7 +942,7 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   for (i in 1:(q1-1)){
         ind[i] <- (i-1)*q2+1
         D[ind[i],ind[i]] <- -1
-  }
+      }
   for (i in 2:(q1-1))
         D[ind[i],ind[i]-q2] <- 1
   D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
@@ -1083,8 +1020,8 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
 
 
 ###########################################################################
-
 ## Prediction matrix for the `tesmi2` smooth class *************************
+
 
 Predict.matrix.tesmi2.smooth<-function(object,data)
 ## prediction method function for the `tesmi2' smooth class
@@ -1105,7 +1042,7 @@ Predict.matrix.tesmi2.smooth<-function(object,data)
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+    }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
   IS[1:q2,1]<-1
@@ -1115,20 +1052,6 @@ Predict.matrix.tesmi2.smooth<-function(object,data)
     
   # get model matrix
   X <- X%*%Sig
-
-#  # apply identifiability constraint 
-#  D<- diag(q1*q2)
-#  D<-D[,-((q1-1)*q2+1)]
-#  ind <- rep(0,q1-1) # get index number for the cells to be changed to "-1"
-#  for (i in 1:(q1-1)){
-#        ind[i] <- (i-1)*q2+1
-#        D[ind[i],ind[i]] <- -1
-#  }
-#  for (i in 2:(q1-1))
-#        D[ind[i],ind[i]-q2] <- 1
-#  D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
-#  X <- X%*%D 
-
   X  # return the prediction matrix
 }
 
