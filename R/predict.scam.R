@@ -42,10 +42,11 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     type<-"terms"
   }
   if (!inherits(object,"scam")) stop("predict.scam can only be used to predict from scam objects")
-  if (ncol(attr(object$terms,"factors")) == 1)
-      { if (max(newdata) > max(object$data[,attr(b$terms,"term.labels")])) 
-           stop("predict.scam can only be used for data within the range of observed values, please use extrapolate.scam otherwise")
-      }
+
+#  if (ncol(attr(object$terms,"factors")) == 1)
+#      { if (max(newdata) > max(object$data[,attr(b$terms,"term.labels")])) 
+#           stop("predict.scam can only be used for data within #the range of observed values, please use extrapolate.scam #otherwise")  }
+
   ## to mimic behaviour of predict.lm, some resetting is required ...
   if (missing(newdata)) na.act <- object$na.action else
   { if (is.null(na.action)) na.act <- NULL 

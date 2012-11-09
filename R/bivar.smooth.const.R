@@ -61,7 +61,6 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
       }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  # IS[1:q2,1] <- rep(1,q2)
   for (j in 1:q2)  IS[j,1:j] <- -1
   IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
   for (j in 1:q1)  IS1[j,1:j] <- 1
@@ -117,34 +116,80 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
 
 Predict.matrix.tedmd.smooth <- function(object, data)
 { ## prediction method function for the `tedmd' smooth class
-  x <- data[[object$term[1]]]  
-  xk <- object$knots[[1]]
-  z <- data[[object$term[2]]]  
-  zk <- object$knots[[2]]
-  n <- length(x)
   if (length(object$bs.dim)==1)
       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
   else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
-  m <- object$m
-  X1 <- splineDesign(xk,x,ord=m[1]+2)
-  X2 <- splineDesign(zk,z,ord=m[2]+2)
+  
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for ( i in 1:n)
-      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  # IS[1:q2,1] <- rep(1,q2)
   for (j in 1:q2)  IS[j,1:j] <- -1
   IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
   for (j in 1:q1)  IS1[j,1:j] <- 1
   Sig <- IS1%x%IS # Knonecker product to get Sigma
   Sig[,1] <- rep(1,ncol(Sig))
-
   X <- X%*%Sig
   X # return the prediction matrix
 }
+
+
+########################################################################
+## function used for predict method to get marginal model submatrices ## 
+## with linear extrapolation if needed                                ##
+########################################################################                                
+
+marginal.linear.extrapolation <- function(object, data)
+{ ## function to get marginal matrices used in predict method on bivariate SCOP-splines
+  x <- data[[object$term[1]]]  
+  z <- data[[object$term[2]]]  
+  if (length(x) != length(z))
+        stop ("arguments of smooth are not of the same dimension")
+  m <- object$m + 1 ## vector of two components
+  ## find spline basis inner knot range for 1st covariate, x...
+  ll <- object$knots[[1]][m[1]+1];ul <- object$knots[[1]][length(object$knots[[1]])-m[1]]
+  m[1] <- m[1] + 1
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X1 <- spline.des(object$knots[[1]],x,m[1])$design
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots[[1]],c(ll,ll,ul,ul),m[1],c(0,1,0,1))$design
+     X1 <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X1[ind,] <- spline.des(object$knots[[1]],x[ind],m[1])$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X1[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X1[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+  }
+  ## the same for 2nd maginal matrix...
+  ## find spline basis inner knot range for 2nd covariate, z...
+  ll <- object$knots[[2]][m[2]+1];ul <- object$knots[[2]][length(object$knots[[2]])-m[2]]
+  m[2] <- m[2] + 1
+  ind <- z<=ul & z>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X2 <- spline.des(object$knots[[2]],z,m[2])$design
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots[[2]],c(ll,ll,ul,ul),m[2],c(0,1,0,1))$design
+     X2 <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X2[ind,] <- spline.des(object$knots[[2]],z[ind],m[2])$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- z < ll 
+     if (sum(ind)>0) X2[ind,] <- cbind(1,z[ind]-ll)%*%D[1:2,]
+     ind <- z > ul
+     if (sum(ind)>0) X2[ind,] <- cbind(1,z[ind]-ul)%*%D[3:4,]
+  }
+  list(X1=X1, X2=X2)
+}
+
 
 
 ####################################################################################### 
@@ -264,21 +309,16 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
 
 Predict.matrix.tedmi.smooth <- function(object, data)
 {  ## prediction method function for the `tedmi' smooth class
-  x <- data[[object$term[1]]]  
-  xk <- object$knots[[1]]
-  z <- data[[object$term[2]]]  
-  zk <- object$knots[[2]]
-  n <- length(x)
   if (length(object$bs.dim)==1)
       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
-  else {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
-  m <- object$m
-  X1 <- splineDesign(xk,x,ord=m[1]+2)
-  X2 <- splineDesign(zk,z,ord=m[2]+2)
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for ( i in 1:n)
-      {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+      {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
   IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
@@ -288,7 +328,7 @@ Predict.matrix.tedmi.smooth <- function(object, data)
   IS1[1:q1,1] <- rep(1,q1)
     for (j in 2:q1)  IS1[j,2:j] <- 1
   Sig <- IS1 %x% IS2 
-  # get model matrix
+  # get final model matrix
   X <- X %*%Sig
   X # return the prediction matrix
 }
@@ -418,21 +458,16 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
 
 Predict.matrix.tesmd1.smooth<-function(object,data)
 { ## prediction method function for the `tesmd1' smooth class
-  m <- object$m
-  xk <- object$knots[[1]]
-  zk <- object$knots[[2]]
-  q1 <- object$bs.dim[1]
-  q2 <- object$bs.dim[2]
-  x <- data[[object$term[1]]] 
-  z <- data[[object$term[2]]] 
-  n <- length(x)
-  bm <- marginal.matrices.tesmi1.ps(x,z,xk,zk,m,q1,q2)
-  X1 <- bm$X1
-  X2 <- bm$X2
-  # get the overall model matrix...
+  if (length(object$bs.dim)==1)
+      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+             ## basis dimension is provided for both marginal smooths
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+    {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
     }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
@@ -440,8 +475,7 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
   for (j in 2:q1)  IS[j,2:j] <- -1
   I <- diag(q2)
   Sig <- IS%x%I
-
-  # get model matrix
+  # get final model matrix
   X <- X%*%Sig
   X  # return the prediction matrix
 }
@@ -450,7 +484,7 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
 
 ############################################################################ 
 ## Tensor product P-spline construction with single monotone decreasing   ##
-## constraint wrt the second covariate                                     ##
+## constraint wrt the second covariate                                    ##
 ############################################################################
 
 
@@ -520,7 +554,6 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   X1 <- bm$X1
   X2 <- bm$X2
   S <- bm$S  
-
 
   # get the overall model matrix...
   X <- matrix(0,n,q1*q2)  # model matrix
@@ -626,33 +659,24 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
 
 Predict.matrix.tesmd2.smooth<-function(object,data)
 ## prediction method function for the `tesmd2' smooth class
-{ m <- object$m
-  xk <- object$knots[[1]]
-  zk <- object$knots[[2]]
-  q1 <- object$bs.dim[1]
-  q2 <- object$bs.dim[2]
-  x <- data[[object$term[1]]] 
-  z <- data[[object$term[2]]] 
-  n <- length(x)
-  bm <- marginal.matrices.tesmi2.ps(x,z,xk,zk,m,q1,q2)
+{ if (length(object$bs.dim)==1)
+      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+             ## basis dimension is provided for both marginal smooths
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
   
-  X1 <- bm$X1
-  X2 <- bm$X2
-
-  # get the overall model matrix...
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+    {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
-  
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
   IS[1:q2,1]<-1
   for (j in 2:q2)  IS[j,2:j] <- -1
   I <- diag(q1)
   Sig <- I%x%IS
-    
-  # get model matrix
+  # get final model matrix
   X <- X%*%Sig
   X  # return the prediction matrix
 }
@@ -670,7 +694,6 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
-  
   if (length(object$p.order)==1)
       {m <- rep(object$p.order, 2) # if a single number is supplied the same
              ## order of P-splines is provided for both marginal smooths
@@ -818,22 +841,16 @@ marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
 
 Predict.matrix.tesmi1.smooth<-function(object,data)
 ## prediction method function for the `tesmi1' smooth class
-{ m <- object$m
-  xk <- object$knots[[1]]
-  zk <- object$knots[[2]]
-  q1 <- object$bs.dim[1]
-  q2 <- object$bs.dim[2]
-  x <- data[[object$term[1]]] 
-  z <- data[[object$term[2]]] 
-  n <- length(x)
-  bm <- marginal.matrices.tesmi1.ps(x,z,xk,zk,m,q1,q2)
+{ if (length(object$bs.dim)==1)
+      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+             ## basis dimension is provided for both marginal smooths
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
   
-  X1 <- bm$X1
-  X2 <- bm$X2
-  # get the overall model matrix...
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+    {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
@@ -842,7 +859,7 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
   I <- diag(q2)
   Sig <- IS%x%I
 
-  # get model matrix
+  # get final model matrix
   X <- X%*%Sig
   X  # return the prediction matrix
 }
@@ -1019,29 +1036,23 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
 
 
 
-###########################################################################
-## Prediction matrix for the `tesmi2` smooth class *************************
+############################################################
+## Prediction matrix for the `tesmi2` smooth class ....   ##
+############################################################
 
 
 Predict.matrix.tesmi2.smooth<-function(object,data)
 ## prediction method function for the `tesmi2' smooth class
-{ m <- object$m
-  xk <- object$knots[[1]]
-  zk <- object$knots[[2]]
-  q1 <- object$bs.dim[1]
-  q2 <- object$bs.dim[2]
-  x <- data[[object$term[1]]] 
-  z <- data[[object$term[2]]] 
-  n <- length(x)
-  bm <- marginal.matrices.tesmi2.ps(x,z,xk,zk,m,q1,q2)
- 
-  X1 <- bm$X1
-  X2 <- bm$X2
-
-  # get the overall model matrix...
+{ if (length(object$bs.dim)==1)
+      q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
+             ## basis dimension is provided for both marginal smooths
+  else  {q1 <- object$bs.dim[1]; q2 <- object$bs.dim[2]}
+  
+  bm <- marginal.linear.extrapolation(object, data)
+  n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+    {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
     }
   # get a matrix Sigma -----------------------
   IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
@@ -1050,7 +1061,7 @@ Predict.matrix.tesmi2.smooth<-function(object,data)
   I <- diag(q1)
   Sig <- I%x%IS
     
-  # get model matrix
+  # get final model matrix
   X <- X%*%Sig
   X  # return the prediction matrix
 }

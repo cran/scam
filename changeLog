@@ -1,0 +1,18 @@
+
+1.1-5
+
+* Predict.matrix.**.smooth 
+
+For all univariate and bivariate SCOP-splines Prediction method now allows prediction outside range of knots, and use linear extrapolation in this case
+
+
+
+1.1-4
+
+* scam.fit: svd replaced with QR + svd if needed approach, 
+  large number of O(nq^2) products that were not needed removed, removal of multiple un-necessary loops.
+
+* gcv.ubre_grad tidied, terms collected in derivative of trace (8 goes to 6), derivative of trace computations restuctured to reduce O(nq^2) operations from 6 per derivative to 4 up front.
+
+* predict.scam: line for reference to extrapolate.uni.scam corrected with "if.. " for uni case only
+

@@ -1,6 +1,8 @@
 
 
-### Adding Monotone increasing P-spline construction *************
+#####################################################
+### Adding Monotone increasing SCOP-spline construction 
+######################################################
 
 
 smooth.construct.mpi.smooth.spec<- function(object, data, knots)
@@ -8,7 +10,7 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 { 
   require(splines)
   m <- object$p.order[1]
-  if (is.na(m)) m <- 2 ## default 
+  if (is.na(m)) m <- 2 ## default for cubic spline
   if (m<1) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
@@ -57,26 +59,44 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `mpi` smooth class *************************
+## Prediction matrix for the `mpi` smooth class... 
 
 
 Predict.matrix.mpi.smooth<-function(object,data)
 ## prediction method function for the `mpi' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
-  q <- object$df + 1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
+  q <- object$df +1
   Sig <- matrix(0,q,q)   # Define Matrix Sigma
   # elements of matrix Sigma for increasing smooth
   for (i in 1:q)  Sig[i,1:i] <- 1
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
-### Adding Monotone decreasing P-spline construction *************
+########################################################
+### Adding Monotone decreasing SCOP-spline construction 
+########################################################
 
 
 smooth.construct.mpd.smooth.spec<- function(object, data, knots)
@@ -84,7 +104,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
 { 
   require(splines)
   m <- object$p.order[1]
-  if (is.na(m)) m <- 2 ## default 
+  if (is.na(m)) m <- 2 ## default for cubic splines
   if (m<1) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
@@ -133,33 +153,49 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `mpd` smooth class *************************
+## Prediction matrix for the `mpd` smooth class 
 
 Predict.matrix.mpd.smooth<-function(object,data)
 ## prediction method function for the `mpd' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-   # use matrix Sigma and remove the first column for the monotone smooth
-  Sig <- matrix(0,q,q)   # Define Matrix Sigma
-      # elements of matrix Sigma for decreasing smooth
+  Sig <- matrix(0,q,q)   
+  # elements of matrix Sigma for decreasing smooth...
   Sig[,1] <- 1
-  for (i in 2:q)  Sig[i,2:i]<- -1
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  for (i in 2:q)  Sig[i,2:i]<- -1 
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
 
 
+##############################################################
+### Smooth constructor for the mixed constrainted smooths ......
+##############################################################
 
-
-### Smooth construct for the mixed constrainted smooth ......
-
-### Adding Monotone decreasing & concave P-spline construction *************
+###############################################################
+### Adding Monotone decreasing & concave P-spline construction ###############################################################
 
 
 smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
@@ -167,7 +203,7 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
 { 
   require(splines)
   m <- object$p.order[1]
-  if (is.na(m)) m <- 2 ## default 
+  if (is.na(m)) m <- 2 ## default for cubis spline
   if (m<1) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
@@ -218,35 +254,47 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `mdcv` smooth class *************************
+## Prediction matrix for the `mdcv` smooth class.... 
 
 Predict.matrix.mdcv.smooth<-function(object,data)
 ## prediction method function for the `mdcv' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-  # use matrix Sigma and remove the first column for the monotone smooth
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Matrix Sigma
-     # for monotone decreasing & concave smooth
-  for (i in 1:(q-1)) Sig1[i:(q-1),i] <- -c(1:(q-i))
-  Sig <- matrix(0,q,q)
+  Sig <- matrix(0,q,q)   
   Sig[,1] <- rep(1,q)
-  Sig [2:q,2:q] <- Sig1 
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  for (i in 2:q)  Sig[i:q,i] <- -c(1:(q-i+1))
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
 
-### Smooth construct for the mixed constrainted smooth ......
-### Adding Monotone decreasing & convex P-spline construction *************
+###############################################################
+### Adding decreasing & convex SCOP-spline construction ################################################################
 
 
 smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
-## construction of the monotone decreasing and convex smooth
+##  the constructor for the monotone decreasing and convex smooth
 { 
   require(splines)
   m <- object$p.order[1]
@@ -272,10 +320,10 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   # use matrix Sigma and remove the first column for the monotone smooth
   Sig <- matrix(0,(q-1),(q-1))   # Define Matrix Sigma
      # for monotone decreasing & convex smooth
-  Sig[1,]<--rep(1,q-1)
+  Sig[1,] <- -rep(1,q-1)
   for (i in 2:(q-1)) {
-         Sig[i,1:(q-i)]<--i;
-         Sig[i,(q-i+1):(q-1)]<--c((i-1):1)
+         Sig[i,1:(q-i)] <- -i;
+         Sig[i,(q-i+1):(q-1)] <- -c((i-1):1)
   }
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
   object$X<-X # the finished model matrix
@@ -305,37 +353,50 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `mdcx` smooth class *************************
+## Prediction matrix for the `mdcx` smooth class.... 
+
 
 Predict.matrix.mdcx.smooth<-function(object,data)
-## prediction method function for the `mdcx' smooth class
+## the prediction method for the `mdcx' smooth class
 { x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+  m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk<-object$knots    # knot locations
-  nk<-length(xk)      # number of knots
-  X1<-splineDesign(xk,x,ord=m+2)
-  
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Matrix Sigma
-     # for monotone decreasing & convex smooth
+  Sig <- matrix(0,q,q)   
+  Sig[,1] <- rep(1,q)
+  Sig1 <- matrix(0,(q-1),(q-1))   
   Sig1[1,] <- -rep(1,q-1)
   for (i in 2:(q-1)) {
          Sig1[i,1:(q-i)]<--i;
          Sig1[i,(q-i+1):(q-1)]<--c((i-1):1)
   }
-  Sig <- matrix(0,q,q)
-  Sig[,1] <- rep(1,q)
   Sig [2:q,2:q] <- Sig1
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
-
-
-
-### Smooth construct for the mixed constrainted smooth ......
-### Adding Monotone increasing & concave P-spline construction *************
+################################################################
+### Adding monotone increasing & concave SCOP-spline construction ################################################################
 
 
 smooth.construct.micv.smooth.spec<- function(object, data, knots)
@@ -398,35 +459,51 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `micv` smooth class *************************
+## Prediction matrix for the `micv` smooth class....
+ 
 
 Predict.matrix.micv.smooth<-function(object,data)
 ## prediction method function for the `micv' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-  
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Matrix Sigma
-     # for monotone increasing & concave smooth
+  Sig <- matrix(0,q,q)   
+  Sig[,1] <- rep(1,q)
+  Sig1 <- matrix(0,(q-1),(q-1))   
   Sig1[1,] <- rep(1,q-1)
   for (i in 2:(q-1)) {
        Sig1[i,1:(q-i)] <- i;
        Sig1[i,(q-i+1):(q-1)] <- c((i-1):1)
   }
-  Sig <- matrix(0,q,q)
-  Sig[,1] <- rep(1,q)
   Sig [2:q,2:q] <- Sig1
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
 
-### Smooth construct for the mixed constrainted smooth ......
-### Adding Monotone increasing & convex P-spline construction *************
+###############################################################
+### Adding monotone increasing & convex SCOP-spline construction ################################################################
 
 
 smooth.construct.micx.smooth.spec<- function(object, data, knots)
@@ -485,25 +562,39 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `micx` smooth class *************************
+## Prediction matrix for the `micx` smooth class...
+ 
 
 Predict.matrix.micx.smooth<-function(object,data)
 ## prediction method function for the `micx` smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-  # use matrix Sigma and remove the first column for the monotone smooth
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Matrix Sigma
-     # for monotone increasing & convex smooth
-  for (i in 1:(q-1)) Sig1[i:(q-1),i] <- c(1:(q-i))
-  Sig <- matrix(0,q,q)
+  Sig <- matrix(0,q,q)   
   Sig[,1] <- rep(1,q)
-  Sig [2:q,2:q] <- Sig1
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  for (i in 2:q) Sig[i:q,i] <- c(1:(q-i+1))
+  
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
@@ -512,7 +603,7 @@ Predict.matrix.micx.smooth<-function(object,data)
 ###########################################################
 
 ###########################################################
-### Adding concave P-spline construction *************
+### Adding concave SCOP-spline construction *************
 ###########################################################
 
 smooth.construct.cv.smooth.spec<- function(object, data, knots)
@@ -576,26 +667,40 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
 
 Predict.matrix.cv.smooth<-function(object,data)
 ## prediction method function for the `cv' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-  # use matrix Sigma and remove the first column for the monotone smooth
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Sigma concave smooth
-  Sig1[1:(q-1),1]<- c(1:(q-1))
-  for (i in 2:(q-1)) Sig1[i:(q-1),i]<--c(1:(q-i))
-  Sig <- matrix(0,q,q)
+  Sig <- matrix(0,q,q)   
   Sig[,1] <- rep(1,q)
-  Sig [2:q,2:q] <- Sig1 
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  Sig[2:q,2]<- c(1:(q-1))
+  for (i in 3:q) Sig[i:q,i] <- -c(1:(q-i+1))
+
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 
 ###########################################################
-### Adding convex P-spline construction *************
+### Adding convex SCOP-spline construction *************
 ##########################################################
 
 smooth.construct.cx.smooth.spec<- function(object, data, knots)
@@ -659,21 +764,35 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
 
 Predict.matrix.cx.smooth<-function(object,data)
 ## prediction method function for the `cx' smooth class
-{ x <- data[[object$term]]
-  m <- object$m;     # spline order (3=cubic)
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
-  xk <- object$knots    # knot locations
-  nk <- length(xk)      # number of knots
-  X1 <- splineDesign(xk,x,ord=m+2)
-  # use matrix Sigma and remove the first column for the monotone smooth
-  Sig1 <- matrix(0,(q-1),(q-1))   # Define Sigma convex smooth
-  Sig1[1:(q-1),1]<- -c(1:(q-1))
-  for (i in 2:(q-1)) Sig1[i:(q-1),i]<- c(1:(q-i))
-  Sig <- matrix(0,q,q)
+  Sig <- matrix(0,q,q)   
   Sig[,1] <- rep(1,q)
-  Sig [2:q,2:q] <- Sig1 
-  X <- X1%*%Sig 
-  X # return the prediction matrix
+  Sig[2:q,2]<- -c(1:(q-1))
+  for (i in 3:q) Sig[i:q,i] <- c(1:(q-i+1))
+  
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  }
+  X
 }
 
 

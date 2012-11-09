@@ -11,7 +11,9 @@ or the original values used for the model fit. Predictions can be accompanied
 by standard errors, based on the posterior distribution of the model
 coefficients. 
 
-For extrapolation of the response variable values in case of a single univariate shape constrained term see \code{\link{extrapolate.uni.scam}}. 
+It now alows prediction outside the range of knots, and use linear extrapolation in this case.
+
+Also for extrapolation of the response variable values in case of a single univariate shape constrained term see \code{\link{extrapolate.uni.scam}}. 
 }
 
 \usage{
@@ -122,11 +124,85 @@ dat <- data.frame(x1=x1,x2=x2,y=y)
 b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2),
     family=gaussian(link="identity"),data=dat)
 
-newd <- data.frame(x1=seq(-2.9,2.9,length.out=30),x2=seq(-0.9,2.9,length.out=30))
-pred <- predict.scam(b,newd)
+newd <- data.frame(x1=seq(-3,3,length.out=20),x2=seq(-1,3,length.out=20))
+pred <- predict(b,newd)
 pred
 predict(b,newd,type="terms",se=TRUE)
-plot(b,se=TRUE,residuals=TRUE,pages=1)
+
+
+## linear extrapolation with predict.scam()...
+set.seed(3)
+n <- 100
+x <- sort(runif(n)*3-1)
+f <- exp(-1.3*x)
+y <- rpois(n,exp(f))
+dat <- data.frame(x=x,y=y)
+b <- scam(y~s(x,k=15,bs="mpd",m=2),family=poisson(link="log"),data=dat)
+newd <- data.frame(x=c(2.3,2.7,3.2))
+pred <- predict(b,newd,type="link",se=TRUE)
+ylim<- c(min(y,exp(fe$fit)),max(y,exp(fe$fit)))
+plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylim=ylim)
+lines(c(x,newd[[1]]),c(b$fitted,exp(pred$fit)),col=3)
+
+## Gaussian model ....
+## simulating data...
+ set.seed(2)
+ n <- 200
+ x <- sort(runif(n)*4-1)
+ f <- exp(4*x)/(1+exp(4*x)) # monotone increasing smooth
+ y <- f+rnorm(n)*0.1
+ dat <- data.frame(x=x,y=y)
+ b <- scam(y~ s(x,k=25,bs="mpi",m=2),family=gaussian,data=dat)
+ newd <- data.frame(x=c(3.2,3.3,3.6))
+ fe <- predict(b,newd)
+ plot(c(x,newd[[1]]),c(y,NA,NA,NA))
+ lines(c(x,newd[[1]]),c(b$fitted,fe),col=3)
+
+### passing observed data + new data...
+   newd <- data.frame(x=c(x,3.2,3.3,3.6))
+   fe <- predict(b,newd,se=TRUE)
+   plot(newd[[1]],c(y,NA,NA,NA))
+   lines(newd[[1]],fe$fit,col=2)
+   lines(newd[[1]],fe$fit+2*fe$se.fit,col=3)
+   lines(newd[[1]],fe$fit-2*fe$se.fit,col=4)
+
+## prediction with CI...
+   newd <- data.frame(x=seq(-1.2,3.5,length.out=100))
+   fe <- predict(b,newd,se=TRUE)
+   ylim<- c(min(y,fe$se.fit),max(y,fe$se.fit))
+   plot(newd[[1]],fe$fit,type="l",ylim=ylim)
+   lines(newd[[1]],fe$fit+2*fe$se.fit,lty=2)
+   lines(newd[[1]],fe$fit-2*fe$se.fit,lty=2)
+ 
+
+## bivariate example...
+   n <- 30
+   x1 <- sort(runif(n));  x2 <- sort(runif(n)*4-1)
+   f1 <- matrix(0,n,n)
+   for (i in 1:n) for (j in 1:n) 
+       { f1[i,j] <- 2*sin(pi*x1[i]) +exp(4*x2[j])/(1+exp(4*x2[j]))}
+   f1 <- as.vector(t(f1));   f <- (f1-min(f1))/(max(f1)-min(f1))
+   y <- f+rnorm(length(f))*0.1
+   x11 <-  matrix(0,n,n); x11[,1:n] <- x1;  x11 <- as.vector(t(x11))
+   x22 <- rep(x2,n)
+   dat <- list(x1=x11,x2=x22,y=y)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmi2"),family=gaussian, data=dat)
+   par(mfrow=c(2,2),mar=c(4,4,2,2))
+   plot(b,se=TRUE);   plot(b,pers=TRUE,theta = 80, phi = 40)
+
+   n.out <- 20
+   xp <- seq(0,1.4,length.out=n.out) 
+   zp <- seq(-1,3.4,length.out=n.out)
+   xp1 <-  matrix(0,n.out,n.out);   xp1[,1:n.out] <- xp
+   xp1 <- as.vector(t(xp1));   xp2 <- rep(zp,n.out)
+   newd <- data.frame(x1=xp1,x2=xp2)
+   fe <- predict(b,newd)
+   fc <- t(matrix(fe,n.out,n.out))
+   persp(xp,zp,fc,expand= 0.85,ticktype = "simple",xlab="x1",
+     ylab="x2",zlab="f^",main="d", theta = 80, phi = 40)
+
+
+
 
 ## obtaining a 'prediction matrix'...
 

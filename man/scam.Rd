@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.1-4}
+% \Rdversion{1.1-5}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 

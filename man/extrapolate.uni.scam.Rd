@@ -5,12 +5,12 @@
 \description{ 
 This function does extrapolations of the response variable values to the right-hand side of the data in case of a single univariate shape constrained term.
 It takes a fitted \code{scam} object produced by \code{scam()} 
-and produces extrapolations given a new set of values for the model covariates to the ``right'' of the data set. It also produces predictions given a new set of values within the range of the model covariate or the original values used for the model fit.
+and produces extrapolations given a new set of values for the model covariates to the ``right'' of the data set by adding knots and giving the same increment to parameter vector which results in linear extrapolation. It also produces predictions given a new set of values within the range of the model covariate or the original values used for the model fit.
 Extrapolations are accompanied by standard errors, based on the posterior distribution of the model coefficients.
 
-For predictions only see \code{\link{predict.scam}}. 
+For scam predictions and linear extrapolations see \code{\link{predict.scam}}. 
 
-}
+} 
 
 \usage{
 extrapolate.uni.scam(object, newdata)
