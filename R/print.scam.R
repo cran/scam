@@ -14,7 +14,7 @@ print.scam <- function (x,...)
         edf <- 0
         cat("\nEstimated degrees of freedom:\n")
         for (i in 1:n.smooth) edf[i] <-  sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
-        edf.str <- format(edf, digits = 5)
+        edf.str <- format(edf, digits = 3)
         for (i in 1:n.smooth) {
             cat(edf.str[i], " ", sep = "")
             if (i%%7 == 0) 

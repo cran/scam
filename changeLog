@@ -1,3 +1,30 @@
+1.1-6
+
+* Namespace, Description fixed
+
+* vis.scam: added, copied from vis.gam(mgcv) 
+
+* scam: added additional returned elements of the fitted scam object: `aic', `df.residual', `df.null', `min.edf', object$call (needed for update to work), 'var.summary' (needed for vis.scam), `R', `edf1'.
+   added keepData argument as input, if FALSE (default) the original data removed to save space. 
+   removed object$X (model matrix) from return/output list to save space. model.matrix() added as in gam(), correspondingly summary.scam() and predict.scam() were corrected to replace object$X by model.matrix(object). 
+
+* scam.fit: `Rrank' is now an exported object of mgcv 
+
+* scam.check: added extra graphics parameters (...) to pass to plotting functions (like pch,cex);  added qqline() with colours in qqnorm() plot
+
+* plot.scam: corrected number of plots per page and plotting any parametric terms when "all.terms=TRUE" as in plot.gam() (although plot.scam is based on the old version of plot.gam()).
+
+* derivative.scam: this function replaced derivative.smooth(). It
+works only for univariate smooths at the moment, with finite differencing approximations for unconstrained smooths.
+
+* summary.scam: corrected the value of the adjusted R-sq as in gam(mgcv), fixed Ref.df to be the same as in summary.gam(),
+  the code was corrected to be in line with summary.gam()
+
+* scam.fit.post: corrected the value of the null deviance, added the null degrees of freedom, removed the value `TRUE' for intercept to correct the values of the deviance explaned and null.df for models without intercept.
+
+* extrapolate.uni.scam: this function has been removed from the package since predict.scam does linear extrapolation
+
+
 
 1.1-5
 

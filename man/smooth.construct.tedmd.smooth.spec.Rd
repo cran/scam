@@ -12,7 +12,7 @@
   where \code{q1} and \code{q2} denote the basis dimensions for the marginal smooths.}
 
 \usage{
-smooth.construct.tedmd.smooth.spec(object, data, knots)
+\method{smooth.construct}{tedmd.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

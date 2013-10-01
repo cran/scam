@@ -1,23 +1,22 @@
 \name{scam-package}
-%\Rdversion{1.1-5}
+%\Rdversion{1.1-6}
 \alias{scam-package}
 \docType{package}
 \title{Shape constrained additive models 
 }
 \description{
-\code{scam} provides functions for generalized additive modelling under shape constraints on the component functions of the linear predictor of the GAM. Models can contain multiple shape constrained and unconstrained terms as well as bivariate smooths with double or single monotonicity. The model set up is the same as in \code{mgcv(gam)} with the added 
-shape constrained smooths, so the unconstrained smooths can be of more than one variable, and other 
+\code{scam} provides functions for generalized additive modelling under shape constraints on the component functions of the linear predictor of the GAM. Models can contain multiple shape constrained and unconstrained terms as well as bivariate smooths with double or single monotonicity. Univariate smooths under  eight possible shape constraints such as monotonically increasing/decreasing, convex/concave, increasing/decreasing and convex, increasing/decreasing and concave, are available as model terms.
+
+The model set up is the same as in \code{mgcv(gam)} with the added shape constrained smooths, so the unconstrained smooths can be of more than one variable, and other 
 user defined smooths can be included.  Penalized log likelihood maximization is used to fit the model
 together with the automatic smoothness selection.
-
-A function \code{\link{extrapolate.uni.scam}}  to predict future values of the response variable in case of a single univariate shape constrained term has been added. Also univariate smooths subject to convexity/concavity constraints are available now as model terms.
 }
 \details{
 \tabular{ll}{
 Package: \tab scam\cr
 Type: \tab Package\cr
-Version: \tab 1.1-5\cr
-Date: \tab 2012-11-09\cr
+Version: \tab 1.1-6\cr
+Date: \tab 2013-10-01\cr
 License: \tab GPL (version 2 or later) See file LICENSE\cr
 LazyLoad: \tab yes\cr
 }
@@ -47,11 +46,12 @@ Wood, S.N. (2011) Fast stable restricted maximum likelihood and marginal likelih
             linear models. \emph{Journal of the Royal Statistical Society: Series B}. 73(1): 1--34
 
 }
-\keyword{ package }
+\keyword{package}
 \keyword{models} 
 \keyword{smooth} 
 \keyword{regression}
 \keyword{monotonicity}
+\keyword{convexity}
 
 
 \examples{

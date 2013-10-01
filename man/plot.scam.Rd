@@ -134,6 +134,7 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 ## simulating data...
 n <- 200
 set.seed(1)
+x0 <- rep(1:4,50)
 x1 <- runif(n)*6-3
 f1 <- 3*exp(-x1^2) # unconstrained smooth term
 x2 <- runif(n)*4-1;
@@ -141,12 +142,13 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 x3 <- runif(n)*5;
 f3 <- -log(x3)/5  # monotone decreasing smooth
 f <- f1+f2+f3
-y <- f + rnorm(n)*0.3
-dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
-## fit model and plot ...
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2)+s(x3,k=30,bs="mpd",m=2),
-     data=dat)
-plot(b,pages=1)    
+y <- 2*x0 + f + rnorm(n)*0.3
+x0 <- factor(x0)
+
+## fit the model and plot ...
+b <- scam(y~x0+s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"))
+plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)    
+
 
 \dontrun{
 ## example with bivariate plot...
@@ -170,8 +172,8 @@ plot(b,pages=1)
             family=gaussian(link="identity"), data=dat,sp=NULL)
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
-   plot(b,pers=TRUE,theta = 30, phi = 40)
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   plot(b,pers=TRUE,theta = 30, phi = 40,n2=20)
+   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=19,cex=.3)
   }
 }
 

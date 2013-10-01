@@ -46,7 +46,7 @@ dgcv.ubre.nlm <- function(rho,G, gamma,ee,eb,esp,
 #######################################################
 
 
-estimate.scam <- function(G,optimizer,optim.method,rho, gamma=1,
+estimate.scam <- function(G,optimizer,optim.method,rho, gamma,
                     ee,eb,esp, check.analytical, del, devtol, steptol)
 {  ## function to select smoothing parameter...
    if (!(optimizer %in% c("bfgs", "nlm", "optim","nlm.fd")) )

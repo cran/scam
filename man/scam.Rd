@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.1-5}
+% \Rdversion{1.1-6}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -13,7 +13,6 @@
   \code{\link{bfgs_gcv.ubre}}. Any unconstrained smooth available in \code{gam} can be taken 
   as model terms. 
 
- A function \code{\link{extrapolate.uni.scam}}  to predict future values of the response variable in case of a single univariate shape constrained term has been added. 
 
 }
 \usage{
@@ -21,7 +20,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
       scale = 0, devtol = 1e-08, steptol= 1e-8, check.analytical=FALSE,
-     del=1e-4, start= NULL, etastart, mustart)
+     del=1e-4, start= NULL, etastart, mustart,keepData=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -80,6 +79,9 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
   \item{etastart}{Initial values for the linear predictor}
 
   \item{mustart}{Initial values for the expected values}
+
+  \item{keepData}{If this is \code{TRUE} a copy of the original \code{data} argument 
+     is kept. The default is \code{FALSE} which saves space.}
 }
 
 \details{
@@ -107,14 +109,7 @@ All available shape constrained smooths are decsribed in \code{\link{shape.const
               BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
               convergence.} 
 
-\item{optim.info}{If \code{optimizer="optim"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
-              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
-              BFGS taken to get convergence; \code{optim.method}, the numerical optimization method used.} 
-
-\item{nlm.info}{If \code{optimizer="nlm"} or \code{optimizer="nlm.fd"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
-              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
-              BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
-              convergence.} 
+\item{call}{the matched call.}
 
 \item{coefficients}{the coefficients of the fitted model. Parametric
           coefficients are  first, followed  by coefficients for each
@@ -124,12 +119,18 @@ All available shape constrained smooths are decsribed in \code{\link{shape.const
 \item{conv}{indicates whether or not the iterative fitting method converged.} 
 \item{CPU.time}{indicates the real and CPU time (in seconds) taken by the fitting process in case of unknown smoothing parameters}
  
-\item{data}{the original supplied data argument.} 
-   
+\item{data}{the original supplied data argument. Only included if the \code{scam} argument
+    \code{keepData} is set to \code{TRUE} (default is \code{FALSE}).} 
+
 \item{deviance}{model deviance (not penalized deviance).}
-        
+
+\item{df.null}{null degrees of freedom.}
+
+\item{df.residual}{effective residual degrees of freedom of the model.}
+           
 \item{edf}{estimated degrees of freedom for each model parameter. Penalization
        means that many of these are less than 1.}
+\item{edf1}{alternative estimate of edf.}
 
 \item{family}{family object specifying distribution and link used.}
 
@@ -149,7 +150,14 @@ expected value for  each datum.}
 
 \item{method}{\code{"GCV"} or \code{"UBRE"}, depending on the fitting criterion used.}
 
+\item{min.edf}{Minimum possible degrees of freedom for whole model.}
+
 \item{model}{model frame containing all variables needed in original model fit.}
+
+\item{nlm.info}{If \code{optimizer="nlm"} or \code{optimizer="nlm.fd"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
+              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
+              BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
+              convergence.} 
 
 \item{nsdf}{number of parametric, non-smooth, model terms including the
           intercept.}
@@ -158,13 +166,19 @@ expected value for  each datum.}
 
 \item{offset}{model offset.}
 
+\item{optim.info}{If \code{optimizer="optim"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
+              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
+              BFGS taken to get convergence; \code{optim.method}, the numerical optimization method used.} 
+
 \item{prior.weights}{prior weights on observations.} 
 
 \item{pterms}{\code{terms} object for strictly parametric part of model.}
 
+\item{R}{Factor R from QR decomposition of weighted model matrix, unpivoted to be in same column order as model matrix.}
+
 \item{residuals}{the working residuals for the fitted model.}
 
-\item{scale.known}{ \code{FALSE} if the scale parameter was estimated, \code{TRUE} otherwise.}
+\item{scale.estimated}{\code{TRUE} if the scale parameter was estimated, \code{FALSE} otherwise.}
 
 \item{sig2}{estimated or supplied variance/scale parameter.}
 
@@ -181,6 +195,8 @@ parameters, subject to optimization.}
 \item{terms}{\code{terms} object of \code{model} model frame.}
 
 \item{trA}{trace of the influence matrix, total number of the estimated degrees of freedom (\code{sum(edf)}).}
+
+\item{var.summary}{A named list of summary information on the predictor variables. See \code{\link{gamObject}}.}
 
 \item{Ve}{frequentist estimated covariance matrix for the parameter
          estimators.}
@@ -200,7 +216,7 @@ parameters, subject to optimization.}
 
 \item{weights}{final weights used in the Newton-Raphson iteration.}
 
-\item{X}{model matrix.}
+%\item{X}{model matrix.}
 
 \item{cmX}{column means of the model matrix (with elements corresponding to smooths set to zero).}
 
@@ -226,7 +242,7 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 }
 \seealso{\code{\link{scam-package}}, \code{\link{shape.constrained.smooth.terms}}, 
     \code{\link{gam}}, \code{\link{s}},
-    \code{\link{plot.scam}}, \code{\link{summary.scam}}, \code{\link{scam.check}}, \code{\link{predict.scam}}, \code{\link{extrapolate.uni.scam}}
+    \code{\link{plot.scam}}, \code{\link{summary.scam}}, \code{\link{scam.check}}, \code{\link{predict.scam}}
 
 
 }
@@ -362,7 +378,7 @@ plot(b)
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 30, phi = 40)
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
 
  }
 }

@@ -13,7 +13,7 @@ log smoothing parameters. Routine \code{\link{bfgs_gcv.ubre}} estimates the smoo
 The function is not normally called directly, but rather service routines for \code{\link{scam}}. 
 }
 \usage{
-scam.fit(G,sp, ee,eb,esp, maxit=200, devtol=1e-8, steptol=1e-8, start=NULL,    
+scam.fit(G,sp, ee,eb,esp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=NULL,    
           etastart=NULL, mustart=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -36,6 +36,9 @@ scam.fit(G,sp, ee,eb,esp, maxit=200, devtol=1e-8, steptol=1e-8, start=NULL,
   
    \item{steptol}{A positive scalar giving the tolerance at which the scaled distance between
         two successive iterates is considered close enough to zero to terminate the algorithm.}
+
+   \item{gamma}{This constant allows to inflate the model degrees of
+          freedom in the GCV or UBRE/AIC score.}  
 
    \item{start}{Initial values for the model coefficients}
 

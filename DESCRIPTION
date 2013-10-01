@@ -1,8 +1,8 @@
 Package: scam
 Type: Package
 Title: Shape constrained additive models
-Version: 1.1-5
-Date: 2012-11-09
+Version: 1.1-6
+Date: 2013-10-01
 Author: Natalya Pya
 Maintainer: Natalya Pya <n.y.pya@bath.ac.uk>
 Description: Routines for generalized additive modelling under shape
@@ -14,12 +14,12 @@ Description: Routines for generalized additive modelling under shape
         maximization based on Newton-Raphson method is used to fit a
         model with multiple smoothing parameter selection by GCV or
         UBRE/AIC.
-Depends: R (>= 2.13.0)
-Imports: mgcv, graphics, stats
-Suggests: mgcv, splines, Matrix
+Depends: R (>= 2.15.0), mgcv (>= 1.7-27), stats, graphics
+Imports: methods, Matrix
+Suggests: nlme, splines
 License: GPL (>= 2)
 LazyLoad: yes
-Packaged: 2013-09-14 07:05:03 UTC; ripley
-Repository: CRAN
-Date/Publication: 2013-09-14 09:06:51
+Packaged: 2013-10-02 09:00:32 UTC; natalya
 NeedsCompilation: no
+Repository: CRAN
+Date/Publication: 2013-10-02 12:05:48

@@ -13,7 +13,7 @@ coefficients.
 
 It now alows prediction outside the range of knots, and use linear extrapolation in this case.
 
-Also for extrapolation of the response variable values in case of a single univariate shape constrained term see \code{\link{extrapolate.uni.scam}}. 
+%Also for extrapolation of the response variable values in case of a single univariate shape constrained %%term see \code{\link{extrapolate.uni.scam}}. 
 }
 
 \usage{
@@ -139,10 +139,10 @@ y <- rpois(n,exp(f))
 dat <- data.frame(x=x,y=y)
 b <- scam(y~s(x,k=15,bs="mpd",m=2),family=poisson(link="log"),data=dat)
 newd <- data.frame(x=c(2.3,2.7,3.2))
-pred <- predict(b,newd,type="link",se=TRUE)
+fe <- predict(b,newd,type="link",se=TRUE)
 ylim<- c(min(y,exp(fe$fit)),max(y,exp(fe$fit)))
 plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylim=ylim)
-lines(c(x,newd[[1]]),c(b$fitted,exp(pred$fit)),col=3)
+lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
 
 ## Gaussian model ....
 ## simulating data...

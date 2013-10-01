@@ -12,7 +12,7 @@
   where the basis for the first marginal smooth is specified in the second element of \code{bs}.
 }
 \usage{
-smooth.construct.tesmd2.smooth.spec(object, data, knots)
+\method{smooth.construct}{tesmd2.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

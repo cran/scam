@@ -3,7 +3,7 @@
 
 check.analytical <- function(object,data, del=1e-6){
 
-     require(mgcv)
+    # require(mgcv)
      G<-gam(object$formula,object$family,data,fit=FALSE)
      n.terms <- length(G$smooth)  # number of smooths in the model
      n <- nrow(G$X)
@@ -18,7 +18,7 @@ check.analytical <- function(object,data, del=1e-6){
      G$q.f <- q.f
      G$q0 <- G$off[1]-1  ## number of the parameters of the strictly parametric model
      G$p.ident <- Q$p.ident  # vector of 0's & 1's for the model parameters identification: 
-     G$n.terms <- n.terms   ## number of the smooth terms in the mono-GAM
+     G$n.terms <- n.terms   ## number of the smooth terms in the SCAM
      G$weights <- object$prior.weights
      G$sig2 <- object$sig2
      G$scale.known <- object$scale.known

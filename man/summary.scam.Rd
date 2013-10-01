@@ -1,5 +1,5 @@
 \name{summary.scam}
-%\Rdversion{1.1}
+%\Rdversion{1.1-6}
 \alias{summary.scam}
 \alias{print.summary.scam}
 
@@ -7,28 +7,26 @@
 }
 \description{Takes a fitted \code{scam} object produced by \code{scam()} and produces various useful
 summaries from it. The same code as in \code{summary.gam} of the \code{mgcv} package is used here with slight modifications
-to accept the exponentiated parameters of the monotone smooth terms and the corresponding covariance matrix. 
+to accept the exponentiated parameters of the shape constrained smooth terms and the corresponding covariance matrix. 
 }
 \usage{
-\method{summary}{scam}(object, dispersion=NULL, freq=FALSE, alpha=0,...)
+\method{summary}{scam}(object, dispersion=NULL, freq=FALSE, ...)
 
 \method{print}{summary.scam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
 }
 
 \arguments{
-\item{object}{a fitted \code{monogam} object as produced by \code{scam()}.}
+\item{object}{a fitted \code{scam} object as produced by \code{scam()}.}
 
 \item{x}{a \code{summary.scam} object produced by \code{summary.scam()}.} 
 
 \item{dispersion}{A known dispersion parameter. \code{NULL} to use estimate or
                   default (e.g. 1 for Poisson).}
 
-\item{freq}{By default p-values for individual terms are calculated using the frequentist estimated
-covariance matrix of the parameter estimators. If this is set to FALSE then
-the Bayesian covariance matrix of the parameters is used instead. }
-
-\item{alpha}{ adjustment to reference distribution per estimated smoothing parameter.}
+\item{freq}{By default p-values for individual terms are calculated using the Bayesian estimated 
+ covariance matrix of the parameter estimators. If this is set to TRUE then
+the frequentist covariance matrix of the parameters is used instead. }
 
 \item{digits}{controls number of digits printed in output.}
 
@@ -84,7 +82,7 @@ explained is probably more appropriate for non-normal errors.}
 
 \item{family}{the family used.}
 
-\item{formula}{the original GAM formula.}
+\item{formula}{the original scam formula.}
 
 \item{dispersion}{the scale parameter.}
 
@@ -124,7 +122,7 @@ Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. Univer
 
 }
 \author{
-Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
+Natalya Pya <nat.pya@gmail.com> based on \code{mgcv} by Simon Wood
 
 }
 

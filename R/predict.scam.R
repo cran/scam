@@ -213,7 +213,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                           else 
                               X1 <- cbind(rep(1,nrow(X)),X[,first:last]) # prediction matrix
                                 # X0 - model matrix of the original data....
-                          X0 <- cbind(rep(1,nrow(object$X)),object$X[,first:last]) 
+                          object.X <- model.matrix(object)
+                          X0 <- cbind(rep(1,nrow(object.X)),object.X[,first:last]) 
                           q <- ncol(X0)
                           onet <- matrix(rep(1,nrow(X0)),1,nrow(X0))
                           A <- onet%*%X0
@@ -238,7 +239,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth", 
                          "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth"))) {
                                 # X0 - model matrix of the original data....
-                        X0 <- cbind(rep(1,nrow(object$X)),object$X[,first:last]) 
+                        object.X <- model.matrix(object)
+                        X0 <- cbind(rep(1,nrow(object.X)),object.X[,first:last]) 
                         onet <- matrix(rep(1,nrow(X0)),1,nrow(X0))
                         if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))

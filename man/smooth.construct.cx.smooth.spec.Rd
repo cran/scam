@@ -12,7 +12,7 @@
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 }
 \usage{
-smooth.construct.cx.smooth.spec(object, data, knots)
+\method{smooth.construct}{cx.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

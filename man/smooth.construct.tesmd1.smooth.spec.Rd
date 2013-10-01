@@ -13,7 +13,7 @@
   
 }
 \usage{
-smooth.construct.tesmd1.smooth.spec(object, data, knots)
+\method{smooth.construct}{tesmd1.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

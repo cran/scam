@@ -4,13 +4,12 @@
 ## the wrapper overall Function to fit scam...             ##
 #############################################################
 
-scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
-            weights=NULL, offset=NULL, optimizer="bfgs", 
+scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
+        weights=NULL, offset=NULL, optimizer="bfgs",
             optim.method=c("Nelder-Mead","fd"),
            scale=0, devtol=1e-8, steptol=1e-8, check.analytical=FALSE, del=1e-4,
-              start=NULL, etastart, mustart)
+              start=NULL, etastart, mustart,keepData=FALSE)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
-   ## min.edf - minimum allowed value of the edf for each parameter 
    ## devtol - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
    ## steptol - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm
    ## optimizer - numerical optimization method to use to optimize the smoothing      parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd"
@@ -20,8 +19,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    ### --------------------------------------------------------
 
    ## Setting from mgcv(gam).......
-   require(mgcv)
-   G <- gam(formula,family,data,fit=FALSE)
+ #  require(mgcv)
+   G <- gam(formula=formula,family,data, fit=FALSE) 
    n.terms <- length(G$smooth)  ## number of smooth terms in the model
    n <- nrow(G$X)
    intercept <- G$intercept ## TRUE or FALSE
@@ -76,11 +75,14 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    G$q.f <- q.f
    G$q0 <- G$off[1]-1  ## number of the parameters of the strictly parametric model
    G$p.ident <- Q$p.ident  ## vector of 0's & 1's for the model parameters identification: 
-   G$n.terms <- n.terms   ## number of the smooth terms in the mono-GAM
-   G$intercept <- intercept
+   G$n.terms <- n.terms   ## number of the smooth terms in the SCAM
+  # G$intercept <- intercept
    G$weights <- weights
    G$sig2 <- sig2
    G$scale.known <- scale.known
+
+   if (!keepData) rm(data) ## save space
+
    object <- list() 
    if (is.null(sp)) 
       {  ## get initial estimates of the smoothing parameter...
@@ -105,6 +107,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          object$aic <- re$aic
          best$p.ident <- Q$p.ident
          best$S <- Q$S
+         
+         object$edf1 <- re$edf1
          object$termcode <- re$termcode
          if (optimizer == "bfgs")
             {   object$check.grad <- re$check.grad
@@ -112,26 +116,49 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
             }
       }
    else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,ee,eb,esp,devtol,steptol)
-            object$aic <- best$aic
-        }
+            best <- scam.fit(G=G, sp=sp,ee,eb,esp,gamma,devtol,steptol)
+            object$aic <- best$aic           
+      }
    ## post-fitting values...
    best$n.smooth <- object$n.smooth <- n.terms
    best$formula <- object$formula <- formula
    best$family <- object$family <- G$family
    best$smooth <- object$smooth <- G$smooth
    best$model <- object$model <- G$mf
-   object$trA <- best$trA
-   object$edf <- best$edf
+
+   object$R <- best$R
+   if (is.null(object$R)){
+         rr <- scam.fit(G=G, sp=best$sp,ee,eb,esp,gamma,devtol,steptol)
+         object$R <- rr$R } ## not sure if it's needed?
+  
+   object$df.residual <- nrow(best$X) - sum(best$edf)
    if (is.null(sp))
-         object$sp <- best$sp
+       {  object$sp <- best$sp
+          names(object$sp) <- names(G$sp)}
    object$deviance <- best$deviance
    object$residuals <- best$residuals
-   object$X <- best$X
+#   object$X <- best$X
+
    object$conv <- best$conv # whether or not the full Newton method converged
-   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = G$offset,
-                    intercept=intercept,weights=weights,scale.known=scale.known)
-   object$null.deviance <- post$nulldev 
+   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = offset,
+                   intercept=G$intercept, weights=weights,scale.known=scale.known) 
+
+   object$edf <- post$edf
+   object$edf1 <- post$edf1
+   object$trA <- post$trA
+   names(object$edf) <- G$term.names
+   names(object$edf1) <- G$term.names
+
+   object$null.deviance <- post$nulldev
+   object$var.summary <- G$var.summary 
+   object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
+   object$model<-G$mf # store the model frame
+   
+   object$full.sp <- G$full.sp  ## not quite right???
+   if (!is.null(object$full.sp))   names(object$full.sp) <- names(G$full.sp)
+
+   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
+   object$df.null <- post$df.null
    object$Ve <- post$Ve
    object$Vp <- post$Vb
    object$Ve.t <- post$Ve.t
@@ -146,16 +173,20 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$assign <- G$assign
    object$nsdf <- G$nsdf
    object$y <- G$y
-   object$data <- G$mf
+ #  object$data <- G$mf
+   if (keepData) object$data <- data 
    object$offset <- G$offset
-   object$scale.known <- scale.known # to be passed in the summary function
+ #  object$scale.known <- scale.known # to be passed in the summary function
+   object$scale.estimated <- !scale.known # to be passed in the summary function
    object$prior.weights <-weights # prior weights on observations
    object$weights <- best$w  # final weights used in full Newton iteration
    object$fitted.values <- best$mu
    object$linear.predictors <- best$eta
-   object$cmX <- G$cmX
+   cl<-match.call() # call needed in gam object for update to work
+   object$call <- cl 
    object$p.ident <- Q$p.ident
-   object$intercept <- intercept
+   object$intercept <- G$intercept
+   object$min.edf <- G$min.edf ## Minimum possible degrees of freedom for whole model
    object$gamma <- gamma
    object$iter <- best$iter  # number of iterations of the Full Newton
    object$optimizer <- optimizer
@@ -210,6 +241,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    class(object) <- "scam"   
    object
 }
+
 
 
 #################################################################
@@ -307,12 +339,13 @@ penalty_pident <- function(object)
 
 
 
+
 #############################################################
 ## Function to fit SCAM based on Full Newton method        ##     
 #############################################################
 
 scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
-                start=NULL, etastart=NULL, mustart=NULL)
+                gamma=1, start=NULL, etastart=NULL, mustart=NULL)
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
    ## sp- vector of smoothing parameters
    ## ee - environment for the model parameters, `beta'
@@ -341,6 +374,8 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
   aic <- family$aic
   mu.eta <- family$mu.eta
   mu.eta <- family$mu.eta
+  
+ 
   if (!is.function(variance) || !is.function(linkinv)) 
         stop("illegal `family' argument")
   valideta <- family$valideta
@@ -476,7 +511,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
            R <- qr.R(Q)
            rp <- 1:ncol(R)
            rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-           if (mgcv:::Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+           if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
              R.inv <- backsolve(R,diag(ncol(R)))[rp,] ## inverse of unpivoted R
              tR.inv <- t(R.inv)
            } else { ## need SVD step
@@ -514,7 +549,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
              R <- qr.R(Q)
              rp <- 1:ncol(R)
              rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-             if (mgcv:::Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+             if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
                beta <- backsolve(R,qr.qty(Q,wz.aug)[1:q])[rp]
              } else { ## need SVD step
                R <- R[,rp] ## unpivoted R
@@ -615,7 +650,10 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
         R <- qr.R(Q)
         rp <- 1:ncol(R)
         rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-        if (mgcv:::Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+ 
+        R.out <- R[,rp]  ## unpivoted R, needed for summary function
+
+        if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
            R.inv <- backsolve(R,diag(ncol(R)))[rp,] ## inverse of unpivoted R
            tR.inv <- t(R.inv)
         } else { ## need SVD step
@@ -649,7 +687,10 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
          R <- qr.R(Q)
          rp <- 1:ncol(R)
          rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-         if (mgcv:::Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+
+         R.out <- R[,rp]  ## unpivoted R, needed for summary function
+
+         if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
              P <- backsolve(R,diag(ncol(R)))[rp,]
              K <- qr.Q(Q)[1:nobs,]
          } else { ## need SVD step
@@ -687,10 +728,12 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
      KtILQ1R <- t(L*I.plus*K)%*%wX1
      edf <- rowSums(P*t(KtILQ1R))
      trA <- sum(edf)
+
      # ---------------------------------------------------------------------------
      scale.est <- dev/(nobs-trA)  #  scale estimate...
      residuals <- rep.int(NA, nobs)
      residuals <- (y-mu)*g.deriv
+
      # ---------------------------------------------------------------------------
      ## calculation of the derivatives of beta by the Implicit Function Theorem starts here
      dbeta.rho <- matrix(0,q,n.pen) # define matrix of the parameters derivatives
@@ -704,13 +747,13 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
      assign("sp.last",sp,envir=esp)
   } ### end if (!EMPTY) 
 
- list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,trA=trA,gcv=dev*nobs/(nobs-trA)^2,
+ list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,gcv=dev*nobs/(nobs-trA)^2,
       sp=sp, mu=mu,X=X, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
       P=P,K=K, KtILQ1R= KtILQ1R,dlink.mu=1/mu.eta(eta),Var=variance(mu), abs.w=abs.w,
       link=family$linkfun(mu),w=as.numeric(w),w1=w1,d2link.mu=dg$d2link(mu),wX1=wX1,I.plus=I.plus,
       dvar.mu=dv$dvar(mu),d2var.mu=dv$d2var(mu),deviance=dev,scale.est=scale.est,
-      ok1=ok1,alpha=as.numeric(alpha),d3link.mu=dg$d3link(mu),eta=eta, edf=edf,iter=iter,
-      Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,
+      ok1=ok1,alpha=as.numeric(alpha),d3link.mu=dg$d3link(mu),eta=eta,iter=iter,
+      Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,R=R.out, edf=edf,trA=trA,
       residuals=residuals,z=g.deriv*(y-mu)+X1%*%beta,dbeta.rho=dbeta.rho, aic=aic.model)
 } ## end of scam.fit
 
@@ -722,18 +765,24 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
 #######################################################################
 
 
-scam.fit.post <- function(y,X,object,sig2,offset=rep(0, nrow(X)),
-                    intercept=TRUE,weights=rep.int(1,nrow(X)),scale.known) 
+scam.fit.post <- function(y,X,object,sig2,offset,intercept,
+                         weights,scale.known)
 {  ## Function to compute null deviance and covariance matrices after a scam fit.
    ## covariance matrix should use expected Hessian, so re-computation of factors 
    ## is required.  
-   n <- nrow(X) # number of observations
+   ## object - object from estimate.scam()
+   n <- nobs <- NROW(y) # number of observations
    linkinv <- object$family$linkinv
-   wtdmu <- if (intercept) 
-               sum(weights * y)/sum(weights)
-            else linkinv(offset)
    dev.resids <- object$family$dev.resids
-   nulldev <- sum(dev.resids(y, wtdmu, weights)) # deviance for single parameter model
+   
+   wtdmu <- if (intercept) sum(weights * y)/sum(weights) 
+              else linkinv(offset)
+
+   nulldev <- sum(dev.resids(y, wtdmu, weights))
+ 
+   n.ok <- nobs - sum(weights == 0)
+   nulldf <- n.ok - as.integer(intercept)
+   
    # calculating the approximate covariance matrices 
    # (dealing with the expected Hessian of the log likelihood) ...
 
@@ -746,7 +795,7 @@ scam.fit.post <- function(y,X,object,sig2,offset=rep(0, nrow(X)),
    R <- qr.R(Q)
    rp <- 1:ncol(R)
    rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-   if (mgcv:::Rrank(R)==ncol(R))  ## no need to truncate, can just use QR
+   if (Rrank(R)==ncol(R))  ## no need to truncate, can just use QR
       {  P <- backsolve(R,diag(q))[rp,]
          K <- qr.Q(Q)[1:n,]
       } else {  ## need SVD step
@@ -767,7 +816,41 @@ scam.fit.post <- function(y,X,object,sig2,offset=rep(0, nrow(X)),
    df.p[object$iv] <- object$beta.t[object$iv]
    Vb.t <- t(df.p*t(df.p*Vb))
    Ve.t <- t(df.p*t(df.p*Ve))
-   list (nulldev=nulldev, Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,sig2=sig2)
+
+   ## calculating edf and trA...
+   KtILQ1R <- t(object$L*object$I.plus*K)%*%wX1
+   F <- P%*%(KtILQ1R)
+   edf <- diag(F) ## effective degrees of freedom
+   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
+   trA <- sum(edf)
+
+   list (nulldev=nulldev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,
+        sig2=sig2,edf=edf,edf1=edf1,trA=trA)
 }
+
+
+###############################################################
+## loading functions, copied from mgcv() package of Simon Wood
+#################################################################
+
+print.scam.version <- function()
+{ library(help=scam)$info[[1]] -> version
+  version <- version[pmatch("Version",version)]
+  um <- strsplit(version," ")[[1]]
+  version <- um[nchar(um)>0][2]
+  hello <- paste("This is scam ",version,".",sep="")
+  packageStartupMessage(hello)
+}
+
+
+.onAttach <- function(...) { 
+  print.scam.version()
+}
+
+##.onUnload <- function(libpath) library.dynam.unload("scam", libpath)
+
+
+
+
 
 

@@ -8,7 +8,23 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
     main = NULL, ylim = NULL, xlim = NULL, too.far = 0.1, all.terms = FALSE, 
     shade = FALSE, shade.col = "gray80", shift = 0, trans = I, 
     seWithMean = FALSE, by.resids = FALSE, ...) 
-{
+# Copied from plot.gam()....
+# Create an appropriate plot for each smooth term of a SCAM.....
+# x is a scam object
+# rug determines whether a rug plot should be added to each plot
+# se determines whether twice standard error bars are to be added
+# pages is the number of pages over which to split output - 0 implies that 
+# graphic settings should not be changed for plotting
+# scale -1 for same y scale for each plot
+#        0 for different y scales for each plot
+# n - number of x axis points to use for plotting each term
+# n2 is the square root of the number of grid points to use for contouring
+# 2-d terms.
+
+{ ######################################
+  ## Local function for producing labels
+  ######################################
+
     sub.edf <- function(lab, edf) {
         pos <- regexpr(":", lab)[1]
         if (pos < 0) {
@@ -23,7 +39,8 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 sep = "")
         }
         lab
-    }
+    } ## end of sub.edf
+
     sp.contour <- function(x, y, z, zse, xlab = "", ylab = "", 
         zlab = "", titleOnly = FALSE, se.plot = TRUE, se.mult = 1, 
         trans = I, shift = 0, ...) {
@@ -138,10 +155,12 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
     }
     else partial.resids <- residuals
     m <- length(x$smooth)
-    order <- attr(x$pterms, "order")
-    if (all.terms) 
-        n.para <- sum(order == 1)
+    order <- attr(x$pterms, "order") # array giving order of each parametric term
+
+    if (all.terms) # plot parametric terms as well
+        n.para <- sum(order == 1)  # plotable parametric terms 
     else n.para <- 0
+
     if (m + n.para == 0) 
         stop("No terms to plot - nothing for plot.gam() to do.")
     if (se) {
@@ -161,41 +180,53 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
         se <- FALSE
         warning("No variance estimates available")
     }
+
+   ##############################################
+   ## sort out number of pages and plots per page 
+   ##############################################
+
     n.plots <- m + n.para
-    if (pages > n.plots) 
-        pages <- n.plots
-    if (pages < 0) 
-        pages <- 0
-    if (pages != 0) {
+   
+   if (n.plots==0) stop("No terms to plot - nothing for plot.scam() to do.")
+
+    if (pages > n.plots) pages <- n.plots
+    if (pages < 0)  pages <- 0
+    if (pages != 0) {  # figure out how to display things
         ppp <- n.plots%/%pages
         if (n.plots%%pages != 0) {
             ppp <- ppp + 1
-            while (ppp * (pages - 1) >= n.plots) pages <- pages - 
-                1
+            while (ppp * (pages - 1) >= n.plots) pages <- pages - 1
         }
-        c <- trunc(sqrt(ppp))
-        if (c < 1) 
-            c <- 1
-        r <- ppp%/%c
-        if (r < 1) 
-            r <- 1
-        while (r * c < ppp) r <- r + 1
-        while (r * c - ppp > c && r > 1) r <- r - 1
-        while (r * c - ppp > r && c > 1) c <- c - 1
-        oldpar <- par(mfrow = c(r, c))
-    }
-    else {
-        ppp <- 1
-        oldpar <- par()
-    }
+
+        # now figure out number of rows and columns
+        c <- r <- trunc(sqrt(ppp))
+        if (c<1) r <- c <- 1
+        if (c*r < ppp) c <- c + 1
+        if (c*r < ppp) r <- r + 1  
+        oldpar <- par(mfrow=c(r,c))
+
+    } else {
+             ppp <- 1; oldpar <- par()
+       }
+
     if ((pages == 0 && prod(par("mfcol")) < n.plots && dev.interactive()) || 
         pages > 1 && dev.interactive()) 
         ask <- TRUE
     else ask <- FALSE
+
+    if (!is.null(select)) {
+        ask <- FALSE
+    }
+
     if (ask) {
         oask <- devAskNewPage(TRUE)
         on.exit(devAskNewPage(oask))
     }
+
+    ################################
+    ## now plot smooths.....
+    ################################
+
     if (partial.resids) {
         fv.terms <- predict(x, type = "terms")
         if (is.null(w.resid)) 
@@ -636,27 +667,31 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 j <- j + pd[[i]]$dim
             }
     }
-    if (n.para > 0) {
-        class(x) <- c("gam", "glm", "lm")
+
+    ####################################################
+    ## Finally deal with any parametric term plotting...
+    ####################################################
+
+    if (n.para > 0) { # plot parameteric terms
+        class(x) <- c("scam","gam", "glm", "lm") # needed to get termplot to call model.frame.glm 
         if (is.null(select)) {
             attr(x, "para.only") <- TRUE
-            termplot(x, se = se, rug = rug, col.se = 1, col.term = 1)
+            termplot(x, se = se, rug = rug, col.se = 1, col.term = 1,...)
         }
-        else {
+        else {  # figure out which plot is required
             if (select > m) {
-                select <- select - m
+                select <- select - m  # i.e. which parametric term
                 term.labels <- attr(x$pterms, "term.labels")
                 term.labels <- term.labels[order == 1]
                 if (select <= length(term.labels)) {
-                  if (interactive() && m && i%%ppp == 0) 
+              #    if (interactive() && m && i%%ppp == 0) 
                     termplot(x, terms = term.labels[select], 
-                      se = se, rug = rug, col.se = 1, col.term = 1)
+                      se = se, rug = rug, col.se = 1, col.term = 1,...)
                 }
             }
         }
     }
-    if (pages > 0) 
-        par(oldpar)
-}
+    if (pages > 0)  par(oldpar)
+}  ## end plot.scam
 
 

@@ -49,11 +49,15 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
-  
-  ## store "mpi" specific stuff ...
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   class(object)<-"mpi.smooth"  # Give object a class
   object
 }
@@ -144,7 +148,11 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "mpd" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -245,7 +253,11 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "mdcv" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -344,7 +356,11 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "mdcx" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -450,7 +466,11 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "micv" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -553,7 +573,11 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
  
-  ## store "micx" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -654,7 +678,11 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "cv" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -751,7 +779,11 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
-  ## store "cx" specific stuff ...
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
+  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
@@ -794,7 +826,6 @@ Predict.matrix.cx.smooth<-function(object,data)
   }
   X
 }
-
 
 
 

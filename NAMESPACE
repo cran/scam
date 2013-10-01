@@ -1,14 +1,14 @@
-## useDynLib(scam, .registration = TRUE)
+## useDynLib(scam, .registration = TRUE, .fixes = "C_")
 
 export(scam, bfgs_gcv.ubre, 
-       derivative.smooth, 
+       derivative.scam, 
        gcv.ubre_grad,
        scam.check,
        scam.fit, 
-       plot.scam, predict.scam, extrapolate.uni.scam,
+       plot.scam, predict.scam, 
        print.scam,
        check.analytical,
-       summary.scam, print.summary.scam,
+       summary.scam, print.summary.scam, vis.scam,
        residuals.scam,
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
@@ -41,14 +41,20 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tesmi1.smooth.spec,
        smooth.construct.tesmi2.smooth.spec)
 
-importFrom(mgcv,gam,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct)
-importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors)
+importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
+           exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank)
+#import(mgcv)  ## imports ALL exported variables from mgcv package
+importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors) ## imports SOME of the exported variables from grDevices package
 importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)
-importFrom(stats,.checkMFClasses,.getXlevels, as.formula, coef,cooks.distance,cor,
-           delete.response,family,fitted,formula,
-           gaussian,glm,influence,lm,logLik,median,model.frame,model.matrix,model.offset,na.pass,napredict,naresid,nlm,optim,
-           pchisq,pf,pnorm,pt,
-            predict,printCoefmat ,quantile,qqnorm, reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, uniroot, var,vcov)
+# importFrom(stats,.checkMFClasses,.getXlevels, as.formula, #anova,anova.glmlist,coef,cooks.distance,cor,
+#           delete.response,family,fitted,formula,
+#gaussian,glm,influence,lm,logLik,median,model.frame,model.matrix#,model.offset,na.pass,napredict,naresid,nlm,optim,
+#           pchisq,pf,pnorm,pt,
+#            predict,printCoefmat ,quantile,qqnorm, #reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, #uniroot, var,vcov)
+importFrom(stats,anova,influence,cooks.distance,logLik,vcov,residuals,predict, model.matrix)
+import(Matrix)
+importFrom(methods,cbind2)
+
 
 S3method(plot, scam)
 S3method(print, scam)
