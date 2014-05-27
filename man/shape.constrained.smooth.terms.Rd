@@ -93,12 +93,14 @@ Double penalties for the monotonic tensor product smooths are obtained from the 
 Natalya Pya <nat.pya@gmail.com>
 }
 \references{
-Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. University of Bath. Department of Mathematical Sciences
+Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{10.1007/s11222-013-9448-7}
+
+Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
 Eilers, P.H.C. and B.D. Marx (1996) Flexible Smoothing with B-splines and Penalties. 
 Statistical Science, 11(2):89-121
 
-Wood S.N. (2006a) \emph{Generalized Additive Models: An Introduction with R}. Chapman and Hall/CRC Press.
+Wood S.N. (2006a) Generalized Additive Models: An Introduction with R. Chapman and Hall/CRC Press.
 
 Wood, S.N. (2006b) Low rank scale invariant tensor product smooths for
 generalized additive mixed models. Biometrics 62(4):1025-1036

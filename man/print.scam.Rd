@@ -25,7 +25,7 @@ selection (by GCV or UBRE) was implemented for \code{scam}.
 
 
 \references{
-Wood S.N. (2006) \emph{Generalized Additive Models: An Introduction with R}. Chapman and Hall/CRC Press.
+Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman and Hall/CRC Press.
 
 }
 \author{

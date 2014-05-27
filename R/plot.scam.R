@@ -243,11 +243,10 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                   by <- rep(1, n)
                   dat <- data.frame(x = xx, by = by)
                   names(dat) <- c(x$smooth[[i]]$term, x$smooth[[i]]$by)
-                }
-                else {
-                  dat <- data.frame(x = xx)
-                  names(dat) <- x$smooth[[i]]$term
-                }
+                }  else {
+                      dat <- data.frame(x = xx)
+                      names(dat) <- x$smooth[[i]]$term
+                   }
                 X <- PredictMat(x$smooth[[i]], dat)
                 first <- x$smooth[[i]]$first.para
                 last <- x$smooth[[i]]$last.para
@@ -274,9 +273,8 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                         p <- qr.qy(qrA,p)
                 }
                 offset <- attr(X, "offset")
-                if (is.null(offset)) 
-                  fit <- X %*% p - intercept
-                else fit <- X %*% p + offset - intercept
+                if (is.null(offset))  fit <- X %*% p - intercept
+                else  fit <- X %*% p + offset - intercept
                 if (se) {
                   if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",                    "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         XZa <- t(qr.qty(qrA,t(X)))[,2:q]
@@ -286,9 +284,8 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                         Vp.c[,1] <- rep(0,nrow(Vp))
                         Vp.c[1,] <- rep(0,ncol(Vp))
                         se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
-                  }
-                  else {
-                      if (seWithMean && inherits(attr(x$smooth[[i]], 
+                  }  else {
+                       if (seWithMean && inherits(attr(x$smooth[[i]], 
                             "qrc"), "qr")) {
                            X1 <- matrix(x$cmX, nrow(X), ncol(x$Vp), 
                            byrow = TRUE)
@@ -297,11 +294,10 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                                 X1 <- X1/meanL1
                            X1[, first:last] <- X
                            se.fit <- sqrt(rowSums((X1 %*% x$Vp.t) * X1))
-                      }
-                      else se.fit <- sqrt(rowSums((X %*% x$Vp.t[first:last, 
-                        first:last]) * X))
-                  }
-                }
+                        }  else se.fit <- sqrt(rowSums((X %*% x$Vp.t[first:last, 
+                                               first:last]) * X))
+                     }
+                }  ## end 'if (se)'
                 edf <- sum(x$edf[first:last])
                 xterm <- x$smooth[[i]]$term
                 if (is.null(xlab)) 
@@ -346,11 +342,10 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                   by <- rep(1, n2^2)
                   dat <- data.frame(x = xx, y = yy, by = by)
                   names(dat) <- c(xterm, yterm, x$smooth[[i]]$by)
-                }
-                else {
-                  dat <- data.frame(x = xx, y = yy)
-                  names(dat) <- c(xterm, yterm)
-                }
+                } else {
+                     dat <- data.frame(x = xx, y = yy)
+                     names(dat) <- c(xterm, yterm)
+                  }
                 X <- PredictMat(x$smooth[[i]], dat)
                 first <- x$smooth[[i]]$first.para
                 last <- x$smooth[[i]]$last.para
@@ -417,17 +412,15 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                                     X1 <- X1/meanL1
                           X1[, first:last] <- X
                           se.fit <- sqrt(rowSums((X1 %*% x$Vp.t) * X1))
-                      }
-                      else se.fit <- sqrt(rowSums((X %*% x$Vp.t[first:last, 
+                      } else se.fit <- sqrt(rowSums((X %*% x$Vp.t[first:last, 
                                     first:last]) * X))
                    }
                    se.fit[exclude] <- NA
-                }
+                } ## end 'if (se)'
                 edf <- sum(x$edf[first:last])
                 if (is.null(main)) {
                   title <- sub.edf(x$smooth[[i]]$label, edf)
-                }
-                else title <- main
+                } else title <- main
                 pd.item <- list(fit = fit, dim = 2, xm = xm, 
                   ym = ym, ylab = ylabel, xlab = xlabel, title = title, 
                   raw = raw)
@@ -442,11 +435,12 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                 }
                 pd[[i]] <- pd.item
                 rm(pd.item)
-            }
+            }  ## end 'if (x$smooth[[i]]$dim == 2)'
             else {
                 pd[[i]] <- list(dim = x$smooth[[i]]$dim)
             }
-        }
+        } ## end  'for (i in 1:m)'
+
     if (se) {
         k <- 0
         if (scale == -1 && is.null(ylim)) 
@@ -456,37 +450,36 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                        ul <- pd[[i]]$fit + pd[[i]]$se
                        ll <- pd[[i]]$fit - pd[[i]]$se
                        
-                      if (k == 0) {
-                      ylim <- c(min(ll), max(ul))
-                      k <- 1
-                      }
-                     else {
-                      if (min(ll) < ylim[1]) 
-                        ylim[1] <- min(ll)
-                      if (max(ul) > ylim[2]) 
-                        ylim[2] <- max(ul)
-                    }
-                    if (partial.resids) {
-                      ul <- max(pd[[i]]$p.resid, na.rm = TRUE)
-                      if (ul > ylim[2]) 
-                        ylim[2] <- ul
-                      ll <- min(pd[[i]]$p.resid, na.rm = TRUE)
-                      if (ll < ylim[1]) 
-                        ylim[1] <- ll
-                    }
-                  }
-                }
-        j <- 1
-        if (m > 0) 
+                       if (k == 0) {
+                          ylim <- c(min(ll), max(ul))
+                          k <- 1
+                       }  else {
+                            if (min(ll) < ylim[1]) 
+                                  ylim[1] <- min(ll)
+                            if (max(ul) > ylim[2]) 
+                                  ylim[2] <- max(ul)
+                          }
+                       if (partial.resids) {
+                            ul <- max(pd[[i]]$p.resid, na.rm = TRUE)
+                           if (ul > ylim[2]) 
+                               ylim[2] <- ul
+                           ll <- min(pd[[i]]$p.resid, na.rm = TRUE)
+                           if (ll < ylim[1]) 
+                               ylim[1] <- ll
+                       }
+                   }
+                } ## end 'for (i in 1:m)'
+       j <- 1
+       if (m > 0) 
             for (i in 1:m) {
                 if (is.null(select) || i == select) {
-                  if (pd[[i]]$dim == 1) {
-                       ul <- pd[[i]]$fit + pd[[i]]$se
-                       ll <- pd[[i]]$fit - pd[[i]]$se
+                   if (pd[[i]]$dim == 1) {
+                        ul <- pd[[i]]$fit + pd[[i]]$se
+                        ll <- pd[[i]]$fit - pd[[i]]$se
                    
-                    if (scale == 0 && is.null(ylim)) {
-                      ylimit <- c(min(ll), max(ul))
-                      if (partial.resids) {
+                        if (scale == 0 && is.null(ylim)) {
+                            ylimit <- c(min(ll), max(ul))
+                           if (partial.resids) {
                         max.r <- max(pd[[i]]$p.resid, na.rm = TRUE)
                         if (max.r > ylimit[2]) 
                           ylimit[2] <- max.r
@@ -574,8 +567,8 @@ plot.scam <- function (x, residuals = FALSE, rug = TRUE, se = TRUE,
                   }
                 }
                 j <- j + pd[[i]]$dim
-            }
-    }
+            }  ## end 'for (i in 1:m)'
+    }  ## end 'if (se)'
     else {
         k <- 0
         if (scale == -1 && is.null(ylim)) 

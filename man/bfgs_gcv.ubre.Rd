@@ -97,10 +97,12 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb,
 }
 \references{
 
-Pya, N. (2010) \emph{Additive models with shape constraints}. PhD thesis. University of Bath. Department of Mathematical Sciences
+Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{10.1007/s11222-013-9448-7}
+
+Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
 Wood, S.N. (2011) Fast stable restricted maximum likelihood and marginal likelihood estimation of semiparametric generalized 
-            linear models. \emph{Journal of the Royal Statistical Society: Series B}. 73(1): 1--34
+            linear models. Journal of the Royal Statistical Society: Series B. 73(1): 1--34
 }
 \author{
 

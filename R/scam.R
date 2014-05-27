@@ -40,26 +40,23 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    ## vector of identifications for exponentiated model coefficients...
    Q <- penalty_pident(G)
    ## checking sp...
-   if (!is.null(sp)) 
-      {   neg <- FALSE
-          if (length(sp)!= length(G$off))
-             {   warning("Supplied smoothing parameter vector is too short - ignored.")
-                 sp <- NULL       
-             }
-          else if (sum(is.na(sp))) 
-             {   warning("NA's in supplied smoothing parameter vector - ignoring.")
-                 sp <- NULL
-             } 
-          else {
-                  for ( i in 1:length(sp))  ## cheking negative values... 
-                      {  if (sp[i] < 0)
-                            {   warning("Supplied smoothing parameter vector has negative values - ignored.")
-                                neg <- TRUE  
-                            } 
-                      }
-               }
-          if (neg) sp <- NULL
-      }
+   if (!is.null(sp)) {
+         neg <- FALSE
+         if (length(sp)!= length(G$off)) {
+              warning("Supplied smoothing parameter vector is too short - ignored.")
+              sp <- NULL       
+         } else if (sum(is.na(sp))) {
+               warning("NA's in supplied smoothing parameter vector - ignoring.")
+               sp <- NULL
+           } else {
+                good <- sp < 0
+                if (sum(good) > 0) { ## cheking negative values..
+                   warning("Supplied smoothing parameter vector has negative values - ignored.")
+                   neg <- TRUE
+                }
+             }                
+         if (neg) sp <- NULL
+     }
    ## Create new environments with `start' initially empty...
    ee <- new.env()
    assign("start",rep(0,0),envir=ee)
@@ -84,8 +81,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    if (!keepData) rm(data) ## save space
 
    object <- list() 
-   if (is.null(sp)) 
-      {  ## get initial estimates of the smoothing parameter...
+   if (is.null(sp)) { 
+       ## get initial estimates of the smoothing parameter...
          start <- etastart <- mustart <- NULL
          y <- G$y; family <- G$family
          nobs <- NROW(y)
@@ -107,17 +104,17 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          object$aic <- re$aic
          best$p.ident <- Q$p.ident
          best$S <- Q$S
-         
+         object$optimizer <- optimizer
          object$edf1 <- re$edf1
          object$termcode <- re$termcode
          if (optimizer == "bfgs")
             {   object$check.grad <- re$check.grad
                 object$dgcv.ubre.check <- re$dgcv.ubre.check
             }
-      }
-   else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,ee,eb,esp,gamma,devtol,steptol)
-            object$aic <- best$aic           
+   } else {   ## no GCV minimization if sp is given...
+            best <- scam.fit(G=G, sp=sp,ee=ee,eb=eb,esp=esp,gamma=gamma,devtol=devtol, steptol=steptol)
+            object$aic <- best$aic
+            object$optimizer <- "NA"           
       }
    ## post-fitting values...
    best$n.smooth <- object$n.smooth <- n.terms
@@ -128,18 +125,21 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    object$R <- best$R
    if (is.null(object$R)){
-         rr <- scam.fit(G=G, sp=best$sp,ee,eb,esp,gamma,devtol,steptol)
+         rr <- scam.fit(G=G, sp=best$sp,ee=ee,eb=eb,esp=esp,gamma=gamma,devtol=devtol, steptol=steptol)
          object$R <- rr$R } ## not sure if it's needed?
   
    object$df.residual <- nrow(best$X) - sum(best$edf)
-   if (is.null(sp))
-       {  object$sp <- best$sp
-          names(object$sp) <- names(G$sp)}
+
+   object$sp <- best$sp
+   names(object$sp) <- names(G$sp)
+   if (sum(is.na(names(object$sp)))!=0){  ## create names for sp if NA's from G
+      for (i in 1:n.terms) names(object$sp)[i] <- object$smooth[[i]]$label
+   }
    object$deviance <- best$deviance
    object$residuals <- best$residuals
 #   object$X <- best$X
 
-   object$conv <- best$conv # whether or not the full Newton method converged
+   object$conv <- best$conv # whether or not the inner full Newton method converged
    post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = offset,
                    intercept=G$intercept, weights=weights,scale.known=scale.known) 
 
@@ -154,7 +154,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
    object$model<-G$mf # store the model frame
    
-   object$full.sp <- G$full.sp  ## not quite right???
+   object$full.sp <- G$full.sp  ## incorrect !!!
    if (!is.null(object$full.sp))   names(object$full.sp) <- names(G$full.sp)
 
    object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
@@ -189,7 +189,6 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$min.edf <- G$min.edf ## Minimum possible degrees of freedom for whole model
    object$gamma <- gamma
    object$iter <- best$iter  # number of iterations of the Full Newton
-   object$optimizer <- optimizer
    if (is.null(sp)) 
          object$CPU.time <- CPU.time
    else 

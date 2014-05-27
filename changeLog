@@ -1,3 +1,13 @@
+
+1.1-7
+
+* bug fix in scam which could fail when the smoothing parameter values are supplied in 'sp'
+          argument to 'scam'. ('sp' values supplied to the smooth term 's' are ignored by 'scam')
+          Thanks to Noel G. Cadigan for reporting the bug.
+
+* References fixes in .Rd files
+
+
 1.1-6
 
 * Namespace, Description fixed
