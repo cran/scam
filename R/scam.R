@@ -529,9 +529,10 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
           QtQRER <- tR.inv%*%(diag(E)*R.inv)
           if (sum(I.minus)>0) {
              if (is.qr(Q)) { 
-             QtQRER <- QtQRER + 2*tcrossprod(qr.qty(Q,diag(nrow(wX11))[,(1:nobs)[as.logical(I.minus)]]))
+            # QtQRER <- QtQRER + 2*tcrossprod(qr.qty(Q,diag(nrow(wX11))[,(1:nobs)[as.logical(I.minus)]]))
+             QtQRER <- QtQRER + 2*crossprod(I.minus*qr.Q(Q)[1:nobs,])  
              } else {
-             QtQRER <- QtQRER + 2*crossprod(Q[(1:nobs)[as.logical(I.minus)],])
+             QtQRER <- QtQRER + 2*crossprod(I.minus*Q[1:nobs,])
              }
          }
          ei <- eigen(QtQRER,symmetric=TRUE)    # eigen-decomposition of QtQRER
@@ -670,10 +671,10 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
        QtQRER <- tR.inv%*%(diag(E)*R.inv)
          if (sum(I.minus)>0) {
               if (is.qr(Q)) { 
-                 QtQRER <- QtQRER + 2*tcrossprod(qr.qty(Q,diag(nrow(wX11))[,(1:nobs)[as.logical(I.minus)]]))
+              QtQRER <- QtQRER + 2*crossprod(I.minus*qr.Q(Q)[1:nobs,])  
               } else {
-                  QtQRER <- QtQRER + 2*crossprod(Q[(1:nobs)[as.logical(I.minus)],])
-                }
+              QtQRER <- QtQRER + 2*crossprod(I.minus*Q[1:nobs,])
+              }
          }
       ei <- eigen(QtQRER,symmetric=TRUE)    # eigen-decomposition of QtQRER
       d <- ei$values        # vector of eigenvalues

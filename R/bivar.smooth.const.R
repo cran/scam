@@ -9,7 +9,7 @@
 
 smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
 { ## construction of the double monotone decreasing smooth surface
-  require(splines)
+  # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -199,7 +199,7 @@ marginal.linear.extrapolation <- function(object, data)
 
 smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
 { ## construction of the double monotone increasing smooth surface
-  require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -342,7 +342,7 @@ Predict.matrix.tedmi.smooth <- function(object, data)
                                                     
 smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
 { ## construction of the double monotone increasing smooth surface
-  require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -491,7 +491,7 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
 smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
 ## construction of the double monotone increasing smooth surface
 { 
-  require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   
@@ -691,7 +691,7 @@ Predict.matrix.tesmd2.smooth<-function(object,data)
 smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
 ## construction of the double monotone increasing smooth surface
 { 
-  require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -875,7 +875,7 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
 smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
 ## construction of the double monotone increasing smooth surface
 { 
-  require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)

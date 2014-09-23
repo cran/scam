@@ -52,7 +52,7 @@ importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,po
 #           pchisq,pf,pnorm,pt,
 #            predict,printCoefmat ,quantile,qqnorm, #reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, #uniroot, var,vcov)
 importFrom(stats,anova,influence,cooks.distance,logLik,vcov,residuals,predict, model.matrix)
-import(Matrix)
+import(Matrix,splines)
 importFrom(methods,cbind2)
 
 

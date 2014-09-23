@@ -1,4 +1,14 @@
 
+1.1-8
+
+* summary.scam: corrected dimension of the variance matrix Vb which sometimes sent an error
+
+* scam.fit: bug fix with coding the term 'QtQRER' needed for the fitting procedure
+
+* scam-package: the EPSRC NCSE grant is acknowledged in the \reference section
+
+
+
 1.1-7
 
 * bug fix in scam which could fail when the smoothing parameter values are supplied in 'sp'
@@ -6,6 +16,7 @@
           Thanks to Noel G. Cadigan for reporting the bug.
 
 * References fixes in .Rd files
+
 
 
 1.1-6

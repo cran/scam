@@ -8,7 +8,7 @@
 smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing smooth
 { 
-  require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
   if (m<1) stop("silly m supplied")
@@ -106,7 +106,7 @@ Predict.matrix.mpi.smooth<-function(object,data)
 smooth.construct.mpd.smooth.spec<- function(object, data, knots)
 ## construction of the monotone decreasing smooth
 { 
-  require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic splines
   if (m<1) stop("silly m supplied")
@@ -209,7 +209,7 @@ Predict.matrix.mpd.smooth<-function(object,data)
 smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
 ## construction of the monotone decreasing and concave smooth
 { 
-  require(splines)
+ # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubis spline
   if (m<1) stop("silly m supplied")
@@ -308,7 +308,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
 smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
 ##  the constructor for the monotone decreasing and convex smooth
 { 
-  require(splines)
+ # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -418,7 +418,7 @@ Predict.matrix.mdcx.smooth<-function(object,data)
 smooth.construct.micv.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing and concave smooth
 { 
-  require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -529,7 +529,7 @@ Predict.matrix.micv.smooth<-function(object,data)
 smooth.construct.micx.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing and convex smooth
 { 
-  require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m < 1) stop("silly m supplied")
@@ -633,7 +633,7 @@ Predict.matrix.micx.smooth<-function(object,data)
 smooth.construct.cv.smooth.spec<- function(object, data, knots)
 ## construction of the concave smooth
 { 
-  require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -734,7 +734,7 @@ Predict.matrix.cv.smooth<-function(object,data)
 smooth.construct.cx.smooth.spec<- function(object, data, knots)
 ## construction of the convex smooth
 { 
-  require(splines)
+ # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")

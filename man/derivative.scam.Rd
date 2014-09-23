@@ -28,7 +28,7 @@ derivative.scam(object,smooth.number=1,deriv=1)
 }
 \references{
 
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
 
 }
 \author{ 
@@ -40,7 +40,6 @@ Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and 
 }
 \examples{
 
-\dontrun{
  set.seed(2)
 n <- 200
 x1 <- runif(n)*4-1;
@@ -65,7 +64,7 @@ d2 <- derivative.scam(b,smooth.number=2,deriv=1)
 xx <- sort(x2,index=TRUE)
 plot(xx$x,d2$d[xx$ix],type="l",xlab=expression(x[2]),
      ylab=expression(df[2]/dx[2]))
-}
+
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

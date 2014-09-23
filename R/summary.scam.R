@@ -423,7 +423,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
     nt <- length(term.labels)
     if (nt > 0) {
         np <- length(object$assign)
-        Vb <- matrix(covmat[1:np, 1:np]) ## ,drop=FALSE)
+        Vb <- matrix(covmat[1:np, 1:np],np,np) ## ,drop=FALSE)
         bp <- array(object$coefficients.t[1:np], np)
         pTerms.pv <- array(0, nt)
         attr(pTerms.pv, "names") <- term.labels

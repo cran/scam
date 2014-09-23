@@ -226,7 +226,7 @@ parameters, subject to optimization.}
 }
 
 \references{
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
@@ -318,7 +318,6 @@ summary(b3)
 ##************************************
 ## Poisson model ....
    ## simulating data...
-\dontrun{
 set.seed(2)
 n <- 200
 x1 <- runif(n)*6-3
@@ -358,7 +357,7 @@ summary(b)
 par(mfrow=c(2,2))
 plot(b)
 
-
+\dontrun{
 ## bivariate example...
  ## simulating data...
    set.seed(2)
