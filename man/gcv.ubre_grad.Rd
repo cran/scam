@@ -13,7 +13,7 @@ with respect to the log smoothing parameter using the method of Wood (2009).
 The function is not normally called directly, but rather service routines for \code{\link{bfgs_gcv.ubre}}.
 }
 \usage{
-gcv.ubre_grad(rho, G, gamma, ee, eb, esp, 
+gcv.ubre_grad(rho, G, gamma, env, 
                              check.analytical, del)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -25,12 +25,7 @@ gcv.ubre_grad(rho, G, gamma, ee, eb, esp,
 
   \item{gamma}{A constant multiplier to inflate the model degrees of freedom in the GCV or UBRE/AIC score.}
 
-  \item{ee}{Get the enviroment for the model coefficients.}
-
-  \item{eb}{Get the enviroment for the model coefficients derivatives.}
-
-  \item{esp}{Get the enviroment for the smoothing parameter.}
-
+  \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
   
   \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated,
                          otherwise \code{NULL}.} 
@@ -54,7 +49,7 @@ gcv.ubre_grad(rho, G, gamma, ee, eb, esp,
 }
 \references{
 
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 

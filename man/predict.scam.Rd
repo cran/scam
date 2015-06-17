@@ -36,7 +36,7 @@ associated standard errors) is returned. When \code{type="terms"} each component
 linear predictor is returned seperately (possibly with standard errors): this includes 
 parametric model components, followed by each smooth component, but excludes
 any offset and any intercept. \code{type="iterms"} is the same, except that any standard errors 
-returned for smooth components will include the uncertainty about the intercept/overall mean.  When 
+returned for unconstrained smooth components will include the uncertainty about the intercept/overall mean.  When 
 \code{type="response"} predictions 
 on the scale of the response are returned (possibly with approximate
 standard errors). When \code{type="lpmatrix"} then a matrix is returned
@@ -99,7 +99,7 @@ Chambers and Hastie (1993) Statistical Models in S. Chapman & Hall.
 
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman and Hall/CRC Press.
 
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 

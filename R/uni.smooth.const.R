@@ -8,7 +8,7 @@
 smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing smooth
 { 
-  # require(splines)
+   #require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
   if (m<1) stop("silly m supplied")
@@ -42,7 +42,7 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
   if (!object$fixed) # create the penalty matrix
   { P <- diff(diag(q-1),difference=1)
     object$P[[1]] <- P
-    object$S[[1]] <- t(P)%*%P
+    object$S[[1]] <- crossprod(P)
   }
   b <- rep(1,q-1) # define vector of 0's & 1's for model parameters identification
   object$p.ident <- b  
@@ -55,8 +55,8 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   class(object)<-"mpi.smooth"  # Give object a class
   object
@@ -140,7 +140,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   if (!object$fixed) # create the penalty matrix
   { P <- diff(diag(q-1),difference=1)
     object$P[[1]] <- P
-    object$S[[1]] <- t(P)%*%P
+    object$S[[1]] <- crossprod(P)
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
   object$p.ident <- b  
@@ -150,8 +150,8 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -209,7 +209,7 @@ Predict.matrix.mpd.smooth<-function(object,data)
 smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
 ## construction of the monotone decreasing and concave smooth
 { 
- # require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubis spline
   if (m<1) stop("silly m supplied")
@@ -244,7 +244,7 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -255,8 +255,8 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -308,7 +308,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
 smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
 ##  the constructor for the monotone decreasing and convex smooth
 { 
- # require(splines)
+  #require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -347,7 +347,7 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -358,8 +358,8 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -418,7 +418,7 @@ Predict.matrix.mdcx.smooth<-function(object,data)
 smooth.construct.micv.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing and concave smooth
 { 
-  # require(splines)
+ # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -457,7 +457,7 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -468,8 +468,8 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -564,7 +564,7 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -575,8 +575,8 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
  
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -633,7 +633,7 @@ Predict.matrix.micx.smooth<-function(object,data)
 smooth.construct.cv.smooth.spec<- function(object, data, knots)
 ## construction of the concave smooth
 { 
-  # require(splines)
+ # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -669,7 +669,7 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -680,8 +680,8 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;
@@ -734,7 +734,7 @@ Predict.matrix.cv.smooth<-function(object,data)
 smooth.construct.cx.smooth.spec<- function(object, data, knots)
 ## construction of the convex smooth
 { 
- # require(splines)
+  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
@@ -770,7 +770,7 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   { P <- diff(diag(q-2),difference=1)
     object$P[[1]] <- P
     S <- matrix(0,q-1,q-1)
-    S[2:(q-1),2:(q-1)] <- t(P)%*%P
+    S[2:(q-1),2:(q-1)] <- crossprod(P)
     object$S[[1]] <- S
   }
   b<-rep(1,q-1) # define vector of 0's & 1's for model parameters identification
@@ -781,8 +781,8 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- (1/h)*splineDesign(xk,x,ord=m+1)[,2:(q-1)] ## ord is by one less for the 1st derivative
-  object$Xdf2 <- (1/h^2)*splineDesign(xk,x,ord=m)[,2:(q-2)] ## ord is by two less for the 2nd derivative
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   object$knots <- xk;
   object$m <- m;

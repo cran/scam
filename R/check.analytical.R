@@ -24,12 +24,10 @@ check.analytical <- function(object,data, del=1e-6){
      G$scale.known <- object$scale.known
 
      ## Create new environments with `start' initially empty
-     ee <- new.env()
-     eb <- new.env()
-     esp <- new.env()
-     assign("start",object$coefficients,envir=ee)
-     assign("dbeta.start",object$dbeta.rho,envir=eb)
-     assign("sp.last",object$sp,envir=esp)
+     env <- new.env()
+     assign("start",object$coefficients,envir=env)
+     assign("dbeta.start",object$dbeta.rho,envir=env)
+     assign("sp.last",object$sp,envir=env)
 
 
      sp1 <- rep(0,n.pen)
@@ -38,11 +36,11 @@ check.analytical <- function(object,data, del=1e-6){
      for (j in 1:n.pen){
           sp1<- sp; sp1[j]<-sp[j]*exp(del)
 
-           m1 <- scam.fit(G=G, sp=sp1,ee,eb,esp, devtol=1e-8, steptol=1e-8)
+           m1 <- scam.fit(G=G, sp=sp1,env=env,devtol=1e-8, steptol=1e-8)
 
           if (object$scale.known) gcv.ubre1 <- m1$deviance/n - object$sig2 +2*object$gamma*m1$trA*object$sig2/n
           else gcv.ubre1 <- m1$gcv
-          dgcv.ubre.check[j] <- (1/del)*(gcv.ubre1-object$gcv) # finite difference derivative
+          dgcv.ubre.check[j] <- (gcv.ubre1-object$gcv)/del # finite difference derivative
        }
 
       check.grad <- 100*(object$dgcv.ubre - dgcv.ubre.check)/dgcv.ubre.check

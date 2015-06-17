@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.1-7}
+% \Rdversion{1.1-9}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -7,11 +7,7 @@
    bivariate smooths with double or single monotonicity. Smoothness selection is estimated as part of the fitting. 
    Confidence/credible intervals are available for each smooth term.    
 
-  All the shaped constrained smooths have been added to the \code{mgcv(gam)} setup using the
-\code{smooth.construct} function. The routine calls a \code{mgcv{gam}} function for the model set up, but there are 
-  separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, 
-  \code{\link{bfgs_gcv.ubre}}. Any unconstrained smooth available in \code{gam} can be taken 
-  as model terms. 
+  All the shaped constrained smooths have been added to the \code{gam()} in package \code{mgcv} setup using the \code{smooth.construct} function. The routine calls a \code{gam()} function for the model set up, but there are separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, \code{\link{bfgs_gcv.ubre}}. Any unconstrained smooth available in \code{gam} can be taken as model terms. 
 
 
 }
@@ -50,7 +46,10 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 
   \item{weights}{Prior weights on the data.}
 
-  \item{offset}{Can be used to supply a model offset for use in fitting.}
+  \item{offset}{Used to supply a model offset for use in fitting. Note
+that this offset will always be completely ignored when predicting, unlike an offset 
+included in \code{formula}. This conforms to the behaviour of
+\code{lm}, \code{glm} and \code{gam}.}
 
   \item{optimizer}{The numerical optimization method to use to optimize the smoothing 
                    parameter estimation criterion. "bfgs" for the built in to \code{scam} package routine \code{\link{bfgs_gcv.ubre}},
@@ -226,7 +225,7 @@ parameters, subject to optimization.}
 }
 
 \references{
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
@@ -382,6 +381,27 @@ plot(b)
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+
+## example with random effect smoother...
+
+   set.seed(2)
+   n <- 200
+   x1 <- runif(n)*6-3
+   f1 <- 3*exp(-x1^2) # unconstrained term
+   f1 <- (f1-min(f1))/(max(f1)-min(f1)) 
+   x2 <- runif(n)*4-1;
+   f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
+   f2 <- (f2-min(f2))/(max(f2)-min(f2)) 
+   f <- f1+f2
+   a <- factor(sample(1:10,200,replace=TRUE))   
+   Xa <- model.matrix(~a-1)    ## random main effects
+   y <- f + Xa%*%rnorm(10)*.5 + rnorm(n)*0.1  
+   dat <- data.frame(x1=x1,x2=x2,y=y,a=a)
+   ## fit model and plot...
+   b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2)+s(a,bs="re"), data=dat)
+   summary(b)
+   scam.check(b)
+   plot(b,pages=1)
 
  }
 }

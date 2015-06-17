@@ -9,7 +9,7 @@
 
 smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
 { ## construction of the double monotone decreasing smooth surface
-  # require(splines)
+ # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -89,8 +89,8 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   object$P[[1]] <- S[[1]][2:nrow(S[[1]]),2:ncol(S[[1]])]
   object$P[[2]] <- S[[2]][2:nrow(S[[2]]),2:ncol(S[[2]])]
   object$S <- list()
-  object$S[[1]] <- t(object$P[[1]])%*%object$P[[1]]
-  object$S[[2]] <- t(object$P[[2]])%*%object$P[[2]]
+  object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
+  object$S[[2]] <- crossprod(object$P[[2]]) ## t(object$P[[2]])%*%object$P[[2]]
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   object$p.ident <- b  
@@ -281,8 +281,8 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   object$P[[1]] <- S[[1]][2:nrow(S[[1]]),2:ncol(S[[1]])]
   object$P[[2]] <- S[[2]][2:nrow(S[[2]]),2:ncol(S[[2]])]
   object$S <- list()
-  object$S[[1]] <- t(object$P[[1]])%*%object$P[[1]]
-  object$S[[2]] <- t(object$P[[2]])%*%object$P[[2]]
+  object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
+  object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   object$p.ident <- b  
@@ -426,8 +426,8 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
 
   object$X <- X # the finished model matrix with identifiability constraint
   object$S <- list()
-  object$S[[1]] <- t(D)%*%S[[1]]%*%D
-  object$S[[2]] <- t(D)%*%S[[2]]%*%D
+  object$S[[1]] <- crossprod(D,S[[1]])%*%D ##  t(D)%*%S[[1]]%*%D
+  object$S[[2]] <- crossprod(D,S[[2]])%*%D ## t(D)%*%S[[2]]%*%D
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   b[1:(q2-1)] <- rep(0, q2-1) 
@@ -587,8 +587,8 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
  
   # create the penalty matrix
   object$S <- list()
-  object$S[[1]] <- t(D)%*%S[[1]]%*%D
-  object$S[[2]] <- t(D)%*%S[[2]]%*%D
+  object$S[[1]] <- crossprod(D,S[[1]])%*%D  ## t(D)%*%S[[1]]%*%D
+  object$S[[2]] <- crossprod(D,S[[2]])%*%D  ## t(D)%*%S[[2]]%*%D
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   b[ind] <- 0
@@ -639,7 +639,7 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
   i <- q1-1
   S[[1]][q2*(i-1)+1,(q2*(i-1)+1):ncol(S[[1]])] <- rep(0,2*q2)
 
-  S[[1]] <- t(S[[1]])%*%S[[1]]
+  S[[1]] <- crossprod(S[[1]])  ## t(S[[1]])%*%S[[1]]
 
   # get penalty for the 2nd monotonic smooth...
   I2 <- diff(diag(q2-1),difference=1) 
@@ -647,7 +647,7 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
   P[2:(q2-1),2:q2] <- I2  # marginal sqrt penalty
   I1 <- diag(q1)
   S[[2]] <- I1%x%P
-  S[[2]] <- t(S[[2]])%*%S[[2]]
+  S[[2]] <- crossprod(S[[2]]) ## t(S[[2]])%*%S[[2]]
 
  list(X1=X1, X2=X2, S=S)
 }
@@ -778,8 +778,8 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   object$X <- X # the finished model matrix with identifiability constraint
  
   object$S <- list()
-  object$S[[1]] <- t(D)%*%S[[1]]%*%D
-  object$S[[2]] <- t(D)%*%S[[2]]%*%D
+  object$S[[1]] <- crossprod(D,S[[1]])%*%D ## t(D)%*%S[[1]]%*%D
+  object$S[[2]] <- crossprod(D,S[[2]])%*%D ## t(D)%*%S[[2]]%*%D
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   b[1:(q2-1)] <- rep(0, q2-1) 
@@ -822,7 +822,7 @@ marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
   Pm1 <- matrix(0,q1-1,q1) # marginal sqrt penalty
   Pm1[2:(q1-1),2:q1] <- P
   S[[1]]<- Pm1%x%I2
-  S[[1]] <- t(S[[1]])%*%S[[1]]
+  S[[1]] <- crossprod(S[[1]])  ## t(S[[1]])%*%S[[1]]
 
   # get penalty for the 2nd smooth
   I2 <- diff(diag(q2),difference=1) 
@@ -831,7 +831,7 @@ marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
   S[[2]] <-matrix(0,q2-2+(q1-1)*(q2-1), q1*q2)
   S[[2]][1:(q2-2),] <- t(I1[1,])%x%I21
   S[[2]][(q2-1):nrow(S[[2]]),] <- I1[2:q1,]%x%I2
-  S[[2]] <- t(S[[2]])%*%S[[2]]
+  S[[2]] <- crossprod(S[[2]])  ## t(S[[2]])%*%S[[2]]
  list(X1=X1, X2=X2, S=S)
 }
 
@@ -875,7 +875,7 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
 smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
 ## construction of the double monotone increasing smooth surface
 { 
- # require(splines)
+  # require(splines)
   if (object$dim !=2)
       stop("the number of covariates should be two")
   if (length(object$p.order)==1)
@@ -969,8 +969,8 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
  
   # create the penalty matrix
   object$S <- list()
-  object$S[[1]] <- t(D)%*%S[[1]]%*%D
-  object$S[[2]] <- t(D)%*%S[[2]]%*%D
+  object$S[[1]] <- crossprod(D,S[[1]])%*%D  ## t(D)%*%S[[1]]%*%D
+  object$S[[2]] <- crossprod(D,S[[2]])%*%D  ## t(D)%*%S[[2]]%*%D
 
   b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
   b[ind] <- 0
@@ -1021,7 +1021,7 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
   i <- q1-1
   S[[1]][q2*(i-1)+1,(q2*(i-1)+1):ncol(S[[1]])] <- rep(0,2*q2)
 
-  S[[1]] <- t(S[[1]])%*%S[[1]]
+  S[[1]] <- crossprod(S[[1]])  ## t(S[[1]])%*%S[[1]]
 
   # get penalty for the 2nd monotonic smooth...
   I2 <- diff(diag(q2-1),difference=1) 
@@ -1029,7 +1029,7 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
   P[2:(q2-1),2:q2] <- I2  # marginal sqrt penalty
   I1 <- diag(q1)
   S[[2]] <- I1%x%P
-  S[[2]] <- t(S[[2]])%*%S[[2]]
+  S[[2]] <- crossprod(S[[2]])  ## t(S[[2]])%*%S[[2]]
 
  list(X1=X1, X2=X2, S=S)
 }

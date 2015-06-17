@@ -13,8 +13,8 @@ log smoothing parameters. Routine \code{\link{bfgs_gcv.ubre}} estimates the smoo
 The function is not normally called directly, but rather service routines for \code{\link{scam}}. 
 }
 \usage{
-scam.fit(G,sp, ee,eb,esp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=NULL,    
-          etastart=NULL, mustart=NULL)
+scam.fit(G, sp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=NULL,    
+          etastart=NULL, mustart=NULL, env = env)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,14 +22,9 @@ scam.fit(G,sp, ee,eb,esp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=N
 
   \item{sp}{The vector of smoothing parameters.}
 
+  \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
 
-  \item{ee}{Get the enviroment for the model coefficients.}
-
-  \item{eb}{Get the enviroment for the model coefficients derivatives.}
-
-  \item{esp}{Get the enviroment for the smoothing parameter.}
-
-   \item{maxit}{Maximum iterations in the Newton-Raphson procedure.}
+  \item{maxit}{Maximum iterations in the Newton-Raphson procedure.}
 
   \item{devtol}{A positive scalar giving the tolerance at which the scaled distance between
         two successive penalized deviances is considered close enough to zero to terminate the algorithm.}
@@ -54,7 +49,7 @@ penalized deviance substantially.
 
 
 \references{
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 

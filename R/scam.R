@@ -20,12 +20,26 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    ## Setting from mgcv(gam).......
  #  require(mgcv)
-   G <- gam(formula=formula,family,data, fit=FALSE) 
+    
+   G <- gam(formula, family,data, fit=FALSE) 
    n.terms <- length(G$smooth)  ## number of smooth terms in the model
    n <- nrow(G$X)
    intercept <- G$intercept ## TRUE or FALSE
-   if (is.null(offset)) 
-         offset <- rep.int(0, n)
+   ## now need to set 'offset' as the above G wouldn't take in 'offset' that is outside of formula..
+   gp <- interpret.gam(formula) # interpret the formula 
+   cl <- match.call() # call needed in gam object for update to work
+   mf <- match.call(expand.dots=FALSE)
+   mf$formula <- gp$fake.formula 
+   mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
+                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$in.out <- mf$...<-NULL
+   mf[[1]] <- as.name("model.frame")
+   pmf <- mf
+   mf <- eval(mf, parent.frame()) 
+   G$offset <- as.vector(model.offset(mf)) 
+   if (is.null(G$offset)) 
+        G$offset <- rep.int(0, n)
+   ## done offset 
+   
    if (is.null(weights)) 
          weights <- rep.int(1,n)
    fam.name <- G$family[1]
@@ -58,13 +72,12 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          if (neg) sp <- NULL
      }
    ## Create new environments with `start' initially empty...
-   ee <- new.env()
-   assign("start",rep(0,0),envir=ee)
-   eb <- new.env()
-   assign("dbeta.start",rep(0,0),envir=eb)
-   esp <- new.env()
-   assign("sp.last",rep(0,0),envir=esp)
-  
+ #  ee <- new.env() ## parent = .GlobalEnv
+   env <- new.env() 
+   assign("start",rep(0,0),envir=env)
+   assign("dbeta.start",rep(0,0),envir=env)
+   assign("sp.last",rep(0,0),envir=env)
+   
    q.f <- rep(0,n.terms)
    for (i in 1:n.terms) 
             { q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 }
@@ -89,13 +102,13 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          eval(family$initialize)
          G$y <- y  ## needed to set factor response values as numeric
          def.sp <- initial.sp.scam (G,Q,q.f=q.f,n.terms=n.terms,family=family,
-              ee,eb,esp,intercept=intercept,offset=G$offset,
+              intercept=intercept,offset=G$offset, env=env,
               weights=weights, devtol=1e-4, steptol=1e-4)
          rho <- log(def.sp) ## get initial log(sp) ...
          ## minimize GCV/UBRE by optimizer....
          ptm <- proc.time()
          re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
-               rho=rho, gamma=gamma,ee=ee,eb=eb,esp=esp, 
+               rho=rho, gamma=gamma, env=env,
               check.analytical=check.analytical, del=del, devtol=devtol, steptol=steptol)
          CPU.time <- proc.time()-ptm
          best <- re
@@ -112,7 +125,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                 object$dgcv.ubre.check <- re$dgcv.ubre.check
             }
    } else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,ee=ee,eb=eb,esp=esp,gamma=gamma,devtol=devtol, steptol=steptol)
+            best <- scam.fit(G=G, sp=sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env)
             object$aic <- best$aic
             object$optimizer <- "NA"           
       }
@@ -125,7 +138,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    object$R <- best$R
    if (is.null(object$R)){
-         rr <- scam.fit(G=G, sp=best$sp,ee=ee,eb=eb,esp=esp,gamma=gamma,devtol=devtol, steptol=steptol)
+         rr <- scam.fit(G=G, sp=best$sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env)
          object$R <- rr$R } ## not sure if it's needed?
   
    object$df.residual <- nrow(best$X) - sum(best$edf)
@@ -140,7 +153,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 #   object$X <- best$X
 
    object$conv <- best$conv # whether or not the inner full Newton method converged
-   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = offset,
+   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = G$offset,
                    intercept=G$intercept, weights=weights,scale.known=scale.known) 
 
    object$edf <- post$edf
@@ -182,7 +195,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$weights <- best$w  # final weights used in full Newton iteration
    object$fitted.values <- best$mu
    object$linear.predictors <- best$eta
-   cl<-match.call() # call needed in gam object for update to work
+ #  cl<-match.call() # call needed in gam object for update to work
    object$call <- cl 
    object$p.ident <- Q$p.ident
    object$intercept <- G$intercept
@@ -239,7 +252,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    names(object$residuals) <- ynames
    class(object) <- "scam"   
    object
-}
+}  ## end scam
 
 
 
@@ -247,11 +260,11 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 ## function to get initial estimates of smoothing parameters...##
 #################################################################
 
-initial.sp.scam <- function(G,Q,q.f,n.terms,family,
-              ee,eb,esp,intercept,offset,weights,devtol=1e-4,steptol=1e-4) 
+initial.sp.scam <- function(G,Q,q.f,n.terms,family,intercept,offset, env= env,
+                      weights,devtol=1e-4,steptol=1e-4) 
 {  ## function to get initial estimates of smoothing parameters
    ## step 1: set sp=rep(0.5,p) and estimate hessian...
-   b <- scam.fit(G=G,sp=rep(0.5,length(G$off)), ee, eb, esp, devtol, steptol)
+   b <- scam.fit(G=G,sp=rep(0.5,length(G$off)), devtol, steptol, env=env)
    H <- crossprod(b$wX1) - b$E
    ## step 2:...
    n.p <- length(Q$S) ## number of penalty matrices
@@ -269,12 +282,10 @@ initial.sp.scam <- function(G,Q,q.f,n.terms,family,
                }
        }
    ## Create again new environments with `start' initially empty...
-   ee <- new.env()
-   assign("start",rep(0,0),envir=ee)
-   eb <- new.env()
-   assign("dbeta.start",rep(0,0),envir=eb)
-   esp <- new.env()
-   assign("sp.last",rep(0,0),envir=esp)
+   env <- new.env()
+   assign("start",rep(0,0),envir=env)
+   assign("dbeta.start",rep(0,0),envir=env)
+   assign("sp.last",rep(0,0),envir=env)
    def.sp
 }
 
@@ -343,13 +354,10 @@ penalty_pident <- function(object)
 ## Function to fit SCAM based on Full Newton method        ##     
 #############################################################
 
-scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
-                gamma=1, start=NULL, etastart=NULL, mustart=NULL)
+scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
+                gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env)
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
    ## sp- vector of smoothing parameters
-   ## ee - environment for the model parameters, `beta'
-   ## eb - environment for the derivatives of the model parameters wrt log sp, `dbeta.rho'
-   ## esp - environment for the log smoothing parameter 
    ## maxit - a positive scalar which gives the maximum number of iterations for Newton's method
    ## devtol - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
    ## steptol - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm 
@@ -433,9 +441,9 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
       iv <- (1:q)[ii]
       #----------------------------------------
       ## Initialization of parameters start here 
-      beta0 <- get("start",envir=ee)
-      dbeta0 <- get("dbeta.start",envir=eb)
-      sp.old <- get("sp.last",envir=esp)
+      beta0 <- get("start",envir=env)
+      dbeta0 <- get("dbeta.start",envir=env)
+      sp.old <- get("sp.last",envir=env)
       if (length(beta0)==0) {
           # list argument to pcls for initializing model coefficients
           M <- list(X=X,p=rep(0.1,q),C=matrix(0,0,0),sp=sp,y=eta-offset,w=y*0+1) 
@@ -497,12 +505,13 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
          tX1 <- Cdiag*t(X)
          g.deriv <- 1/mu.eta(eta)  # diag(G)
          w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1) - Fisher weights
-         alpha <- 1+(y-mu)*(dv$dvar(mu)/variance(mu)+dg$d2link(mu)/g.deriv) # alpha elements of W
+         y.mu <- y - mu
+         alpha <- 1+ y.mu*(dv$dvar(mu)/variance(mu)+dg$d2link(mu)/g.deriv) # alpha elements of W
          w <- w1*alpha          # diag(W) - Newton weights
-         diag(E) <- drop((C1diag*t(X))%*%(w1*g.deriv*(y-mu)))
+         diag(E) <- drop((C1diag*t(X))%*%(w1*g.deriv*y.mu))
          abs.w <- abs(w)      # absolute values of the diag(W)
          I.minus <- rep(0,nobs)  # define diagonal elements of the matrix I^{-}
-         z1 <- g.deriv*(y-mu)/alpha  # the first term of the pseudodata
+         z1 <- g.deriv*y.mu/alpha  # the first term of the pseudodata
          ii <- w < 0;  I.minus[ii] <- 1;z1[ii] <- -z1[ii]
          wX11 <- rbind(sqrt(abs.w)[1:nobs]*t(tX1),rS)
            illcond <- FALSE
@@ -517,7 +526,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
              R <- R[,rp] ## unpivoted R
              svd.r <- svd(R)
              d.inv <- rep(0,q)  # initial vector of inverse singular values
-             good <- svd.r$d >= max(svd.r$d)*sqrt(.Machine$double.eps)
+             good <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
              d.inv[good] <- 1/svd.r$d[good]
              if (sum(!good)>0) illcond <- TRUE
              R <- svd.r$d*t(svd.r$v)
@@ -542,8 +551,8 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
                          # set alpha =1
              eta.t <- drop(t(beta)%*%tX1)     # eta tilde for pseudodata 
              wX11 <- rbind(sqrt(w1)[1:nobs]*t(tX1),rS)   
-             z<-g.deriv*(y-mu)+eta.t      # pseudodata
-             wz<-sqrt(w1)*z               # weighted pseudodata
+             z<-g.deriv*y.mu+eta.t      # pseudodata
+             wz<-w1^.5*z               # weighted pseudodata
              wz.aug<-c(wz,rep(0,nrow(rS)))   # augmented pseudodata
              Q <- qr(wX11,LAPACK=TRUE) 
              R <- qr.R(Q)
@@ -555,13 +564,13 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
                R <- R[,rp] ## unpivoted R
                s1 <- svd(R)
                d.inv1 <- rep(0,q)
-               good1 <- s1$d >= max(s1$d)*(.Machine$double.eps)^(1/2)
+               good1 <- s1$d >= max(s1$d)*.Machine$double.eps^.5
                d.inv1[good1] <- 1/s1$d[good1]
                beta <- s1$v%*%((d.inv1*t(s1$u))%*%qr.qty(Q,wz.aug)[1:q])
              }
          }  ### end of if (ok1) - Fisher step 
          else  {       ##  full Newton step
-             Id.inv.r<-1/(1-d)^(1/2)   # vector of inverse values of (1-sv)^1/2
+             Id.inv.r<-1/(1-d)^.5   # vector of inverse values of (1-sv)^.5
              ii <- (1-d) < .Machine$double.eps
              Id.inv.r[ii] <- 0
              eidrop <- t(Id.inv.r*t(ei$vectors))
@@ -586,7 +595,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
                
          ## `step reduction' approach starts here ---------------------
          ii <- 1 
-         div.thresh <- 10*(0.1 +abs(old.pdev))*.Machine$double.eps^0.5
+         div.thresh <- 10*(.1 +abs(old.pdev))*.Machine$double.eps^.5
          while (is.na(pdev) || (pdev-old.pdev) > div.thresh) { # 'step reduction' approach
              if (ii > 200) 
                 stop ("step reduction failed")
@@ -607,7 +616,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
          pdev.plot[iter] <- pdev      # store penilized deviance of the working model for plotting
           
          ## checking convergence .......
-         if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < devtol) {
+         if (abs(pdev - old.pdev)/(.1 + abs(pdev)) < devtol) {
              if (max(abs(beta - c(old.beta))) > steptol * 
                           max(abs(beta + c(old.beta)))/2) {
                 old.beta <- beta
@@ -660,7 +669,7 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
            R <- R[,rp] ## unpivoted R
            svd.r <- svd(R)
            d.inv <- rep(0,q)  # initial vector of inverse singular values
-           good <- svd.r$d >= max(svd.r$d)*sqrt(.Machine$double.eps)
+           good <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
            d.inv[good] <- 1/svd.r$d[good]
            if (sum(!good)>0) illcond <- TRUE
            R <- svd.r$d*t(svd.r$v)
@@ -697,14 +706,14 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
              R <- R[,rp] ## unpivoted R
              s1 <- svd(R)
              d.inv1 <- rep(0,q)
-             good1 <- s1$d >= max(s1$d)*(.Machine$double.eps)^(1/2)
+             good1 <- s1$d >= max(s1$d)*.Machine$double.eps^.5
              d.inv1[good1] <- 1/s1$d[good1]
              P <- t(d.inv1*t(s1$v))
              K <- qr.qy(Q,rbind(s1$u,matrix(0,nobs,q)))[1:nobs,]
           }
      } ## end of if (ok1)
      else  {   ## full Newton step
-         Id.inv.r<-1/(1-d)^(1/2)   # vector of inverse values of (1-sv)^1/2
+         Id.inv.r<-1/(1-d)^.5   # vector of inverse values of (1-sv)^1/2
          ii <- (1-d) < .Machine$double.eps
          Id.inv.r[ii] <- 0
          eidrop <- t(Id.inv.r*t(ei$vectors))
@@ -742,9 +751,9 @@ scam.fit <- function(G,sp,ee,eb,esp, maxit=200,devtol=1e-8, steptol=1e-8,
      }
      # end of calculating the parameters derivatives
      aic.model <- aic(y, n, mu, weights, dev) +  2 * sum(edf)
-     assign("start",beta,envir=ee)
-     assign("dbeta.start",dbeta.rho,envir=eb)
-     assign("sp.last",sp,envir=esp)
+     assign("start",beta,envir=env)
+     assign("dbeta.start",dbeta.rho,envir=env)
+     assign("sp.last",sp,envir=env)
   } ### end if (!EMPTY) 
 
  list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,gcv=dev*nobs/(nobs-trA)^2,
@@ -802,7 +811,7 @@ scam.fit.post <- function(y,X,object,sig2,offset,intercept,
                 R <- R[,rp] ## unpivoted R
                 s1 <- svd(R)
                 d.inv1 <- rep(0,q)
-                good1 <- s1$d >= max(s1$d)*(.Machine$double.eps)^(1/2)
+                good1 <- s1$d >= max(s1$d)*.Machine$double.eps^.5
                 d.inv1[good1] <- 1/s1$d[good1]
                 P <- t(d.inv1[good1]*t(s1$v[,good1]))
                 K <- qr.qy(Q,rbind(s1$u,matrix(0,n,q))[,good1])[1:n,]         

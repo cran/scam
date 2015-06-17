@@ -42,7 +42,7 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tesmi2.smooth.spec)
 
 importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
-           exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank)
+           exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank, interpret.gam)
 #import(mgcv)  ## imports ALL exported variables from mgcv package
 importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors) ## imports SOME of the exported variables from grDevices package
 importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)
@@ -52,14 +52,16 @@ importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,po
 #           pchisq,pf,pnorm,pt,
 #            predict,printCoefmat ,quantile,qqnorm, #reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, #uniroot, var,vcov)
 importFrom(stats,anova,influence,cooks.distance,logLik,vcov,residuals,predict, model.matrix)
-import(Matrix,splines)
+import(Matrix)
 importFrom(methods,cbind2)
-
+importFrom(splines,splineDesign, spline.des)
 
 S3method(plot, scam)
 S3method(print, scam)
 S3method(print, summary.scam)
 S3method(summary, scam)
+S3method(predict, scam)
+S3method(residuals, scam)
 
 S3method(smooth.construct,mdcv.smooth.spec)
 S3method(smooth.construct,cv.smooth.spec)

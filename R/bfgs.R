@@ -7,13 +7,10 @@
 ## function to get the gcv/ubre value and their gradient    ##
 ##############################################################
 
-gcv.ubre_grad <- function(rho, G, gamma, ee, eb, esp, check.analytical=FALSE, del)
+gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del)
  { ## G - object from scam setup via gam(..., fit=FALSE) 
    ## rho - logarithm of the smoothing parameters
    ## gamma - an ad hoc parametrer of the GCV
-   ## ee - environment for the model parameters, `beta'
-   ## eb - environment for the derivatives of the model parameters wrt log sp, `dbeta.rho'
-   ## esp - environment for the log smoothing parameter 
    ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
    ## del - increment for finite differences when checking analytical gradients
    y <- G$y;  
@@ -26,10 +23,11 @@ gcv.ubre_grad <- function(rho, G, gamma, ee, eb, esp, check.analytical=FALSE, de
    if (length(rho)!=n.pen) stop (paste("length of rho and # penalties has to be the same"))
    sp <- exp(rho)
    ## fit the model with the given values of the smoothing parameters...
-   b <- scam.fit(G=G,sp=sp,ee=ee,eb=eb,esp=esp)
+   b <- scam.fit(G=G,sp=sp, env=env)
    n <- nrow(b$X)
    q <- ncol(b$X)
-   c <- -2*(y-b$mu)/(b$Var*b$dlink.mu) 
+   y.mu <- y-b$mu
+   c <- -2*y.mu/(b$Var*b$dlink.mu) 
    diag.C <- rep(1,q)   # diagonal elements of matrix C with estimates of beta at convergence
    diag.C[b$iv] <- b$beta.t[b$iv]
    D.beta <- (diag.C*t(b$X))%*%c  # derivative of the deviance w.r.t. beta
@@ -39,42 +37,45 @@ gcv.ubre_grad <- function(rho, G, gamma, ee, eb, esp, check.analytical=FALSE, de
    D.rho <- t(D.beta)%*%b$dbeta.rho
    ## ------------------------------------------------------------
    ## calculating the derivative of tr(A) w.r.t. log(sp)
-   a1 <- as.numeric((y-b$mu)*b$d2link.mu/b$dlink.mu)    # a constant for updating the derivative of z
-   a2 <- as.numeric((b$w)^2*(b$dvar.mu*b$dlink.mu+2*b$Var*b$d2link.mu)) # a constant for updating the derivative of w
+   d2link.dlink <- b$d2link.mu/b$dlink.mu
+   a1 <- as.numeric(y.mu*d2link.dlink)    # a constant for updating the derivative of z
+   a2 <- as.numeric(b$w^2*(b$dvar.mu*b$dlink.mu+2*b$Var*b$d2link.mu)) # a constant for updating the derivative of w
    eta.rho <- matrix(0,n,n.pen) # define derivatives of the linear predictor
    N_rho <- matrix(0,q,n.pen) # define diagonal elements of N_j
    w.rho <- matrix(0,n,n.pen) # define derivatives of the diagonal elements of W
    alpha.rho <- matrix(0,n,n.pen) # define derivatives of alpha
    T_rho <- matrix(0,n,n.pen) # define diagonal elements of T_j
    ## a constant for the derivative of the alpha
-   alpha1 <- as.numeric(-(b$dvar.mu/b$Var+b$d2link.mu/b$dlink.mu)/b$dlink.mu -
-            (y-b$mu)*((b$dvar.mu/b$Var)^2+
-            (b$d2link.mu/b$dlink.mu)^2-b$d2var.mu/b$Var-b$d3link.mu/b$dlink.mu)/b$dlink.mu)
+   dvar.var <- b$dvar.mu/b$Var
+   alpha1 <- as.numeric(-(dvar.var+d2link.dlink)/b$dlink.mu -
+                        y.mu*(dvar.var^2 + d2link.dlink^2 - b$d2var.mu/b$Var -
+                                  b$d3link.mu/b$dlink.mu)/b$dlink.mu)
    eta.rho <- b$X1%*%b$dbeta.rho
    N_rho[b$iv,] <- b$dbeta.rho[b$iv,]
    alpha.rho <- alpha1*eta.rho
    w.rho <- -a2*b$alpha*eta.rho + b$w1*alpha.rho
    T_rho <- w.rho / b$abs.w
-   z2 <- b$dlink.mu*(y-b$mu)    # term for the derivative of E
+   z2 <- b$dlink.mu*y.mu    # term for the derivative of E
    w1.rho <- matrix(0,n,n.pen)  # define derivatives of the diagonal elements of W1
    T1_rho <- matrix(0,n,n.pen)  # define diagonal elements of T1_j
    Q_rho <- matrix(0,q,n.pen)   # derivative of E diagonal wrt log(sp[j]) 
    w1.rho <- -a2*eta.rho
    T1_rho <- w1.rho/b$w1
-   Q_rho <- N_rho*drop(b$C1diag*(t(b$X)%*%(b$w1*z2))) +
-           b$C1diag*(t(b$X)%*%(b$w1*(T1_rho*z2 + a1*eta.rho- eta.rho)))
+   term <- T1_rho*z2 + a1*eta.rho- eta.rho
+   Q_rho <- N_rho*drop(b$C1diag*crossprod(b$X,b$w1*z2)) +  # (t(b$X)%*%(b$w1*z2))
+           b$C1diag*crossprod(b$X,term)    # (t(b$X)%*%(b$w1*(T1_rho*z2 + a1*eta.rho- eta.rho)))
    ## efficient version of derivative of trA...
    KtIL <- t((b$L*b$I.plus)*b$K)
    KtILK <- KtIL%*%b$K
    KKtILK <- b$K%*%KtILK
-   KtIQ1R <- t(b$I.plus*b$K)%*%b$wX1
+   KtIQ1R <-  crossprod(b$I.plus*b$K,b$wX1) # t(b$I.plus*b$K)%*%b$wX1
    trA.rho<-rep(0,n.pen)
    for (j in 1:n.pen)
       {
         trA.rho[j] <- - 2*sum(KtILK*(KtIQ1R%*%(N_rho[,j]*b$P))) -
                   sum((T_rho[,j]*KKtILK)*b$K) -  
-                  sp[j]*sum( (t(b$P)%*%b$S[[j]]%*%b$P)*t(KtILK) )+
-                  sum( (t(b$P)%*%(c(Q_rho[,j])*b$P))*t(KtILK) )+
+                  sp[j]*sum((t(b$P)%*%b$S[[j]]%*%b$P)*t(KtILK) )+
+                  sum( (t(b$P)%*%(c(Q_rho[,j])*b$P))*t(KtILK) ) +
                   2*sum( b$KtILQ1R*t(N_rho[,j]*b$P) ) +
                   sum(KtIL*t(T1_rho[,j]*b$K))
       }
@@ -106,15 +107,15 @@ gcv.ubre_grad <- function(rho, G, gamma, ee, eb, esp, check.analytical=FALSE, de
          dgcv.ubre.check <- rep(0,n.pen)
          for (j in 1:n.pen)
             {  sp1 <- sp; sp1[j] <- sp[j]*exp(del)
-               b1 <- scam.fit(G=G,sp=sp1,ee,eb,esp)
+               b1 <- scam.fit(G=G,sp=sp1, env)
                ## calculating the derivatives of beta estimates by finite differences...
-               dbeta.check[,j] <- 1/del*(b1$beta - b$beta)
+               dbeta.check[,j] <- (b1$beta - b$beta)/del
                ## calculating the derivatives of the trA by finite differences...
-               dtrA.check[j] <- (1/del)*(b1$trA-b$trA)
+               dtrA.check[j] <- (b1$trA-b$trA)/del
                ## calculating derivatives of GCV/UBRE by finite differences...
                if (scale.known) gcv.ubre1 <- b1$dev/n - sig2 + 2*gamma*b1$trA*sig2/n
                else gcv.ubre1 <- b1$gcv
-               dgcv.ubre.check[j] <- (1/del)*(gcv.ubre1-gcv.ubre)
+               dgcv.ubre.check[j] <- (gcv.ubre1-gcv.ubre)/del
             }
         }
    check.grad <- NULL
@@ -131,8 +132,8 @@ gcv.ubre_grad <- function(rho, G, gamma, ee, eb, esp, check.analytical=FALSE, de
 ## BFGS for gcv/ubre miminization..                ##
 #####################################################
 
-bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
-             ee, eb, esp, n.pen=length(rho), typx=rep(1,n.pen), typf=1, steptol= 1e-7, 
+bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
+              n.pen=length(rho), typx=rep(1,n.pen), typf=1, steptol= 1e-7, 
             gradtol = 6.0554*1e-06, maxNstep = 5, maxHalf = 30, 
             check.analytical, del) 
 {  ## fn - GCV/UBRE Function which returs the GCV/UBRE value and its derivative wrt log(sp)
@@ -152,7 +153,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
    rho1 <- rho
    old.rho <- rho
    
-   b <- fn(rho,G,gamma=1,ee,eb,esp, check.analytical=FALSE, del)
+   b <- fn(rho,G,gamma=1, env, check.analytical=FALSE, del)
    old.score <- score <- b$gcv.ubre
    score.plot <- rep(0,200) ## for plotting the gcv
    score.plot[1] <- score
@@ -162,7 +163,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
       {  B <- matrix(0,n.pen,n.pen)
          for (j in 1:n.pen) 
            {  rho2 <- rho; rho2[j] <- rho[j] + 1e-6
-              b2 <- fn(rho2,G,gamma=1,ee,eb,esp,check.analytical=FALSE, del)
+              b2 <- fn(rho2,G,gamma=1,env,check.analytical=FALSE, del)
               B[,j] <- (b2$dgcv.ubre - grad)/1e-6   
            }
          B <- B + t(B)
@@ -184,7 +185,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
          Nstep <- 0*grad   ## initialize the quasi-Newton step
          Nstep[unconv.ind] <- -drop(B[unconv.ind, unconv.ind]%*%grad[unconv.ind])
          Dp <- Sp*Nstep
-         Newtlen <- (sum(Dp^2))^0.5  ## Euclidean norm to get the Newton step
+         Newtlen <- (sum(Dp^2))^.5  ## Euclidean norm to get the Newton step
          if (Newtlen > maxNstep)  ## reduce if ms is greater than the max allowable
             {  Nstep <- maxNstep*Nstep/Newtlen
                Newtlen <- maxNstep
@@ -202,7 +203,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
          curv.condition <- TRUE
          repeat 
              {  rho1 <- rho + alpha*Nstep 
-                b <- fn(rho=rho1,G,gamma=1,ee,eb,esp,check.analytical=FALSE, del)
+                b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE, del)
                 score1 <- b$gcv.ubre
                 if (score1 <= score+c1*alpha*initslope) 
                    {   grad1 <- b$dgcv.ubre
@@ -216,7 +217,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
                                            old.score1 <- score1
                                            alpha <- min(2*alpha, maxalpha)
                                            rho1 <- rho + alpha*Nstep
-                                           b <- fn(rho=rho1,G,gamma=1,ee,eb,esp,
+                                           b <- fn(rho=rho1,G,gamma=1, env,
                                                 check.analytical=FALSE, del)
                                            score1 <- b$gcv.ubre
                                            if (score1 <= score+c1*alpha*initslope)
@@ -248,7 +249,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
                                                   alpha.incr <- 0.2*alpha.diff
                                             alpha <- alpha.lo+alpha.incr
                                             rho1 <- rho + alpha*Nstep
-                                            b <- fn(rho=rho1,G,gamma=1,ee,eb,esp,
+                                            b <- fn(rho=rho1,G,gamma=1, env,
                                                   check.analytical=FALSE, del)
                                             score1 <- b$gcv.ubre
                                             if (score1 > score+c1*alpha*initslope)
@@ -273,8 +274,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
                                          {   curv.condition <- FALSE
                                              score1 <- sc.lo
                                              rho1 <- rho + alpha.lo*Nstep
-                                             b <- fn(rho=rho1,G,gamma=1,ee,eb,esp,
-                                             check.analytical=FALSE, del)
+                                             b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE, del)
                                           } 
                                   } ## end of "if ((alpha < 1) || (alpha>1 && ..."
                            }  ## end of "if (newslope < 0.9*initslope) ..."
@@ -287,13 +287,12 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
                 else if (alpha < minalpha) ## no satisfactory rho+ can be found suff-ly distinct from previous rho
                     {   retcode <- 1
                         rho1 <- rho
-                        b <- fn(rho=rho1,G,gamma=1,ee,eb,esp,
-                                  check.analytical=FALSE,del)
+                        b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE,del)
                      }
                 else   ## backtracking to satisfy the sufficient decrease condition...
                     {   ii <- ii+1
                         if (alpha == 1) ## first backtrack, quadratic fit
-                            {   alpha.temp <- -initslope/(2*(score1-score-initslope))
+                            {   alpha.temp <- -initslope/(score1-score-initslope)/2
                             }
                         else {  ## all subsequent backtracts, cubic fit 
                                 A1 <- matrix(0,2,2)
@@ -308,7 +307,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
                                 ab <- 1/(alpha-old.alpha)*A1%*%bb1
                                 disc <- ab[2]^2-3*ab[1]*initslope
                                 if (ab[1] == 0) ## cubic is a quadratic
-                                       alpha.temp <- -initslope/(2*ab[2])
+                                       alpha.temp <- -initslope/ab[2]/2
                                 else     ## legitimate cubic
                                        alpha.temp <- (-ab[2]+disc^0.5)/(3*ab[1])
                                 if (alpha.temp > 0.5*alpha)
@@ -347,8 +346,8 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1,
          if (!curv.condition)
                skipupdate <- TRUE
          if (!skipupdate) 
-            {  B <- B - rr * step %*% (t(yg)%*%B) 
-               B <- B - rr*(B %*% yg) %*% t(step) + rr * step %*% t(step)
+            {  B <- B - rr * step %*% crossprod(yg,B) # (t(yg)%*%B) 
+               B <- B - rr*tcrossprod((B %*% yg),step) + rr *tcrossprod(step)  # B - rr*(B %*% yg) %*% t(step) + rr * step %*% t(step)
             }
  
          ## check the termination condition ...

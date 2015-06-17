@@ -11,8 +11,8 @@ Backtracking is included to satisfy the sufficient decrease condition.
 The function is not normally called directly, but rather service routines for \code{\link{scam}}.
 }
 \usage{
-bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb, 
-         esp, n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
+bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
+        n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
         steptol= 1e-7, gradtol = 6.0554*1e-06, maxNstep = 5, 
         maxHalf = 30, check.analytical, del) 
 }
@@ -30,11 +30,7 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb,
 
   \item{gamma}{An ad hoc parametrer of the GCV/UBRE score.}
 
-  \item{ee}{Get the enviroment for the model coefficients.}
-
-  \item{eb}{Get the enviroment for the model coefficients derivatives.}
-
-  \item{esp}{Get the enviroment for the smoothing parameter.}
+  \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
 
   \item{n.pen}{Smoothing parameter dimension.}
 
@@ -97,7 +93,7 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, ee, eb,
 }
 \references{
 
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 

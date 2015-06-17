@@ -11,6 +11,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 # Type == "link"     - for linear predictor
 #      == "response" - for fitted values
 #      == "terms"    - for individual terms on scale of linear predictor 
+#      == "iterms"   - exactly as "terms" except that se's include uncertainty about mean for unconstrained smooths
 #      == "lpmatrix" - for matrix mapping parameters to l.p.
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
@@ -37,7 +38,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 #                       dropping
 # if GC is TRUE then gc() is called after each block is processed
 
-  if (type!="link"&&type!="terms"&&type!="response"&&type!="lpmatrix")  
+  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  
   { warning("Unknown type, reset to terms.")
     type<-"terms"
   }
@@ -129,7 +130,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (type=="lpmatrix")
   { H<-matrix(0,np,nb)
   } else
-  if (type=="terms")
+  if (type=="terms"||type=="iterms")
   { term.labels<-attr(object$pterms,"term.labels")
     if (is.null(attr(object,"para.only"))) para.only <-FALSE else
     para.only <- TRUE  # if true then only return information on parametric part
@@ -179,14 +180,14 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
       Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
       if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
-      if (type=="terms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
+      if (type=="terms"||type=="iterms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
     }
     # have prediction matrix for this block, now do something with it
     if (type=="lpmatrix") { 
       H[start:stop,]<-X
       if (any.soff) s.offset <- rbind(s.offset,Xoff)
     } else 
-    if (type=="terms")
+    if (type=="terms" ||type=="iterms")
     {
       ind <- 1:length(object$assign)
       if (n.pterms)  # work through parametric part
@@ -207,7 +208,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",                     "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth", "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                           if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))
                           else 
@@ -260,9 +261,9 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                           }
                        else # get RZaR for single monotonicity...
                           { RZa <- t(qr.qty(qrA,t(R)))[,2:q]
-                            RZatRZa.inv <- solve(t(RZa)%*%RZa) 
+                            RZatRZa.inv <- solve(crossprod(RZa)) ## solve(t(RZa)%*%RZa) 
                             Q <- qr.Q(qrX)
-                            B1 <- RZatRZa.inv%*%t(RZa)
+                            B1 <-  tcrossprod(RZatRZa.inv,RZa) ## RZatRZa.inv%*%t(RZa)
                             RZaR <- B1%*%R
                            }
                        if (nrow(X)==1)
@@ -274,7 +275,13 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp)*Ga))
                }
                else { ## for unconstrained smooth terms..... 
-                    se[start:stop,n.pterms+k] <- ## terms strictly centred
+                    if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
+                      X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
+                      meanL1 <- object$smooth[[k]]$meanL1
+                      if (!is.null(meanL1)) X1 <- X1 / meanL1              
+                      X1[,first:last] <- X[,first:last]
+                      se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
+                    } else  se[start:stop,n.pterms+k] <- ## terms strictly centred
                     sqrt(rowSums((X[,first:last]%*%object$Vp.t[first:last,first:last])*X[,first:last]))
                }         
           } ## end if (se.fit)
@@ -348,8 +355,15 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       H <- napredict(na.act,H)
     }
   }
-  if (type=="terms") attr(H,"constant") <- object$coefficients[1]
+  if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 }
 
+
+
+###############################################################################
+### ISSUES.....
+#
+#* predict.scam "terms" and "iterms" don't deal properly with 
+#  shape constrained smooths: se.fit retured are the same for both types
 

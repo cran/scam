@@ -1,3 +1,17 @@
+1.1-9
+
+* scam.r, bfgs.r, estimate.scam.r, check.analytical.r: corrected environmental variable
+
+* plot.scam: can now plot random effect smoother. Thanks to Ondřej Mikula for reporting the bug.
+  plot.scam is now a clone of the 'new' version of plot.gam().
+
+* predict.scam: type="iterms" is added to return standard errors for unconstrained smooth components that include the uncertainty about the intercept/overall mean ("iterms" was commented in an .Rd file of the previous versions but not implemented) 
+Thanks to Ondřej Mikula for reporting the issue
+
+* S3 methods predict.scam residuals.scam are registered now (in 'NAMESPACE' file)
+
+* scam: corrected use of an 'offset' variable, the one that is outside of the formula. Previously it was not recognized by scam. Thanks to Amy Morin for reporting the bug and providing an example. 
+
 
 1.1-8
 

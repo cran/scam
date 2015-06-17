@@ -26,7 +26,7 @@ derivative.smooth <- function(object,smooth.number,x){
 #  get model matrix for derivative function, of one order less -------------
 
   X1 <- splineDesign(xk,x,ord=m+1) # ord is by one less for the derivative
-  deriv <- (1/h)*(X1[,2:(q-1)]%*%delta.gamma) ## derivative function for the monotone smooth
+  deriv <- (X1[,2:(q-1)]%*%delta.gamma)/h ## derivative function for the monotone smooth
   
   ## calculating standard erors for getting CI...
 
@@ -34,7 +34,7 @@ derivative.smooth <- function(object,smooth.number,x){
   Sig1[,1] <- rep(1,q)
   Sig1[2:q,2:q] <- Sig 
   P <- diff(diag(q),difference=1)
-  X <- (1/h)*X1[,1:(q-1)]%*%P%*%Sig1
+  X <- (X1[,1:(q-1)]%*%P%*%Sig1)/h
   X <- sweep(X,2,colMeans(X))
   Vp <- object$Vp.t[c(1,first:last),c(1,first:last)] 
   Vp.c <- Vp
@@ -45,7 +45,7 @@ derivative.smooth <- function(object,smooth.number,x){
 ### trying another variant...
 
   P <- diff(diag(q-1),difference=1)
-  X <- (1/h)*X1[,1:(q-2)]%*%P%*%Sig
+  X <- (X1[,1:(q-2)]%*%P%*%Sig)/h
   X <- sweep(X,2,colMeans(X))
   Vp <- object$Vp.t[first:last,first:last] 
   se.fit1 <- sqrt(rowSums((X%*%Vp)*X))  

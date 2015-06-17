@@ -15,7 +15,8 @@
          n=100,n2=40,pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade=FALSE,shade.col="gray80",
-         shift=0,trans=I,seWithMean=FALSE,by.resids=FALSE,...)
+         shift=0,trans=I,seWithMean=FALSE,unconditional = FALSE, 
+         by.resids = FALSE,scheme=0,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{The list of the arguments is the same as in \code{plot.gam} of the \code{mgcv} package.
@@ -104,8 +105,19 @@ uncertainty relates purely to the centred smooth itself. An extension of the arg
 presented in Nychka (1988) suggests that \code{TRUE} results in better coverage performance,
 and this is also suggested by simulation.}
 
+\item{unconditional}{ if \code{TRUE} then the smoothing parameter uncertainty
+          corrected covariance matrix is used to compute uncertainty
+          bands, if available. Otherwise the bands treat the smoothing
+          parameters as fixed.}
+
 \item{by.resids}{Should partial residuals be plotted for terms with \code{by} variables? 
 Usually the answer is no, they would be meaningless.}
+
+\item{scheme}{Integer (0,1 or 2) or integer vector selecting a plotting scheme for each plot. 
+  \code{scheme == 0} produces a smooth curve with dashed curves 
+indicating 2 standard error bounds. \code{scheme == 1} illustrates the error bounds using a shaded
+region. For \code{scheme==0}, contour plots are produced for 2-d smooths with the x-axes labelled with the first covariate
+name and the y axis with the second covariate name. For 2-d smooths \code{scheme==1} produces a perspective plot, while \code{scheme==2} produces a heatmap, with overlaid contours. }
 
 \item{...}{ other graphics parameters to pass on to plotting commands.}
 
@@ -119,7 +131,7 @@ Usually the answer is no, they would be meaningless.}
 }
 \references{
 
-Pya, N. and Wood, S.N. (2014) Shape constrained additive models. Statistics and Computing, DOI \url{http://dx.doi.org/10.1007/s11222-013-9448-7}
+Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
@@ -128,7 +140,7 @@ Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman an
 
 }
 \author{
-Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
+Natalya Pya <nat.pya@gmail.com> based on the \code{plot.gam} of the \code{mgcv} by Simon Wood
 
 }
 
@@ -155,29 +167,42 @@ plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)
 
 
 \dontrun{
-## example with bivariate plot...
+## example with 2-d plots...
  ## simulating data...
    set.seed(2)
    n <- 30
+   x0 <- rep(1:9,100)
    x1 <- sort(runif(n)*4-1)
    x2 <- sort(runif(n))
-   f1 <- matrix(0,n,n)
+   x3 <- runif(n*n, 0, 1)
+   f <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i]))+2*sin(pi*x2[j])}
-   f <- as.vector(t(f1))
-   y <- f+rnorm(length(f))*0.1
+       { f[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i]))+2*sin(pi*x2[j])}
+   f1 <- as.vector(t(f))
+   f2 <- x3*0
+   e <- rnorm(length(f1))*0.1
+   y <- 2*x0 + f1 + f2 + e
+   x0 <- factor(x0)
    x11 <-  matrix(0,n,n)
    x11[,1:n] <- x1
    x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+   dat <- list(x0=x0,x1=x11,x2=x22,x3=x3,y=y)
 ## fit model  and plot ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs=c("tesmd1","ps"),m=2),
-            family=gaussian(link="identity"), data=dat,sp=NULL)
-   par(mfrow=c(2,2),mar=c(4,4,2,2))
-   plot(b,se=TRUE)
-   plot(b,pers=TRUE,theta = 30, phi = 40,n2=20)
+   b <- scam(y~x0+s(x1,x2,k=c(10,10),bs=c("tesmd1","ps"),m=2)+s(x3),data=dat)
+   op <- par(mfrow=c(2,2))
+   plot(b,all.terms=TRUE)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=19,cex=.3)
+   par(op) 
+   
+## and use of schemes...
+   op <- par(mfrow=c(2,2))
+   plot(b,all.terms=TRUE,scheme=1)
+   par(op)
+   op <- par(mfrow=c(2,2))
+   plot(b,all.terms=TRUE,scheme=c(2,1))
+   par(op)
+
   }
 }
 
