@@ -2,6 +2,11 @@
 \alias{vis.scam}
 \alias{persp}
 \title{Visualization of SCAM objects}
+\description{ Produces perspective or contour plot views of \code{scam} model
+predictions.
+The code is a clone of \code{vis.gam} of the \code{mgcv} package.
+ 
+}
 \usage{
 vis.scam(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,
         color="heat",contour.col=NULL,se=-1,type="link",
@@ -15,8 +20,7 @@ vis.scam(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,
 
   \item{view}{an array containing the names of the two main effect terms to be displayed on the 
    x and y dimensions of the plot. If omitted the first two suitable terms
-   will be used. 
-}
+   will be used.}
 
   \item{cond}{a named list of the values to use for the other predictor terms
   (not in \code{view}). Variables omitted from this list will have the closest observed value to the median 
@@ -52,13 +56,6 @@ scale. \code{NULL} to choose automatically.}
 
 }
 \value{Simply produces a plot.}
-
-\description{ Produces perspective or contour plot views of \code{scam} model
-predictions.
-The code is a clone of \code{vis.gam} of the \code{mgcv} package.
- 
-}
-
 
 \author{Simon Wood \email{simon.wood@r-project.org}
 

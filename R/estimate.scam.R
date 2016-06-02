@@ -3,11 +3,11 @@
 # Function to return gcv/ubre ...                      ##
 #########################################################
 
-gcv.ubre <- function(rho,G,gamma,env)
+gcv.ubre <- function(rho,G,gamma,env) 
 {  ## function to get GCV.UBRE value for optim()...
    if (length(rho)!= length(G$off)) stop (paste("length of rho and n.terms has to be the same"))
    sp <- exp(rho)
-   b <- scam.fit(G=G, sp=sp, env=env)
+   b <- scam.fit(G=G, sp=sp, env=env) 
    if (G$scale.known) #  value of Mallow's Cp/UBRE/AIC ....
       {  n <- nrow(G$X)
          gcv.ubre <- b$dev/n - G$sig2 +2*gamma*b$trA*G$sig2/n
@@ -20,7 +20,7 @@ gcv.ubre <- function(rho,G,gamma,env)
 ## function to get the gradient of the gcv/ubre.....   ##
 #########################################################
 
-gcv.ubre.derivative <- function(rho,G, gamma,env, check.analytical=FALSE, del) 
+gcv.ubre.derivative <- function(rho,G, gamma,env, check.analytical=FALSE, del)  
 {  ## function to return derivative of GCV or UBRE for optim...
    gcv.ubre_grad(rho, G, gamma,env,check.analytical, del)$gcv.ubre.rho
 }
@@ -30,9 +30,9 @@ gcv.ubre.derivative <- function(rho,G, gamma,env, check.analytical=FALSE, del)
 ## for nlm() function to get the gcv/ubre and gradient of the gcv/ubre.....##
 #############################################################################
 
-dgcv.ubre.nlm <- function(rho,G, gamma,env, check.analytical=FALSE, del)
+dgcv.ubre.nlm <- function(rho,G, gamma,env, check.analytical=FALSE, del) 
 {  ## GCV UBRE objective function for nlm
-   gg <- gcv.ubre_grad(rho, G, gamma,env,check.analytical, del)
+   gg <- gcv.ubre_grad(rho, G, gamma,env,check.analytical, del) 
    attr(gg$gcv.ubre,"gradient") <- gg$gcv.ubre.rho
    gg$gcv.ubre
 }
@@ -51,7 +51,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,
           stop("unknown outer optimization method")
    if (optimizer == "bfgs") ## minimize GCV/UBRE by BFGS...
       {  b <- bfgs_gcv.ubre(gcv.ubre_grad,rho=rho, G=G,gamma=gamma,env=env,
-                         check.analytical=check.analytical, del=del)
+                         check.analytical=check.analytical, del=del) 
          sp <- exp(b$rho)
          object <- b$object
          object$gcv.ubre <- b$gcv.ubre
@@ -79,7 +79,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,
                                  grr <- gcv.ubre.derivative
                               else 
                                  grr <- NULL
-              b <- optim(par=rho,fn=gcv.ubre, gr=grr, method=optim.method[1],G=G, gamma=gamma,env=env)
+              b <- optim(par=rho,fn=gcv.ubre, gr=grr, method=optim.method[1],G=G, gamma=gamma,env=env) 
               sp <- exp(b$par)
               gcv.ubre <- b$value
               dgcv.ubre <- NULL
@@ -97,11 +97,11 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,
                       conv <- "An error from the `L-BFGS-B' method; see help for `optim' for further details"
            }
    else if (optimizer=="nlm.fd") ## nlm() with finite difference derivatives...
-           {  b <- nlm(f=gcv.ubre, p=rho,iterlim=100, G=G, gamma=gamma,env=env)
+           {  b <- nlm(f=gcv.ubre, p=rho,iterlim=100, G=G, gamma=gamma,env=env) 
            }
    else if (optimizer=="nlm")  ## nlm() with analytical derivatives...
            { b <- nlm(f=dgcv.ubre.nlm, p=rho,iterlim=100,G=G,gamma=1,env=env,
-                     check.analytical=check.analytical, del=del)
+                     check.analytical=check.analytical, del=del) 
            }
    if (optimizer== "nlm.fd" || optimizer== "nlm") 
       {   sp <- exp(b$estimate)
@@ -126,7 +126,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,
       }
    ## fit the model using the optimal sp from "optim" or "nlm"...
    if (optimizer== "nlm.fd" || optimizer== "nlm" || optimizer== "optim")
-      {  object <- scam.fit(G=G, sp=sp,env=env, devtol=devtol, steptol=steptol)
+      {  object <- scam.fit(G=G, sp=sp,env=env, devtol=devtol, steptol=steptol) 
          object$gcv.ubre <- gcv.ubre
          object$dgcv.ubre <- dgcv.ubre 
          object$termcode <- termcode

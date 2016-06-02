@@ -305,6 +305,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
 ### Adding decreasing & convex SCOP-spline construction ################################################################
 
 
+
 smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
 ##  the constructor for the monotone decreasing and convex smooth
 { 
@@ -409,6 +410,9 @@ Predict.matrix.mdcx.smooth<-function(object,data)
   }
   X
 }
+
+
+
 
 
 ################################################################

@@ -680,3 +680,59 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
 
 
 
+
+###############################################
+## anova for scam models (clone of summary.gam())...
+## of mgcv versions up to 1.8-11...
+###############################################
+
+
+anova.scam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0)
+# clone of summary.gam(): mgcv package
+{   # adapted from anova.glm: R stats package
+    dotargs <- list(...)
+    named <- if (is.null(names(dotargs)))
+        rep(FALSE, length(dotargs))
+    else (names(dotargs) != "")
+    if (any(named))
+        warning("The following arguments to anova.glm(..) are invalid and dropped: ",
+            paste(deparse(dotargs[named]), collapse = ", "))
+    dotargs <- dotargs[!named]
+    is.glm <- unlist(lapply(dotargs, function(x) inherits(x,
+        "glm")))
+    dotargs <- dotargs[is.glm]
+    if (length(dotargs) > 0)
+     return(anova(structure(c(list(object), dotargs), class="glmlist"), 
+            dispersion = dispersion, test = test)) 
+       # return(anova.glmlist(c(list(object), dotargs), dispersion = dispersion,
+       #     test = test)) ## modified at BDR's suggestion 19/08/13
+    if (!is.null(test)) warning("test argument ignored")
+    if (!inherits(object,"scam")) stop("anova.scam called with non scam object")
+    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
+    class(sg) <- "anova.scam"
+    sg
+} ## anova.scam
+
+
+print.anova.scam <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{ # print method for class anova.scam resulting from single
+  # scam model calls to anova. Clone of print.anova.gam(): mgcv package
+  print(x$family)
+  cat("Formula:\n") 
+  if (is.list(x$formula)) for (i in 1:length(x$formula)) print(x$formula[[i]]) else
+  print(x$formula)
+  if (length(x$pTerms.pv)>0)
+  { cat("\nParametric Terms:\n")
+    printCoefmat(x$pTerms.table, digits = digits, signif.stars = FALSE, has.Pvalue = TRUE, na.print = "NA", ...)
+  }
+  cat("\n")
+  if(x$m>0)
+  { cat("Approximate significance of smooth terms:\n")
+    printCoefmat(x$s.table, digits = digits, signif.stars = FALSE, has.Pvalue = TRUE, na.print = "NA", ...)
+  }
+  invisible(x)
+} ## print.anova.scam
+
+
+
+

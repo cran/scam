@@ -1,8 +1,18 @@
+1.2-0
+
+* smooth.construct: six tensor product smoothing constructors for bivariate functions subject to shape constraints were added: 'temicx','temicv', 'tedecx', 'tedecv', 'tescx', 'tescv'. Thanks to Linda Mhalla for bringing this up.
+
+* anova.scam: added (clone of anova.gam (mgcv)). Thanks to Felix Meyer for raising a question about that.
+
+* plot.scam: fits are now centralized (by subscracting the mean of the smooth term)
+
+
+
 1.1-9
 
 * scam.r, bfgs.r, estimate.scam.r, check.analytical.r: corrected environmental variable
 
-* plot.scam: can now plot random effect smoother. Thanks to Ondřej Mikula for reporting the bug.
+* plot.scam: can now plot random effect smoother. Thanks to Ondřej Mikula for bringing up the issue.
   plot.scam is now a clone of the 'new' version of plot.gam().
 
 * predict.scam: type="iterms" is added to return standard errors for unconstrained smooth components that include the uncertainty about the intercept/overall mean ("iterms" was commented in an .Rd file of the previous versions but not implemented) 

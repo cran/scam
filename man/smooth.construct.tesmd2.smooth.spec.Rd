@@ -70,13 +70,14 @@ Natalya Pya <nat.pya@gmail.com>
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmd2",m=2),
-            family=gaussian(link="identity"), data=dat,sp=NULL)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmd2",m=2),data=dat,sp=NULL)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 90, phi = 60)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   x11()
+   vis.scam(b,theta = 90, phi = 60)
  }
 }
 \keyword{models} \keyword{regression}%-- one or more ..

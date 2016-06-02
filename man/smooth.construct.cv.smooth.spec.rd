@@ -60,9 +60,9 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    f <- -4*x^2
    y <- f + rnorm(n)*0.45
    dat <- data.frame(x=x,y=y)
-   b <- scam(y~s(x,k=15,bs="cv",m=2),family=gaussian,data=dat)
+   b <- scam(y~s(x,k=15,bs="cv",m=2),family=gaussian,data=dat,not.exp=FALSE)
    # UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=gaussian, data=dat)
+   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=gaussian, data=dat,not.exp=FALSE)
 
 ## plot results ...
    plot(x,y,xlab="x",ylab="y")
@@ -74,10 +74,10 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    y <- rpois(n,15*exp(f))
    dat <- data.frame(x=x,y=y)
  ## fit model ...
-   b <- scam(y~s(x,k=15,bs="cv",m=2),family=poisson(link="log"),data=dat)
+   b <- scam(y~s(x,k=15,bs="cv",m=2),family=poisson(link="log"),data=dat,not.exp=FALSE)
 
 # UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=poisson(link="log"), data=dat)
+   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=poisson(link="log"), data=dat,not.exp=FALSE)
 
 ## plot results ...
    plot(x,y,xlab="x",ylab="y")

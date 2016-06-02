@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.1-9}
+% \Rdversion{1.2-0}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -16,7 +16,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
       scale = 0, devtol = 1e-08, steptol= 1e-8, check.analytical=FALSE,
-     del=1e-4, start= NULL, etastart, mustart,keepData=FALSE)
+     del=1e-4, start= NULL, etastart, mustart,keepData=FALSE, not.exp=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -81,6 +81,8 @@ included in \code{formula}. This conforms to the behaviour of
 
   \item{keepData}{If this is \code{TRUE} a copy of the original \code{data} argument 
      is kept. The default is \code{FALSE} which saves space.}
+
+  \item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring beta parameters re-parameterization.}
 }
 
 \details{
@@ -157,6 +159,8 @@ expected value for  each datum.}
               \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
               BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
               convergence.} 
+
+\item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring beta parameters re-parameterization.}
 
 \item{nsdf}{number of parametric, non-smooth, model terms including the
           intercept.}
@@ -256,7 +260,7 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
    ## simulating data...
 require(scam)
 
-set.seed(2)
+set.seed(0)
 n <- 200
 x1 <- runif(n)*6-3
 f1 <- 3*exp(-x1^2) # unconstrained term
@@ -269,7 +273,7 @@ y <- f+rnorm(n)*0.1
 dat <- data.frame(x1=x1,x2=x2,y=y)
   ## fit model, results, and plot...
 b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2),
-    family=gaussian(link="identity"),data=dat)
+    family=gaussian(link="identity"),data=dat,not.exp=FALSE)
 print(b)
 summary(b)
 plot(b,pages=1)

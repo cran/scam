@@ -71,8 +71,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmi1",m=2),
-            family=gaussian(link="identity"), data=dat,sp=NULL)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmi1",m=2), data=dat,sp=NULL)
 ## plot results ...
    par(mfrow=c(2,2))
    plot(b,se=TRUE)

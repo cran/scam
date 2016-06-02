@@ -14,6 +14,12 @@
 \alias{Predict.matrix.tesmd2.smooth}
 \alias{Predict.matrix.tesmi1.smooth}
 \alias{Predict.matrix.tesmi2.smooth}
+\alias{Predict.matrix.temicx.smooth}
+\alias{Predict.matrix.temicv.smooth}
+\alias{Predict.matrix.tedecx.smooth}
+\alias{Predict.matrix.tedecv.smooth}
+\alias{Predict.matrix.tescx.smooth}
+\alias{Predict.matrix.tescv.smooth}
 
 \title{Predict matrix method functions for SCAMs
 }
@@ -35,6 +41,12 @@
 \method{Predict.matrix}{tesmd2.smooth}(object, data)
 \method{Predict.matrix}{tesmi1.smooth}(object, data)
 \method{Predict.matrix}{tesmi2.smooth}(object, data)
+\method{Predict.matrix}{temicx.smooth}(object, data)
+\method{Predict.matrix}{temicv.smooth}(object, data)
+\method{Predict.matrix}{tedecx.smooth}(object, data)
+\method{Predict.matrix}{tedecv.smooth}(object, data)
+\method{Predict.matrix}{tescx.smooth}(object, data)
+\method{Predict.matrix}{tescv.smooth}(object, data)
 
 }
 

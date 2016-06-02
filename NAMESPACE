@@ -9,9 +9,11 @@ export(scam, bfgs_gcv.ubre,
        print.scam,
        check.analytical,
        summary.scam, print.summary.scam, vis.scam,
+       anova.scam, print.anova.scam,
        residuals.scam,
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
+       marginal.matrices.tescv.ps,
        Predict.matrix.cv.smooth,
        Predict.matrix.cx.smooth,
        Predict.matrix.mdcv.smooth,
@@ -26,6 +28,12 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.tesmd2.smooth,
        Predict.matrix.tesmi1.smooth,
        Predict.matrix.tesmi2.smooth,
+       Predict.matrix.temicx.smooth,
+       Predict.matrix.temicv.smooth,
+       Predict.matrix.tedecx.smooth,
+       Predict.matrix.tedecv.smooth,
+       Predict.matrix.tescx.smooth,
+       Predict.matrix.tescv.smooth,
        smooth.construct.cv.smooth.spec,
        smooth.construct.cx.smooth.spec,
        smooth.construct.mdcv.smooth.spec,
@@ -39,19 +47,41 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tesmd1.smooth.spec,
        smooth.construct.tesmd2.smooth.spec,
        smooth.construct.tesmi1.smooth.spec,
-       smooth.construct.tesmi2.smooth.spec)
+       smooth.construct.tesmi2.smooth.spec,
+       smooth.construct.temicx.smooth.spec,
+       smooth.construct.temicv.smooth.spec,
+       smooth.construct.tedecx.smooth.spec,
+       smooth.construct.tedecv.smooth.spec,
+       smooth.construct.tescx.smooth.spec,
+       smooth.construct.tescv.smooth.spec
+)
 
 importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
            exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank, interpret.gam)
-#import(mgcv)  ## imports ALL exported variables from mgcv package
-importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors) ## imports SOME of the exported variables from grDevices package
+import(mgcv)  ## imports ALL exported variables from mgcv package
+
+importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,heat.colors,terrain.colors,topo.colors)
+importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
+           mtext, par, persp,plot,points,
+           polygon,rect,strheight,strwidth,text,title)
+
 importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)
-# importFrom(stats,.checkMFClasses,.getXlevels, as.formula, #anova,anova.glmlist,coef,cooks.distance,cor,
-#           delete.response,family,fitted,formula,
-#gaussian,glm,influence,lm,logLik,median,model.frame,model.matrix#,model.offset,na.pass,napredict,naresid,nlm,optim,
-#           pchisq,pf,pnorm,pt,
-#            predict,printCoefmat ,quantile,qqnorm, #reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, #uniroot, var,vcov)
-importFrom(stats,anova,influence,cooks.distance,logLik,vcov,residuals,predict, model.matrix)
+
+importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
+binomial,coef,contrasts,"contrasts<-",cooks.distance,cor,cov,
+delete.response,dbeta,dgamma,dnorm,dpois,fitted,formula,gaussian,glm,
+influence,logLik,lm,mad,
+make.link,median,model.frame,model.offset,model.matrix,nlm,
+na.pass,napredict,na.omit,naresid,optim,pchisq,pnorm,pt,pf,
+power,predict,printCoefmat,quantile,
+qbeta,qbinom,qchisq,qnbinom,qgamma,qnorm,qpois,qqline,qqnorm,qqplot,
+reformulate,residuals,
+rbeta,rbinom,rgamma,rnbinom,rnorm,rpois,runif,sd,
+termplot,terms.formula,terms,uniroot,var,vcov,weights)
+
+
+
+
 import(Matrix)
 importFrom(methods,cbind2)
 importFrom(splines,splineDesign, spline.des)
@@ -62,6 +92,8 @@ S3method(print, summary.scam)
 S3method(summary, scam)
 S3method(predict, scam)
 S3method(residuals, scam)
+S3method(anova, scam)
+S3method(print, anova.scam)
 
 S3method(smooth.construct,mdcv.smooth.spec)
 S3method(smooth.construct,cv.smooth.spec)
@@ -77,6 +109,12 @@ S3method(smooth.construct, tesmd1.smooth.spec)
 S3method(smooth.construct, tesmd2.smooth.spec)
 S3method(smooth.construct, tesmi1.smooth.spec)
 S3method(smooth.construct, tesmi2.smooth.spec)
+S3method(smooth.construct, temicx.smooth.spec)
+S3method(smooth.construct, temicv.smooth.spec)
+S3method(smooth.construct, tedecx.smooth.spec)
+S3method(smooth.construct, tedecv.smooth.spec)
+S3method(smooth.construct, tescx.smooth.spec)
+S3method(smooth.construct, tescv.smooth.spec)
 
 
 S3method(Predict.matrix,cv.smooth)
@@ -93,6 +131,12 @@ S3method(Predict.matrix,tesmd1.smooth)
 S3method(Predict.matrix,tesmd2.smooth)
 S3method(Predict.matrix,tesmi1.smooth)
 S3method(Predict.matrix,tesmi2.smooth)
+S3method(Predict.matrix,temicx.smooth)
+S3method(Predict.matrix,temicv.smooth)
+S3method(Predict.matrix,tedecx.smooth)
+S3method(Predict.matrix,tedecv.smooth)
+S3method(Predict.matrix,tescx.smooth)
+S3method(Predict.matrix,tescv.smooth)
 
 
 

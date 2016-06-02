@@ -1,4 +1,6 @@
 
+#setwd("~/Documents/research/SCAM_package/SCAM_PACKAGE_1.2-0")
+#source("scam-try-notExp.r"); source("estimate.scam.R")
 
 #############################################################
 ## the wrapper overall Function to fit scam...             ##
@@ -8,7 +10,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
         weights=NULL, offset=NULL, optimizer="bfgs",
             optim.method=c("Nelder-Mead","fd"),
            scale=0, devtol=1e-8, steptol=1e-8, check.analytical=FALSE, del=1e-4,
-              start=NULL, etastart, mustart,keepData=FALSE)
+              start=NULL, etastart, mustart,keepData=FALSE, not.exp=FALSE)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
    ## devtol - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
    ## steptol - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm
@@ -16,10 +18,10 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    ## optim.method - if optimizer=="optim" then the first argument of optim.method     specifies the method, and the second can be either "fd" for finite-difference approximation of the gradient or "grad" - to use analytical gradient of gcv/ubre
    ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
    ## del - increment for finite differences when checking analytical gradients
-   ### --------------------------------------------------------
+   ## not.exp - if TRUE then notExp() function will be used in place of exp in positivity ensuring beta parameters re-parameterization
+   ###################################################
 
    ## Setting from mgcv(gam).......
- #  require(mgcv)
     
    G <- gam(formula, family,data, fit=FALSE) 
    n.terms <- length(G$smooth)  ## number of smooth terms in the model
@@ -31,7 +33,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    mf <- match.call(expand.dots=FALSE)
    mf$formula <- gp$fake.formula 
    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
-                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$in.out <- mf$...<-NULL
+                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$...<-NULL
    mf[[1]] <- as.name("model.frame")
    pmf <- mf
    mf <- eval(mf, parent.frame()) 
@@ -90,6 +92,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    G$weights <- weights
    G$sig2 <- sig2
    G$scale.known <- scale.known
+   G$not.exp <- not.exp
 
    if (!keepData) rm(data) ## save space
 
@@ -103,13 +106,13 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          G$y <- y  ## needed to set factor response values as numeric
          def.sp <- initial.sp.scam (G,Q,q.f=q.f,n.terms=n.terms,family=family,
               intercept=intercept,offset=G$offset, env=env,
-              weights=weights, devtol=1e-4, steptol=1e-4)
+              weights=weights, devtol=1e-4, steptol=1e-4) 
          rho <- log(def.sp) ## get initial log(sp) ...
          ## minimize GCV/UBRE by optimizer....
          ptm <- proc.time()
          re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
                rho=rho, gamma=gamma, env=env,
-              check.analytical=check.analytical, del=del, devtol=devtol, steptol=steptol)
+              check.analytical=check.analytical, del=del, devtol=devtol, steptol=steptol) 
          CPU.time <- proc.time()-ptm
          best <- re
          object$gcv.ubre <- re$gcv.ubre
@@ -125,7 +128,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                 object$dgcv.ubre.check <- re$dgcv.ubre.check
             }
    } else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env)
+            best <- scam.fit(G=G, sp=sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env) 
             object$aic <- best$aic
             object$optimizer <- "NA"           
       }
@@ -138,7 +141,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    object$R <- best$R
    if (is.null(object$R)){
-         rr <- scam.fit(G=G, sp=best$sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env)
+         rr <- scam.fit(G=G, sp=best$sp,gamma=gamma,devtol=devtol, steptol=steptol, env=env) 
          object$R <- rr$R } ## not sure if it's needed?
   
    object$df.residual <- nrow(best$X) - sum(best$edf)
@@ -189,6 +192,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
  #  object$data <- G$mf
    if (keepData) object$data <- data 
    object$offset <- G$offset
+   object$not.exp <- G$not.exp
  #  object$scale.known <- scale.known # to be passed in the summary function
    object$scale.estimated <- !scale.known # to be passed in the summary function
    object$prior.weights <-weights # prior weights on observations
@@ -250,7 +254,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                  rownames(G$y)
              else names(G$y)
    names(object$residuals) <- ynames
-   class(object) <- "scam"   
+   class(object) <- c("scam","glm","lm")   
    object
 }  ## end scam
 
@@ -264,7 +268,7 @@ initial.sp.scam <- function(G,Q,q.f,n.terms,family,intercept,offset, env= env,
                       weights,devtol=1e-4,steptol=1e-4) 
 {  ## function to get initial estimates of smoothing parameters
    ## step 1: set sp=rep(0.5,p) and estimate hessian...
-   b <- scam.fit(G=G,sp=rep(0.5,length(G$off)), devtol, steptol, env=env)
+   b <- scam.fit(G=G,sp=rep(0.5,length(G$off)), devtol, steptol, env=env) 
    H <- crossprod(b$wX1) - b$E
    ## step 2:...
    n.p <- length(Q$S) ## number of penalty matrices
@@ -307,7 +311,7 @@ penalty_pident <- function(object)
            cons.terms[i] <- 1  
        }
    p.ident <- rep(0,q) # initialize vector of parameter identifications
-                      # with `1' - for a parameter to be exponentiated, `0' - otehrwise
+                      # with `1' - for a parameter to be exponentiated, `0' - otherwise
    off.terms <- rep(0,n.terms) # starting points for each term
    off <- object$off
    if (n.terms ==length(off))
@@ -344,7 +348,7 @@ penalty_pident <- function(object)
    object$S <- S 
    object$p.ident <- p.ident
    object
-}
+} ## end penalty_pident
 
 
 
@@ -355,13 +359,14 @@ penalty_pident <- function(object)
 #############################################################
 
 scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
-                gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env)
+                gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env) 
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
    ## sp- vector of smoothing parameters
    ## maxit - a positive scalar which gives the maximum number of iterations for Newton's method
    ## devtol - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
    ## steptol - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm 
-{ y <- G$y;  X <- G$X;  S <- G$S
+   ## not.exp - if TRUE then notExp() function will be used in place of exp in positivity ensuring beta parameters re-parameterization
+{ y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp
   attr(X,"dimnames") <- NULL
   q0 <- G$q0; q.f <- G$q.f
   p.ident <- G$p.ident; n.terms <- G$n.terms
@@ -458,7 +463,7 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
       else {
           beta <- beta0
           beta.t <- beta               # current beta tilde
-          beta.t[iv] <- exp(beta[iv])  # values of re-para beta of the constrained term
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) # values of re-para beta of the constrained term
       }
       ## Initialization of parameters finishes here 
       #-------------------------------------------
@@ -469,8 +474,13 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
       old.pdev <- pdev       # initialize convergence control for penalized deviance
       pdev.plot <- 0     # define initial pen dev for plotting it 
       E <- matrix(0,q,q)   # define diagonal matrix E- second term of the Hessian
-      Cdiag <- rep(1,q);Cdiag[iv] <- beta.t[iv]
-      C1diag <- rep(0,q);C1diag[iv] <- beta.t[iv]
+      Cdiag <- rep(1,q); C1diag <- rep(0,q)
+      if (!not.exp) {
+          Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+      } else {
+          Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+      }
+
       tX1 <- Cdiag*t(X)
       g.deriv <- 1/mu.eta(eta)        # diag(G)
       w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1)
@@ -501,7 +511,13 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
                   iter)
               break
          }
-         Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+       
+         if (!not.exp) {
+             Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+         } else {
+             Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+           }
+
          tX1 <- Cdiag*t(X)
          g.deriv <- 1/mu.eta(eta)  # diag(G)
          w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1) - Fisher weights
@@ -587,7 +603,7 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
          step <- 1                      # initial trial step length
          beta <- c(old.beta)+step*delta    # current parameter estimates
          beta.t <- beta                 # current reparameterized beta
-         beta.t[iv] <- exp(beta[iv])  # values of re-para beta of the shape constrained term
+         beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])  # values of re-para beta of the shape constrained term
          eta <- as.numeric(X%*%beta.t + offset)     # linear predictor
          mu <- linkinv(eta)          # fitted values
          dev <- sum(dev.resids(y,mu,weights)) # deviance of the working model
@@ -603,7 +619,7 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
              step <- step/2         # decrease step length 
              beta <- c(old.beta)+step*delta   # update current parameter estimates
              beta.t <- beta                # update current re-para beta
-             beta.t[iv] <- exp(beta[iv])   
+             beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
              eta <- as.numeric(X%*%beta.t + offset)    # linear predictor  
              mu <- linkinv(eta)         # fitted values
              dev <- sum(dev.resids(y,mu,weights)) # update deviance of the working model
@@ -615,7 +631,7 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
          Dp.gnorm <- max(abs(Dp.g)) 
          pdev.plot[iter] <- pdev      # store penilized deviance of the working model for plotting
           
-         ## checking convergence .......
+         ## checking convergence ...
          if (abs(pdev - old.pdev)/(.1 + abs(pdev)) < devtol) {
              if (max(abs(beta - c(old.beta))) > steptol * 
                           max(abs(beta + c(old.beta)))/2) {
@@ -632,28 +648,36 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
              old.pdev <- pdev
              old.beta <- beta
          }
-     } ## main iteration procedure is completed here ------------
-     ##______________________________________________________________
-     ## define matrices at their converged values from the full Newton method------
+     } ## main iteration procedure is completed here... 
+
+     
+     ## define matrices at their converged values from the full Newton method...
   
      dev <- sum(dev.resids(y,mu,weights))
      beta.t <- beta               # estimates of re-para beta
-     beta.t[iv] <- exp(beta[iv])   
+     beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
      eta <- as.numeric(X%*%beta.t + offset)      # linear predictor  
      mu <- linkinv(eta)         # fitted values
-     Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+
+     if (!not.exp) {
+             Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+     } else {
+             Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+       }
+
      X1 <- t(Cdiag*t(X)) 
      g.deriv <- 1/ mu.eta(eta)        # diag(G)
      w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1)
      alpha <- 1+(y-mu)*(dv$dvar(mu)/variance(mu)+dg$d2link(mu)/g.deriv) # alpha elements of W
      w <- w1*alpha          # diag(W)
+
      diag(E) <- drop((C1diag*t(X))%*%(w1*g.deriv*(y-mu))) # diagonal elements of E
      abs.w <- abs(w)      # absolute values of the diag(W)
      I.minus <- rep(0,nobs)  # define diagonal elements of the matrix I^{-}
      I.minus[w<0] <- 1
      wX1 <- sqrt(abs.w)[1:nobs]*X1 ## wX1 actually used later
      wX11 <- rbind(wX1,rS) # augmented model matrix 
-      ## Faster version only does SVD when needed (and then only on QR factor)
+     ## Faster version only does SVD when needed (and then only on QR factor)
         illcond <- FALSE
         Q <- qr(wX11,LAPACK=TRUE) 
         R <- qr.R(Q)
@@ -724,8 +748,9 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
            K <- Q[1:nobs,]%*%eidrop ## (ei$vectors%*%diag(Id.inv.r))  # define matrix K 
          }
      }  ## end of if (!ok1)
-     # end of calculation of the matrices at their converged values ------
-     # -------------------------------------------------------------
+     # end of calculation of the matrices at their converged values...
+     
+
      Dp.g <- -t(X1)%*%(w1*g.deriv*(y-mu))+S.t%*%beta # the gradient vector of the penalized deviance
      Dp.gnorm<-max(abs(Dp.g)) 
 
@@ -734,10 +759,20 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
      I.plus[w<0] <- -1
      L <- c(1/alpha)    # define diagonal elements of L=diag(1/alpha)
      ## NOTE PKt is O(np^2) and not needed --- can compute trA as side effect of gradiant
-     KtILQ1R <- t(L*I.plus*K)%*%wX1
+     KtILQ1R <- crossprod(L*I.plus*K,wX1) ## t(L*I.plus*K)%*%wX1 
      edf <- rowSums(P*t(KtILQ1R))
      trA <- sum(edf)
 
+     ## below is needed for later calculations of derivative of trA
+     wXC1 <- sqrt(abs.w)[1:nobs]*t(C1diag*t(X)) 
+     KtILQ1R <-  if (!not.exp) KtILQ1R else crossprod(L*I.plus*K,wXC1)  ##t(L*I.plus*K)%*%wXC1
+     KtIQ1R <-  if (!not.exp) crossprod(I.plus*K,wX1) 
+                  else crossprod(I.plus*K,wXC1)
+     C2diag <- rep(0,q)
+     C2diag[iv] <- if (!not.exp)  C1diag[iv] else D3notExp(beta[iv])
+     XC2 <- t(C2diag*t(X))
+     XC1 <- t(C1diag*t(X))
+     
      # ---------------------------------------------------------------------------
      scale.est <- dev/(nobs-trA)  #  scale estimate...
      residuals <- rep.int(NA, nobs)
@@ -756,9 +791,9 @@ scam.fit <- function(G,sp, maxit=200,devtol=1e-8, steptol=1e-8,
      assign("sp.last",sp,envir=env)
   } ### end if (!EMPTY) 
 
- list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,gcv=dev*nobs/(nobs-trA)^2,
-      sp=sp, mu=mu,X=X, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
-      P=P,K=K, KtILQ1R= KtILQ1R,dlink.mu=1/mu.eta(eta),Var=variance(mu), abs.w=abs.w,
+ list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,gcv=dev*nobs/(nobs-trA)^2, sp=sp, mu=mu,X=X, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
+      P=P,K=K, C2diag=C2diag, KtILQ1R= KtILQ1R, KtIQ1R=KtIQ1R, ## XC1=XC1, XC2=XC2,
+      dlink.mu=1/mu.eta(eta),Var=variance(mu), abs.w=abs.w,
       link=family$linkfun(mu),w=as.numeric(w),w1=w1,d2link.mu=dg$d2link(mu),wX1=wX1,I.plus=I.plus,
       dvar.mu=dv$dvar(mu),d2var.mu=dv$d2var(mu),deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=as.numeric(alpha),d3link.mu=dg$d3link(mu),eta=eta,iter=iter,
@@ -797,9 +832,9 @@ scam.fit.post <- function(y,X,object,sig2,offset,intercept,
 
    if (!scale.known) sig2 <- object$scale.est
    ## get the inverse of the expected Hessian...
-   wX1 <- sqrt(object$w1)[1:n]*object$X1
-   wX11 <- rbind(wX1,object$rS)
-   q <- ncol(wX1)
+  ## wX1 <- sqrt(object$w1)[1:n]*object$X1
+   wX11 <- rbind(object$wX1,object$rS)
+   q <- ncol(object$wX1)
    Q <- qr(wX11,LAPACK=TRUE) 
    R <- qr.R(Q)
    rp <- 1:ncol(R)
@@ -827,15 +862,85 @@ scam.fit.post <- function(y,X,object,sig2,offset,intercept,
    Ve.t <- t(df.p*t(df.p*Ve))
 
    ## calculating edf and trA...
-   KtILQ1R <- t(object$L*object$I.plus*K)%*%wX1
+   KtILQ1R <- crossprod(object$L*object$I.plus*K,object$wX1) ## t(object$L*object$I.plus*K)%*%object$wX1
    F <- P%*%(KtILQ1R)
    edf <- diag(F) ## effective degrees of freedom
    edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
    trA <- sum(edf)
-
    list (nulldev=nulldev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,
         sig2=sig2,edf=edf,edf1=edf1,trA=trA)
+} ## end of scam.fit.post
+
+
+
+### the following three functions are for use in place of exp(beta)
+### notExp() is similar to that in R package mgcv() of Simon N Wood
+### in positivity ensuring beta parameters re-parameterization.... they have `better' 
+### over/underflow characteristics, but is still continuous to second
+### derivative. 
+### DnotExp() calculates the first derivative
+### D2notExp() gets the second derivative 
+
+notExp <- function(x){
+  f <- x
+  ind <- x > 1
+  f[ind] <- exp(1)*(x[ind]^2+1)/2
+  ind <- (x <= 1)&(x > -1)
+  f[ind] <- exp(x[ind])
+  ind <- (x <= -1)
+  f[ind] <-  exp(1)*(x[ind]^2+1)/2; f[ind]<-1/f[ind]
+  f
 }
+
+DnotExp <- function(x) {
+## first derivative of notExp()...
+  f <- x
+  ind <- x > 1
+  f[ind] <- exp(1)*x[ind]
+  ind <- (x <= 1)&(x > -1)
+  f[ind] <- exp(x[ind])
+  ind <- (x <= -1)
+  f[ind] <-  -4*x[ind]/exp(1)/(x[ind]^2+1)^2
+  f
+}
+
+D2notExp <- function(x) {
+## second derivative of notExp()...
+  f <- x
+  ind <- x > 1
+  f[ind] <- exp(1)
+  ind <- (x <= 1)&(x > -1)
+  f[ind] <- exp(x[ind])
+  ind <- (x <= -1)
+  f[ind] <-  (12*x[ind]^2-4)/exp(1)/(x[ind]^2+1)^3
+  f
+}
+
+
+D3notExp <- function(x) {
+## third derivative of notExp()...
+  f <- x
+  ind <- x > 1
+  f[ind] <- 0
+  ind <- (x <= 1)&(x > -1)
+  f[ind] <- exp(x[ind])
+  ind <- (x <= -1)
+  f[ind] <-  48*x[ind]*(1-x[ind]^2)/exp(1)/(x[ind]^2+1)^4
+  f
+}
+
+
+
+
+## checking derivatives...
+#eps <- 1e-7
+#x<-seq(-5,5,length.out=100)
+#d1 <- (notExp(x+eps)-notExp(x))/eps
+#range((DnotExp(x)-d1)/d1)
+#d2 <- (DnotExp(x+eps)-DnotExp(x))/eps
+#range((D2notExp(x)-d2)/d2)
+#d3 <- (D2notExp(x+eps)-D2notExp(x))/eps
+#range((D3notExp(x)-d3)/d3)
 
 
 ###############################################################
@@ -857,6 +962,8 @@ print.scam.version <- function()
 }
 
 ##.onUnload <- function(libpath) library.dynam.unload("scam", libpath)
+
+
 
 
 

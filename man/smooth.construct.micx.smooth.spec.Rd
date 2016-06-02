@@ -64,7 +64,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    dat <- data.frame(x=x,y=y)
  ## fit model ...
    b <- scam(y~s(x,k=15,bs="micx",m=2),family=poisson(link="log"),
-       data=dat,sp=NULL)
+       data=dat,sp=NULL,not.exp=FALSE)
 
 # UNCONSTRAINED FIT *****************
    b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=poisson(link="log"),

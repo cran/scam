@@ -40,7 +40,8 @@ scam.fit(G, sp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=NULL,
   \item{etastart}{Initial values for the linear predictor}
 
   \item{mustart}{Initial values for the expected values}
-  
+
+    
 }
 \details{
 The routine applies step halving to any step that increases the
