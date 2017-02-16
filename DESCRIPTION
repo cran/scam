@@ -1,11 +1,12 @@
 Package: scam
-Version: 1.2-0
+Version: 1.2-1
 Author: Natalya Pya <nat.pya@gmail.com>
 Maintainer: Natalya Pya <nat.pya@gmail.com>
 Title: Shape Constrained Additive Models
-Date: 2016-06-02
+Date: 2017-02-16
 Description: Routines for generalized additive modelling under shape
-        constraints on the component functions of the linear predictor.
+        constraints on the component functions of the linear predictor
+        (Pya and Wood, 2015) <doi:10.1007/s11222-013-9448-7>.
         Models can contain multiple shape constrained (univariate
         and/or bivariate) and unconstrained terms. The routines of gam() 
         in package 'mgcv' are used for setting up the model matrix,  
@@ -19,6 +20,6 @@ Suggests: nlme
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: no
-Packaged: 2016-06-02 07:03:21 UTC; natalya
+Packaged: 2017-02-16 10:36:17 UTC; natalya
 Repository: CRAN
-Date/Publication: 2016-06-02 09:43:01
+Date/Publication: 2017-02-16 17:27:51

@@ -1,3 +1,12 @@
+1.2-1
+
+* bfgs_gcv.ubre, estimate.scam: bug fix with supplying the value of 'gamma' which was overridden by a default 'gamma=1'. Thanks to Phil Boonstra for reporting the bug and providing an example.
+
+* smooth.construct: a univariate positively constrained smooth, 'po', was added.
+
+* added 'linear.functional.terms' with shape constraints example to an Rd file (see linear.functional.terms(mgcv))
+
+
 1.2-0
 
 * smooth.construct: six tensor product smoothing constructors for bivariate functions subject to shape constraints were added: 'temicx','temicv', 'tedecx', 'tedecv', 'tescx', 'tescv'. Thanks to Linda Mhalla for bringing this up.

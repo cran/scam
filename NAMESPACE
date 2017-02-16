@@ -22,6 +22,7 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.micx.smooth,
        Predict.matrix.mpd.smooth,
        Predict.matrix.mpi.smooth,
+       Predict.matrix.po.smooth,
        Predict.matrix.tedmd.smooth,
        Predict.matrix.tedmi.smooth,
        Predict.matrix.tesmd1.smooth,
@@ -42,6 +43,7 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.micx.smooth.spec,
        smooth.construct.mpd.smooth.spec,
        smooth.construct.mpi.smooth.spec,
+       smooth.construct.po.smooth.spec,
        smooth.construct.tedmd.smooth.spec,
        smooth.construct.tedmi.smooth.spec,
        smooth.construct.tesmd1.smooth.spec,
@@ -103,6 +105,7 @@ S3method(smooth.construct,micv.smooth.spec)
 S3method(smooth.construct, micx.smooth.spec)
 S3method(smooth.construct, mpd.smooth.spec)
 S3method(smooth.construct, mpi.smooth.spec)
+S3method(smooth.construct, po.smooth.spec)
 S3method(smooth.construct, tedmd.smooth.spec)
 S3method(smooth.construct, tedmi.smooth.spec)
 S3method(smooth.construct, tesmd1.smooth.spec)
@@ -125,6 +128,7 @@ S3method(Predict.matrix,micv.smooth)
 S3method(Predict.matrix,micx.smooth)
 S3method(Predict.matrix,mpd.smooth)
 S3method(Predict.matrix,mpi.smooth)
+S3method(Predict.matrix,po.smooth)
 S3method(Predict.matrix,tedmd.smooth)
 S3method(Predict.matrix,tedmi.smooth)
 S3method(Predict.matrix,tesmd1.smooth)

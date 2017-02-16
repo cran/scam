@@ -100,7 +100,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,
            {  b <- nlm(f=gcv.ubre, p=rho,iterlim=100, G=G, gamma=gamma,env=env) 
            }
    else if (optimizer=="nlm")  ## nlm() with analytical derivatives...
-           { b <- nlm(f=dgcv.ubre.nlm, p=rho,iterlim=100,G=G,gamma=1,env=env,
+           { b <- nlm(f=dgcv.ubre.nlm, p=rho,iterlim=100,G=G,gamma=gamma,env=env,
                      check.analytical=check.analytical, del=del) 
            }
    if (optimizer== "nlm.fd" || optimizer== "nlm") 

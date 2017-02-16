@@ -8,6 +8,7 @@
 \alias{Predict.matrix.micv.smooth}
 \alias{Predict.matrix.mdcx.smooth}
 \alias{Predict.matrix.mdcv.smooth}
+\alias{Predict.matrix.po.smooth}
 \alias{Predict.matrix.tedmd.smooth}
 \alias{Predict.matrix.tedmi.smooth}
 \alias{Predict.matrix.tesmd1.smooth}
@@ -35,6 +36,7 @@
 \method{Predict.matrix}{micv.smooth}(object, data)
 \method{Predict.matrix}{mdcx.smooth}(object, data)
 \method{Predict.matrix}{mdcv.smooth}(object, data)
+\method{Predict.matrix}{po.smooth}(object, data)
 \method{Predict.matrix}{tedmd.smooth}(object, data)
 \method{Predict.matrix}{tedmi.smooth}(object, data)
 \method{Predict.matrix}{tesmd1.smooth}(object, data)

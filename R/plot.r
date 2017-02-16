@@ -118,6 +118,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       offset <- attr(P$X,"offset")      ## any term specific offset
       ## get fitted values ....
 ### addition for univariate shape-constrained smooths ...
+     intercept <- 0
      if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
                         q <- ncol(P$X)
                         beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p))
@@ -179,11 +180,13 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                 }
 ## end shape constrained supplement...
 
-## added code to centralize the fit ...
+## added code to centralize the fit if no 'by' variable...
       ft <- P$X%*%p 
   ##  if (is.null(offset)) P$fit <- P$X%*%p else P$fit <- P$X%*%p + offset 
-      if (is.null(offset)) P$fit <- ft-sum(ft)/length(ft) 
-           else P$fit <- ft-sum(ft)/length(ft) + offset 
+      if (is.null(x$smooth[[i]]$by)){
+            if (is.null(offset)) P$fit <- ft-sum(ft)/length(ft) 
+                else P$fit <- ft-sum(ft)/length(ft) + offset 
+      } else{ if (is.null(offset)) P$fit <- ft-intercept else P$fit <- ft + offset -intercept}
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se && P$se) { ## get standard errors for fit
 ## shape constrained supplement...
@@ -240,7 +243,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
   n.plots <- n.para
   if (m>0) for (i in 1:m) n.plots <- n.plots + as.numeric(pd[[i]]$plot.me) 
 
-  if (n.plots==0) stop("No terms to plot - nothing for plot.gam() to do.")
+  if (n.plots==0) stop("No terms to plot - nothing for plot.scam() to do.")
 
   if (pages>n.plots) pages<-n.plots
   if (pages<0) pages<-0

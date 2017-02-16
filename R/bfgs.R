@@ -160,7 +160,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    rho1 <- rho
    old.rho <- rho
    not.exp <- G$not.exp
-   b <- fn(rho,G,gamma=1, env, check.analytical=FALSE, del) 
+   b <- fn(rho,G,gamma=gamma, env, check.analytical=FALSE, del) 
    old.score <- score <- b$gcv.ubre
    score.plot <- rep(0,200) ## for plotting the gcv
    score.plot[1] <- score
@@ -170,7 +170,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
       {  B <- matrix(0,n.pen,n.pen)
          for (j in 1:n.pen) 
            {  rho2 <- rho; rho2[j] <- rho[j] + 1e-6
-              b2 <- fn(rho2,G,gamma=1,env,check.analytical=FALSE, del) 
+              b2 <- fn(rho2,G,gamma=gamma,env,check.analytical=FALSE, del) 
               B[,j] <- (b2$dgcv.ubre - grad)/1e-6   
            }
          B <- B + t(B)
@@ -210,7 +210,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          curv.condition <- TRUE
          repeat 
              {  rho1 <- rho + alpha*Nstep 
-                b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE, del) 
+                b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE, del) 
                 score1 <- b$gcv.ubre
                 if (score1 <= score+c1*alpha*initslope) 
                    {   grad1 <- b$dgcv.ubre
@@ -224,7 +224,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                            old.score1 <- score1
                                            alpha <- min(2*alpha, maxalpha)
                                            rho1 <- rho + alpha*Nstep
-                                           b <- fn(rho=rho1,G,gamma=1, env,
+                                           b <- fn(rho=rho1,G,gamma=gamma, env,
                                                 check.analytical=FALSE, del) 
                                            score1 <- b$gcv.ubre
                                            if (score1 <= score+c1*alpha*initslope)
@@ -256,7 +256,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                                   alpha.incr <- 0.2*alpha.diff
                                             alpha <- alpha.lo+alpha.incr
                                             rho1 <- rho + alpha*Nstep
-                                            b <- fn(rho=rho1,G,gamma=1, env,
+                                            b <- fn(rho=rho1,G,gamma=gamma, env,
                                                   check.analytical=FALSE, del) 
                                             score1 <- b$gcv.ubre
                                             if (score1 > score+c1*alpha*initslope)
@@ -281,7 +281,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                          {   curv.condition <- FALSE
                                              score1 <- sc.lo
                                              rho1 <- rho + alpha.lo*Nstep
-                                             b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE, del) 
+                                             b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE, del) 
                                           } 
                                   } ## end of "if ((alpha < 1) || (alpha>1 && ..."
                            }  ## end of "if (newslope < 0.9*initslope) ..."
@@ -294,7 +294,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                 else if (alpha < minalpha) ## no satisfactory rho+ can be found suff-ly distinct from previous rho
                     {   retcode <- 1
                         rho1 <- rho
-                        b <- fn(rho=rho1,G,gamma=1,env,check.analytical=FALSE,del)  
+                        b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE,del)  
                      }
                 else   ## backtracking to satisfy the sufficient decrease condition...
                     {   ii <- ii+1
