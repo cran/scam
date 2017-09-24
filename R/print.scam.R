@@ -13,14 +13,15 @@ print.scam <- function (x,...)
     else {
         edf <- 0
         cat("\nEstimated degrees of freedom:\n")
-        for (i in 1:n.smooth) edf[i] <-  sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
-        edf.str <- format(edf, digits = 3)
+        for (i in 1:n.smooth) 
+           edf[i] <-  sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
+        edf.str <- format(round(edf,digits=4),digits=3,scientific=FALSE) 
         for (i in 1:n.smooth) {
             cat(edf.str[i], " ", sep = "")
             if (i%%7 == 0) 
                 cat("\n")
         }
-        cat(" total =", x$trA, "\n")
+        cat(" total =",round(sum(x$edf),digits=2),"\n")    ##  (" total =", x$trA, "\n")
     }
     cat("\n",x$method," score: ", x$gcv.ubre, "\n", sep = "")
     cat("\n")

@@ -9,7 +9,7 @@
 scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
         weights=NULL, offset=NULL, optimizer="bfgs",
             optim.method=c("Nelder-Mead","fd"),
-           scale=0, knots=NULL, devtol=1e-8, steptol=1e-8, check.analytical=FALSE, del=1e-4,
+           scale=0, devtol=1e-8, steptol=1e-8, check.analytical=FALSE, del=1e-4,
               start=NULL, etastart, mustart,keepData=FALSE, not.exp=FALSE)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
    ## devtol - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
@@ -23,7 +23,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    ## Setting from mgcv(gam).......
     
-   G <- gam(formula, family,data=data, knots=knots, fit=FALSE) 
+   G <- gam(formula, family,data, fit=FALSE) 
    n.terms <- length(G$smooth)  ## number of smooth terms in the model
    n <- nrow(G$X)
    intercept <- G$intercept ## TRUE or FALSE
@@ -941,29 +941,6 @@ D3notExp <- function(x) {
 #range((D2notExp(x)-d2)/d2)
 #d3 <- (D2notExp(x+eps)-D2notExp(x))/eps
 #range((D3notExp(x)-d3)/d3)
-
-
-logLik.scam <- function (object,...)
-{  # based on logLik.gam and logLik.glm 
-    sc.p <- as.numeric(object$scale.estimated)
-    p <- sum(object$edf) + sc.p
-    val <- p - object$aic/2
-    #if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
-    #    p <- p + 1
-    np <- length(object$coefficients) + sc.p 
-    if (p > np) p <- np 
-    attr(val, "df") <- p
-    class(val) <- "logLik"
-    val
-} ## logLik.scam
-
-
-formula.scam <- function(x, ...)
-# clone of formula.gam...
-# formula.lm and formula.glm reconstruct the formula from x$terms, this is 
-# problematic because of the way mgcv handles s() and te() terms 
-{ x$formula
-}
 
 
 ###############################################################

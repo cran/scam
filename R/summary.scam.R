@@ -489,7 +489,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
           }
         X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
     
-     } ## end if (!freq)
+       } ## end if (!freq)
 
      for (i in 1:m) { ## loop through smooths
         start <- object$smooth[[i]]$first.para
@@ -526,7 +526,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
            s.pv[i] <- res$pval 
         }
         names(chi.sq)[i]<- object$smooth[[i]]$label
-      
+  
         if (freq) {
           if (!est.disp)
             s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
@@ -536,23 +536,29 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
               if (df[i] < 0.1) s.pv[i] <- NA
         }
       }
+
+      ## rounding output values of edf, df and chi.sq...
+      edf <- round(edf,digits=4)
+      df <- round(df,digits=4)
+      chi.sq <- round(chi.sq,digits=4)    
+
       if (!est.disp) {
         if (freq) {
           s.table <- cbind(edf, df, chi.sq, s.pv)      
           dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "Chi.sq", "p-value"))
         } else {
-          s.table <- cbind(edf, df, chi.sq, s.pv)      
-          dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
-        }
+            s.table <- cbind(edf, df, chi.sq, s.pv)      
+            dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
+          }
      } else {
        if (freq) {
-         s.table <- cbind(edf, df, chi.sq/df, s.pv)      
-         dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "F", "p-value"))
-       } else {
-         s.table <- cbind(edf, df, chi.sq/df, s.pv)      
-         dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
+           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+           dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "F", "p-value"))
+        } else {
+           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+           dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
+          }
        }
-     }
    }
    w <- as.numeric(object$prior.weights)
    mean.y <- sum(w*object$y)/sum(w)

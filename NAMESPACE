@@ -10,6 +10,8 @@ export(scam, bfgs_gcv.ubre,
        check.analytical,
        summary.scam, print.summary.scam, vis.scam,
        anova.scam, print.anova.scam,
+       logLik.scam,
+       formula.scam,
        residuals.scam,
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
@@ -95,6 +97,8 @@ S3method(summary, scam)
 S3method(predict, scam)
 S3method(residuals, scam)
 S3method(anova, scam)
+S3method(formula, scam)
+S3method(logLik, scam)
 S3method(print, anova.scam)
 
 S3method(smooth.construct,mdcv.smooth.spec)

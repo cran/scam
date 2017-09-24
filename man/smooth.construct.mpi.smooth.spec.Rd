@@ -25,9 +25,12 @@
           If it is \code{NULL} then the knot locations are generated automatically.}
 
 }
-%\details{
-%%  ~~ If necessary, more details than the description above ~~
-%}
+\details{
+  The constructor is not called directly, but as with \code{gam(mgcv)} is used internally. 
+
+If the knots of the spline are not supplied, then they are placed evenly throughout the covariate values. If the knots are supplied, then the number of supplied knots should be \code{k+m+2}, and the range of the middle \code{k-m} knots must include all the covariate values.
+
+}
 \value{ An object of class \code{"mpi.smooth"}. 
 }
 \references{
@@ -75,7 +78,38 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    lines(x1$x,exp(f)[x1$ix])      ## the true function
    lines(x1$x,b$fitted.values[x1$ix],col=2)  ## monotone fit 
    lines(x1$x,b1$fitted.values[x1$ix],col=3) ## unconstrained fit 
- 
+
+## example with supplied knots...
+   knots <- list(x=c (-1.5,  -1.2, -.99, -.97, -.7, -.5, -.3, 0, 0.7,  
+           0.9,1.1, 1.22,1.5,2.2,2.77,2.93,2.99, 3.2,3.6))
+   b2 <- scam(y~s(x,k=15,bs="mpi",m=2),knots=knots, 
+          family=poisson(link="log"), data=dat)
+   summary(b2)
+   plot(b2)
+
+\dontrun{
+## example with two terms...
+   set.seed(0)
+   n <- 200
+   x1 <- runif(n)*6-3
+   f1 <- 3*exp(-x1^2) # unconstrained term
+   x2 <- runif(n)*4-1;
+   f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
+   f <- f1+f2
+   y <- f+rnorm(n)*0.1
+   dat <- data.frame(x1=x1,x2=x2,y=y)
+   knots <- list(x1=c(-4,-3.5,-2.99,-2.7,-2.5,-1.9,-1.1,-.9,-.3,0.3,.8,1.2,1.9,2.3,
+2.7,2.99,3.5,4.1), x2=c(-1.5,-1.2,-1.1, -.89,-.69,-.5,-.3,0,0.7, 
+0.9,1.1,1.22,1.5,2.2,2.77,2.99,3.1, 3.2,3.6))
+   b3 <- scam(y~s(x1,k=15,bs="bs",m=2)+s(x2,bs="mpi", k=15,m=2), 
+         knots=knots,data=dat)
+  
+## setting knots for f(x2) only...
+   knots <- list(x2=c(-1.5,-1.2,-1.1, -.89,-.69,-.5,-.3,
+   0,0.7,0.9,1.1,1.22,1.5,2.2,2.77,2.99,3.1, 3.2,3.6))
+   b4 <- scam(y~s(x1,k=15,bs="bs")+s(x2,bs="mpi", k=15),
+       knots=knots,data=dat)
+ }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

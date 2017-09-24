@@ -1,3 +1,18 @@
+1.2-2
+
+* print.scam, summary.scam: changed the printing info about edf, they are now rounded up.
+
+* logLik.scam: function added (clone of logLik.gam (mgcv)). Thanks to Jorge Guevara for raising a question about that.
+
+* scam: bug fix with manually setting knots of the spline. Example added to smooth.construct.mpi.smooth.spec.Rd file. Thanks to Matthew Harris for reporting the issue.  
+
+* formula.scam: function added, returns the scam formula. Thanks to Renke von Seggern for reporting the bug.
+
+* scam.check: bug fix with setting 'pch' explicitly. Thanks to Renke von Seggern for reporting the bug.
+
+* plot.scam: bug fix with plotting the residuals which had a shift of an intercept. Thanks to John Kornak for reporting the bug.
+
+
 1.2-1
 
 * bfgs_gcv.ubre, estimate.scam: bug fix with supplying the value of 'gamma' which was overridden by a default 'gamma=1'. Thanks to Phil Boonstra for reporting the bug and providing an example.

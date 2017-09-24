@@ -1,9 +1,9 @@
 Package: scam
-Version: 1.2-1
+Version: 1.2-2
 Author: Natalya Pya <nat.pya@gmail.com>
 Maintainer: Natalya Pya <nat.pya@gmail.com>
 Title: Shape Constrained Additive Models
-Date: 2017-02-16
+Date: 2017-09-24
 Description: Routines for generalized additive modelling under shape
         constraints on the component functions of the linear predictor
         (Pya and Wood, 2015) <doi:10.1007/s11222-013-9448-7>.
@@ -20,6 +20,6 @@ Suggests: nlme
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: no
-Packaged: 2017-02-16 10:36:17 UTC; natalya
+Packaged: 2017-09-24 12:37:23 UTC; natalya
 Repository: CRAN
-Date/Publication: 2017-02-16 17:27:51
+Date/Publication: 2017-09-24 13:02:32 UTC

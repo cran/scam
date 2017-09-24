@@ -220,9 +220,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       } ## standard errors for fit completed
       if (partial.resids) { 
              P$p.resid <- fv.terms[,length(order)+i] + w.resid 
-             if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth"))){
-                  P$p.resid <- P$p.resid + intercept
-             } 
+         #   if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth"))){ P$p.resid <- P$p.resid + intercept } 
       }
       if (se && P$se) P$se <- se.fit*P$se.mult  # Note multiplier
       P$X <- NULL
