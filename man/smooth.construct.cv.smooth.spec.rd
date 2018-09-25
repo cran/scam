@@ -1,7 +1,5 @@
 \name{smooth.construct.cv.smooth.spec}
-%\Rdversion{1.1-2}
 \alias{smooth.construct.cv.smooth.spec}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for concave P-splines in SCAMs
 }
 \description{This is a special method function
@@ -41,8 +39,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    Natalya Pya <nat.pya@gmail.com>
 
 }
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
 \seealso{
 \code{\link{smooth.construct.cx.smooth.spec}}, 
 \code{\link{smooth.construct.mpi.smooth.spec}}, \code{\link{smooth.construct.mdcv.smooth.spec}}, 

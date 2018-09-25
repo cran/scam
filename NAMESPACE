@@ -37,6 +37,9 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.tedecv.smooth,
        Predict.matrix.tescx.smooth,
        Predict.matrix.tescv.smooth,
+       Predict.matrix.tecvcv.smooth,
+       Predict.matrix.tecxcx.smooth,
+       Predict.matrix.tecxcv.smooth,
        smooth.construct.cv.smooth.spec,
        smooth.construct.cx.smooth.spec,
        smooth.construct.mdcv.smooth.spec,
@@ -57,7 +60,10 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tedecx.smooth.spec,
        smooth.construct.tedecv.smooth.spec,
        smooth.construct.tescx.smooth.spec,
-       smooth.construct.tescv.smooth.spec
+       smooth.construct.tescv.smooth.spec,
+       smooth.construct.tecvcv.smooth.spec,
+       smooth.construct.tecxcx.smooth.spec,
+       smooth.construct.tecxcv.smooth.spec
 )
 
 importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
@@ -122,6 +128,9 @@ S3method(smooth.construct, tedecx.smooth.spec)
 S3method(smooth.construct, tedecv.smooth.spec)
 S3method(smooth.construct, tescx.smooth.spec)
 S3method(smooth.construct, tescv.smooth.spec)
+S3method(smooth.construct, tecvcv.smooth.spec)
+S3method(smooth.construct, tecxcx.smooth.spec)
+S3method(smooth.construct, tecxcv.smooth.spec)
 
 
 S3method(Predict.matrix,cv.smooth)
@@ -145,6 +154,9 @@ S3method(Predict.matrix,tedecx.smooth)
 S3method(Predict.matrix,tedecv.smooth)
 S3method(Predict.matrix,tescx.smooth)
 S3method(Predict.matrix,tescv.smooth)
+S3method(Predict.matrix,tecvcv.smooth)
+S3method(Predict.matrix,tecxcx.smooth)
+S3method(Predict.matrix,tecxcv.smooth)
 
 
 

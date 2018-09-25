@@ -532,9 +532,14 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
             s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
             else
               s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
-              ## p-values are meaningless for very small edf. Need to set to NA
-              if (df[i] < 0.1) s.pv[i] <- NA
+         #     ## p-values are meaningless for very small edf. Need to set to NA
+         #     if (df[i] < 0.1) s.pv[i] <- NA
         }
+        ## p-values are meaningless for very small edf. Need to set to NA  
+        if (df[i] < 0.1) {
+               s.pv[i] <- NA 
+               chi.sq[i] <- NA
+           }
       }
 
       ## rounding output values of edf, df and chi.sq...
@@ -670,7 +675,8 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
     if (length(x$dev.expl) > 0) 
         cat("   Deviance explained = ", formatC(x$dev.expl * 
             100, digits = 3, width = 4), "%\n", sep = "")
-    cat( x$method," score = ", formatC(x$sp.criterion, digits = 5), 
+    if (length(x$sp.criterion) > 0) 
+        cat( x$method," score = ", formatC(x$sp.criterion, digits = 5), 
             sep = "")
     cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
         flag = "-"), "  n = ", x$n, "\n", sep = "")

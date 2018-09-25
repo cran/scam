@@ -1,3 +1,16 @@
+
+1.2-3
+
+* scam.Rd: example with random effect corrected. Thank you to Alan Cobo-Lewis.  
+
+* smooth.construct: three tensor product smoothing constructors for bivariate functions subject to shape constraints were added: 'tecxcx','tecvcv', 'tecxcv'. Thanks to Leire Citores for bringing this up.
+
+* summary.scam: corrected summary info for the test statistic and p-value for very small edf. Also removed line for the score info in case of supplied sp value.
+
+* scam-package.Rd: updated content to be in sync with the actual package metadata in the DESCRIPTION file.
+
+
+
 1.2-2
 
 * print.scam, summary.scam: changed the printing info about edf, they are now rounded up.

@@ -140,7 +140,8 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                 }
 ### addition for double and single monotonicity...
         if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth",                     "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth","temicx.smooth",
-"temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth")))
+"temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth",
+"tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                    { p.ident <- x$p.ident[first:last]
                      ii <- p.ident == 1
                      count <- sum(ii) ## the number of exponentiated parameters 
@@ -159,7 +160,8 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      R <- qr.R(qrX)
                      qrA <- qr(t(A))
                      q <- ncol(P$X)
-                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth")))
+                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth",
+"tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                      { # get `beta.a' for double monotonicity...
                          R <- R[-1,]
                          RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
@@ -199,7 +201,8 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                         Vp.c[1,] <- rep(0,ncol(Vp))
                         se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
         } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",  "tesmi1.smooth", "tesmi2.smooth","tesmd1.smooth", "tesmd2.smooth","temicx.smooth",
-"temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth"))) {
+"temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth",
+"tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
                           XZa <- t(qr.qty(qrA,t(P$X)))[,2:ncol(P$X)]
                           Ga <- XZa%*%RZaR%*%x$smooth[[i]]$Zc
                           Vp <- x$Vp.t[first:last,first:last] 

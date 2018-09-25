@@ -53,5 +53,7 @@ scam.check(b,pch=19,cex=.3)
  }
 }
 
-\keyword{models} \keyword{smooth} \keyword{regression} %-- one or more ..
+\keyword{models} 
+\keyword{smooth} 
+\keyword{regression} %-- one or more ..
 

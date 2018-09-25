@@ -173,7 +173,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 ### added code specific for scam....
 	if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth",
 "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
-"tedecv.smooth")))
+"tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
            X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
       else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tesmi2.smooth","tesmd1.smooth",
                   "tesmd2.smooth","tescx.smooth","tescv.smooth")))  # for single monotonicity...
@@ -240,7 +240,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                           se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
                }
                else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth", 
-                       "tesmi1.smooth", "tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth", "tescx.smooth", "tescv.smooth"))) {
+                       "tesmi1.smooth", "tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth", "tescx.smooth", "tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
                                 # X0 - model matrix of the original data....
                         object.X <- model.matrix(object)
                         X0 <- cbind(rep(1,nrow(object.X)),object.X[,first:last]) 
@@ -254,7 +254,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                         R <- qr.R(qrX)
                         qrA <- qr(t(A))
                         q <- ncol(X0)
-                       if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth")))
+                       if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth", "temicx.smooth","temicv.smooth","tedecx.smooth","tedecv.smooth",
+"tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                           { # get RZaR for double monotonicity...
                             R <- R[-1,]
                             RZa <- t(qr.qty(qrA,t(R)))[,2:q] 

@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.2-0}
+% \Rdversion{1.2-3}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -400,7 +400,7 @@ plot(b)
    f <- f1+f2
    a <- factor(sample(1:10,200,replace=TRUE))   
    Xa <- model.matrix(~a-1)    ## random main effects
-   y <- f + Xa%*%rnorm(10)*.5 + rnorm(n)*0.1  
+   y <- f + Xa\%*\%rnorm(length(levels(a)))*.5 + rnorm(n)*0.1    
    dat <- data.frame(x1=x1,x2=x2,y=y,a=a)
    ## fit model and plot...
    b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2)+s(a,bs="re"), data=dat)

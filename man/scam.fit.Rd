@@ -1,9 +1,6 @@
 \name{scam.fit}
-%\Rdversion{1.0}
 \alias{scam.fit}
-
 \title{Newton-Raphson method to fit SCAM}
-
 \description{
 This routine estimates SCAM coefficients given log smoothing parameters using the Newton-Raphson method.
 The estimation of the smoothing parameters by the GCV/UBRE score optimization is outer to the model fitting. Routine 
@@ -47,8 +44,6 @@ scam.fit(G, sp, maxit=200, devtol=1e-8, steptol=1e-8, gamma=1, start=NULL,
 The routine applies step halving to any step that increases the
 penalized deviance substantially.
 }
-
-
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
@@ -66,7 +61,6 @@ models. Journal of the Royal Statistical Society (B) 73(1):3-36
 Natalya Pya <nat.pya@gmail.com>
 
 }
-
 \seealso{\code{\link{scam}}}
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
