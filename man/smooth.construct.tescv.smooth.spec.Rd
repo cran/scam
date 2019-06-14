@@ -58,13 +58,13 @@ Natalya Pya <nat.pya@gmail.com>
  \dontrun{
 ## tensor product `tescv' example 
   ## simulating data...
-   set.seed(2)
+   set.seed(5)
    n <- 30
    x1 <- sort(runif(n))
    x2 <- sort(2*runif(n)-1)
    f1 <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- 2*sin(pi*x1[i]) - 4*x2[j]^2}
+        f1[i,j] <- sin(2*x1[i]) - 4*x2[j]^2
    f1 <- as.vector(t(f1))
    f <- (f1-min(f1))/(max(f1)-min(f1))
    y <- f+rnorm(length(f))*0.1
@@ -82,7 +82,14 @@ Natalya Pya <nat.pya@gmail.com>
    plot(b,pers=TRUE, theta = 50, phi = 20) 
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
    x11()
-   vis.scam(b, theta=30)
+   vis.scam(b, theta = 50, phi = 20)
+   ## plotting the truth...
+   x11()
+   x1 <- seq(min(x1),max(x1),length.out=30)
+   x2 <-  seq(min(x2),max(x2),length.out=30)
+   f1 <- matrix(0,n,n)
+   for (i in 1:n) for (j in 1:n) f1[i,j] <- sin(2*x1[i]) - 4*x2[j]^2
+   persp(x1,x2,f1,theta = 50, phi = 20)  
  }
 }
 

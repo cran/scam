@@ -8,7 +8,7 @@
          model and compares it with the analytical gradient. 
 }
 \usage{
-check.analytical(object, data, del=1e-6)
+check.analytical(object, data, del=1e-6,control)
 }
 \arguments{
  
@@ -18,12 +18,14 @@ check.analytical(object, data, del=1e-6)
 
   \item{del}{A positive scalar (default is 1e-6) giving an increment for finite difference approximation.} 
 
+   \item{control}{Control option list as returned by \code{\link{scam.control}}.}
 }
 
 
 \value{A list is returned with the following items:
 
   \item{dgcv.ubre.fd}{The finite-difference approximation of the gradient.}
+
   \item{check.grad}{The relative difference in percentage between the analytical
            and finite differenced derivatives.}
 

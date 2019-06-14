@@ -3,7 +3,7 @@
 export(scam, bfgs_gcv.ubre, 
        derivative.scam, 
        gcv.ubre_grad,
-       scam.check,
+       scam.check, scam.control,
        scam.fit, 
        plot.scam, predict.scam, 
        print.scam,

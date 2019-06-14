@@ -44,7 +44,7 @@ f2 <- function(x) { ## the coefficient function
 }
 f <- f2(x) 
 plot(x,f ,type="l")
-y <- L%*%f + rnorm(200)*20 ## simulated response data
+y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 X <- matrix(x,200,100,byrow=TRUE) 
 
 b <- scam(y~s(X,by=L,k=20,bs="mpd")) 
@@ -64,7 +64,7 @@ f2 <- function(x) { ## the coefficient function
 }
 f <- f2(x) 
 plot(x,f ,type="l")
-y <- L%*%f + rnorm(200)*20 ## simulated response data
+y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 X <- matrix(x,200,100,byrow=TRUE) 
 
 b <- scam(y~s(X,by=L,k=20,bs="mpi")) 

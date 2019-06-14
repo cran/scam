@@ -60,10 +60,10 @@ Natalya Pya <nat.pya@gmail.com>
    set.seed(2)
    n <- 30
    x1 <- sort(runif(n))
-   x2 <- sort(runif(n))
+   x2 <- sort(2*runif(n)-1)
    f1 <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- 2*sin(pi*x1[i]) + 2*exp(x2[j]-0.5)}
+        f1[i,j] <- sin(x1[i]) + 2*x2[j]^2 
    f1 <- as.vector(t(f1))
    f <- (f1-min(f1))/(max(f1)-min(f1))
    y <- f+rnorm(length(f))*0.1
@@ -72,16 +72,23 @@ Natalya Pya <nat.pya@gmail.com>
    x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
-## fit model ...
+   ## fit model ...
    b <- scam(y~s(x1,x2,k=c(10,10),bs="tescx",m=2),
             family=gaussian(), data=dat)
-## plot results ...
+   ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE, theta = 50, phi = 20) 
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
    x11()
-   vis.scam(b, theta=30)
+   vis.scam(b, theta = 50, phi = 20)
+   ## plotting the truth...
+   x11()
+   x1 <- seq(min(x1),max(x1),length.out=30)
+   x2 <-  seq(min(x2),max(x2),length.out=30)
+   f1 <- matrix(0,n,n)
+   for (i in 1:n) for (j in 1:n) f1[i,j] <- sin(x1[i]) + 2*x2[j]^2 
+   persp(x1,x2,f1,theta = 50, phi = 20) 
  }
 }
 

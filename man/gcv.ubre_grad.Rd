@@ -13,8 +13,8 @@ with respect to the log smoothing parameter using the method of Wood (2009).
 The function is not normally called directly, but rather service routines for \code{\link{bfgs_gcv.ubre}}.
 }
 \usage{
-gcv.ubre_grad(rho, G, gamma, env, 
-                             check.analytical, del)
+gcv.ubre_grad(rho, G, gamma, env, check.analytical=FALSE, del, maxit, maxHalf.fit, 
+              devtol.fit, steptol.fit)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,16 +33,32 @@ gcv.ubre_grad(rho, G, gamma, env,
   \item{del}{A positive scalar (default is 1e-4) giving an increment for finite difference approximation when 
              \code{check.analytical=TRUE}, otherwise \code{NULL}.} 
 
+  \item{maxit}{Maximum number of IRLS iterations to perform used in \code{\link{scam.fit}}.}
+
+  \item{maxHalf.fit}{If a step of  the Newton-Raphson optimization method leads 
+                  to a worse penalized deviance, then the step length of the model coefficients is halved. This is
+                  the number of halvings to try before giving up used in \code{\link{scam.fit}}.}
+
+  \item{devtol.fit}{A positive scalar giving the convergence control for the model fitting algorithm in \code{\link{scam.fit}}.}
+
+  \item{steptol.fit}{A positive scalar giving the tolerance at which the scaled distance between
+        two successive iterates is considered close enough to zero to terminate the model fitting algorithm in \code{\link{scam.fit}}.}
+
 }
 
 
 \value{A list is returned with the following items:
 
   \item{dgcv.ubre}{The value of GCV/UBRE gradient.}
+
   \item{gcv.ubre}{The GCV/UBRE score value.}
+
   \item{scale.est}{The value of the scale estimate.}
+
   \item{object}{The elements of the fitting procedure \code{monogam.fit} for a given value of the smoothing parameter.}
+
   \item{dgcv.ubre.check}{If \code{check.analytical=TRUE} this returns the finite-difference approximation of the gradient.}
+
   \item{check.grad}{If \code{check.analytical=TRUE} this returns the relative difference (in %) between the analytical
            and finite differenced derivatives.}
 
@@ -67,7 +83,7 @@ Natalya Pya <nat.pya@gmail.com>
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{scam}}, \code{\link{bfgs_gcv.ubre}}
+\code{\link{scam}}, \code{\link{scam.fit}}, \code{\link{bfgs_gcv.ubre}}
 }
 
 

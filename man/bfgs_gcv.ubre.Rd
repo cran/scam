@@ -13,8 +13,7 @@ The function is not normally called directly, but rather service routines for \c
 \usage{
 bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
         n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
-        steptol= 1e-7, gradtol = 6.0554*1e-06, maxNstep = 5, 
-        maxHalf = 30, check.analytical, del) 
+        control) 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -38,22 +37,7 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
 
   \item{typf}{A positive scalar estimating the magnitude of the gcv near the minimum.}
 
-  \item{steptol}{A positive scalar giving the tolerance at which the scaled distance between
-        two successive iterates is considered close enough to zero to terminate the algorithm.}
- 
-  \item{gradtol}{A scalar giving a tolerance at which the gradient is considered
-           to be close enougth to 0 to terminate the algorithm.}
-
-  \item{maxNstep}{A positive scalar which gives the maximum allowable step length.}
-
-
-  \item{maxHalf}{A positive scalar which gives the maximum number of step halving 
-                in "backtracking".}
-
-  \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated.} 
-
-  \item{del}{A positive scalar (default is 1e-4) giving an increment for finite difference approximation when 
-             \code{check.analytical=TRUE}.}
+  \item{control}{Control option list as returned by \code{\link{scam.control}}.}
  
 }
 % \details{
@@ -62,10 +46,15 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
 \value{A list is returned with the following items:
 
   \item{gcv.ubre}{The optimal value of GCV/UBRE.}
+
   \item{rho}{The best value of the log smoothing parameter.}
+
   \item{dgcv.ubre}{The gradient of the GCV/UBRE.}
+
   \item{iterations}{The number of iterations taken until convergence.}
+
   \item{conv.bfgs}{Convergence information indicating why the BFGS terminated (given below).}
+
   \item{termcode}{ An integer code indicating why the optimization process
           terminated.
 
@@ -86,8 +75,10 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
           5: five consecutive steps of length \code{maxNstep} have been taken, it's possible that `maxstep' is too small.
               }
   \item{object}{A list of elements returned by the fitting procedure \code{scam.fit} for an optimal value of the smoothing parameter.}
+
   \item{dgcv.ubre.check}{If \code{check.analytical=TRUE} this is the finite-difference approximation of the gradient calculated by
                             \code{\link{gcv.ubre_grad}}, otherwise \code{NULL}.} 
+
   \item{check.grad}{If \code{check.analytical=TRUE} this is the relative difference (in %) between the analytical
            and finite differenced derivatives calculated by \code{\link{gcv.ubre_grad}}, otherwise \code{NULL}.} 
 }

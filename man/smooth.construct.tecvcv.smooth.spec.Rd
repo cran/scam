@@ -57,7 +57,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
  \dontrun{
 ## tensor product `tecvcv' example 
   ## simulating data...
-   set.seed(2)
+   set.seed(3)
    n <- 30
    x1 <- sort(2*runif(n)-1)
    x2 <- sort(2*runif(n)-1)
@@ -79,9 +79,11 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
    plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
    x11()
-   vis.scam(b, theta=30)
+   vis.scam(b, theta=30,phi=40)
    ## plotting the truth...
-   x1 <- x2 <- seq(-1,1,length.out=30)
+   x11()
+   x1 <- seq(min(x1),max(x1),length.out=30)
+   x2 <- seq(min(x2),max(x2),length.out=30)
    f1 <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) f1[i,j] <- -4*(x1[i]^2+x2[j]^2)     
    persp(x1,x2,f1,theta = 30, phi = 40)  

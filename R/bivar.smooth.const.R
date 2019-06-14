@@ -1397,11 +1397,11 @@ Predict.matrix.temicv.smooth <- function(object, data)
 
 #################################################################
 ## Tensor product P-spline construction with mixed constraints: 
-## decreasing wrt the 1st covariate and convex wrt the second covariate ...
+## decreasing wrt the 1st covariate and concave wrt the second covariate ...
 ##############################################################
 
 
-smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
+smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with mixed constraints: decreasing
 ## wrt the 1st covariate and convex wrt the 2nd one...
 { 
@@ -1510,21 +1510,21 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
   
-  ## store "tedecx" specific stuff ...
+  ## store "tedecv" specific stuff ...
   object$knots <- list()
   object$knots[[1]] <- xk
   object$knots[[2]] <- zk
   object$m <- m
    
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
-  class(object)<-"tedecx.smooth"  # Give object a class
+  class(object)<-"tedecv.smooth"  # Give object a class
   object
 }
 
 ####################################################################
 
-Predict.matrix.tedecx.smooth <- function(object, data)
-{  ## prediction method function for the `tedecx' smooth class
+Predict.matrix.tedecv.smooth <- function(object, data)
+{  ## prediction method function for the `tedecv' smooth class
   if (length(object$bs.dim)==1)
       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths
@@ -1554,11 +1554,11 @@ Predict.matrix.tedecx.smooth <- function(object, data)
 
 ################################################################
 ## Tensor product P-spline construction with mixed constraints:
-## decreasing wrt the 1st covariate and concave wrt the 2nd covariate ...
+## decreasing wrt the 1st covariate and convex wrt the 2nd covariate ...
 #################################################################
 
 
-smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
+smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with mixed constraints: decreasing
 ## wrt the first covariate and concave wrt the 2nd one...
 { 
@@ -1667,21 +1667,21 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
   
-  ## store "tedecv" specific stuff ...
+  ## store "tedecx" specific stuff ...
   object$knots <- list()
   object$knots[[1]] <- xk
   object$knots[[2]] <- zk
   object$m <- m
    
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
-  class(object)<-"tedecv.smooth"  # Give object a class
+  class(object)<-"tedecx.smooth"  # Give object a class
   object
 }
 
 ####################################################################
 
-Predict.matrix.tedecv.smooth <- function(object, data)
-{  ## prediction method function for the `tedecv' smooth class
+Predict.matrix.tedecx.smooth <- function(object, data)
+{  ## prediction method function for the `tedecx' smooth class
   if (length(object$bs.dim)==1)
       q1 <- q2 <- object$bs.dim # if `k' is supplied as a single number, the same
              ## basis dimension is provided for both marginal smooths

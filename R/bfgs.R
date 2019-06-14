@@ -7,7 +7,7 @@
 ## function to get the gcv/ubre value and their gradient    ##
 ##############################################################
 
-gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del)
+gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del,maxit,maxHalf.fit, devtol.fit, steptol.fit)
  { ## G - object from scam setup via gam(..., fit=FALSE) 
    ## rho - logarithm of the smoothing parameters
    ## gamma - an ad hoc parametrer of the GCV
@@ -24,7 +24,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del)
    if (length(rho)!=n.pen) stop (paste("length of rho and # penalties has to be the same"))
    sp <- exp(rho)
    ## fit the model with the given values of the smoothing parameters...
-   b <- scam.fit(G=G,sp=sp, env=env) 
+   b <- scam.fit(G=G,sp=sp, env=env,gamma=gamma,maxit=maxit, maxHalf.fit=maxHalf.fit,devtol.fit=devtol.fit, steptol.fit=steptol.fit) 
    n <- nrow(b$X)
    q <- ncol(b$X)
    y.mu <- y-b$mu
@@ -107,14 +107,15 @@ gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del)
    ## checking the derivatives by finite differences-----------
    dgcv.ubre.check <- NULL
    if (check.analytical)
-      {  del <- 1e-4
+      {  ##del <- del #1e-4
          sp1 <- rep(0,n.pen)
          dbeta.check <- matrix(0,q,n.pen)
          dtrA.check <- rep(0,n.pen)
          dgcv.ubre.check <- rep(0,n.pen)
          for (j in 1:n.pen)
             {  sp1 <- sp; sp1[j] <- sp[j]*exp(del)
-               b1 <- scam.fit(G=G,sp=sp1, env) 
+               b1 <- scam.fit(G=G,sp=sp1, env=env,gamma=gamma,maxit=maxit,maxHalf.fit=maxHalf.fit,devtol.fit=devtol.fit,
+                               steptol.fit=steptol.fit) 
                ## calculating the derivatives of beta estimates by finite differences...
                dbeta.check[,j] <- (b1$beta - b$beta)/del
                ## calculating the derivatives of the trA by finite differences...
@@ -140,27 +141,30 @@ gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del)
 #####################################################
 
 bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
-              n.pen=length(rho), typx=rep(1,n.pen), typf=1, steptol= 1e-7, 
-            gradtol = 6.0554*1e-06, maxNstep = 5, maxHalf = 30, 
-            check.analytical, del)  
+              n.pen=length(rho), typx=rep(1,n.pen), typf=1, control)
+             ## steptol.bfgs= 1e-7, gradtol.bfgs = 6.0554*1e-06, maxNstep = 5, maxHalf = 30, check.analytical, del, devtol.fit, steptol.fit)  
 {  ## fn - GCV/UBRE Function which returs the GCV/UBRE value and its derivative wrt log(sp)
    ## rho - log of the initial values of the smoothing parameters
    ## ini.fd - if TRUE, a finite difference to the Hessian is used to find the initial inverse Hessian
    ## typx - vector whose component is a positive scalar specifying the typical magnitude of sp
    ## typf - a positive scalar estimating the magnitude of the gcv near the minimum
-   ## gradtol - a scalar giving a tolerance at which the gradient is considered
-   ##            to be close enougth to 0 to terminate the algorithm
-   ## steptol - a positive scalar giving the tolerance at which the scaled distance between
-   ##          two successive iterates is considered close enough to zero to terminate the algorithm 
+   ## gradtol.bfgs - a scalar giving a tolerance at which the gradient is considered
+   ##            to be close enougth to 0 to terminate the BFGS algorithm
+   ## steptol.bfgs - a positive scalar giving the tolerance at which the scaled distance between
+   ##          two successive iterates is considered close enough to zero to terminate the BFGS algorithm 
    ## maxNstep - a positive scalar which gives the maximum allowable step length
    ## maxHalf - a positive scalar which gives the maximum number of step halving in "backtracking"
+   ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
+   ## del - increment for finite differences when checking analytical gradients
+   ## devtol.fit, steptol.fit - scalars giving the tolerance for the full Newton methods to estimate model coefficients
    
    Sp <- 1/typx     # diagonal of the scaling matrix 
    ## storage for solution track
    rho1 <- rho
    old.rho <- rho
    not.exp <- G$not.exp
-   b <- fn(rho,G,gamma=gamma, env, check.analytical=FALSE, del) 
+   b <- fn(rho,G,gamma=gamma, env, check.analytical=control$bfgs$check.analytical, del=control$bfgs$del, maxit=control$maxit,
+            maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
    old.score <- score <- b$gcv.ubre
    score.plot <- rep(0,200) ## for plotting the gcv
    score.plot[1] <- score
@@ -170,7 +174,9 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
       {  B <- matrix(0,n.pen,n.pen)
          for (j in 1:n.pen) 
            {  rho2 <- rho; rho2[j] <- rho[j] + 1e-6
-              b2 <- fn(rho2,G,gamma=gamma,env,check.analytical=FALSE, del) 
+              b2 <- fn(rho2,G,gamma=gamma,env,check.analytical=control$bfgs$check.analytical, del=control$bfgs$del, 
+                        maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit, 
+                        steptol.fit=control$steptol.fit) 
               B[,j] <- (b2$dgcv.ubre - grad)/1e-6   
            }
          B <- B + t(B)
@@ -182,7 +188,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    else  
         B <- diag(n.pen)*100
    score.scale <- b$scale.est + score  ## ??? for UBRE
-   unconv.ind <- abs(grad) > score.scale*gradtol # checking the gradient is within the tolerance
+   unconv.ind <- abs(grad) > score.scale*control$bfgs$gradtol.bfgs # checking the gradient is within the tolerance
    if (!sum(unconv.ind))  ## if at least one is false
          unconv.ind <- unconv.ind | TRUE
    consecmax <- 0
@@ -193,15 +199,15 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          Nstep[unconv.ind] <- -drop(B[unconv.ind, unconv.ind]%*%grad[unconv.ind])
          Dp <- Sp*Nstep
          Newtlen <- (sum(Dp^2))^.5  ## Euclidean norm to get the Newton step
-         if (Newtlen > maxNstep)  ## reduce if ms is greater than the max allowable
-            {  Nstep <- maxNstep*Nstep/Newtlen
-               Newtlen <- maxNstep
+         if (Newtlen > control$bfgs$maxNstep)  ## reduce if ms is greater than the max allowable
+            {  Nstep <- control$bfgs$maxNstep*Nstep/Newtlen
+               Newtlen <- control$bfgs$maxNstep
             }
          maxtaken <- FALSE
          retcode <- 2
          initslope <- sum(grad * Nstep) ## initial slope
          rellength <- max(abs(Nstep)/max(abs(rho),1/Sp)) ## relative length of rho for the stopping criteria
-         minalpha <- steptol/rellength
+         minalpha <- control$bfgs$steptol.bfgs/rellength
          c1 <- 1e-4   ## constant for the sufficient decrease condition 
          alpha <- 1   ## initialize step length
          ii <- 0 ## initialize the number of "step halving"
@@ -210,22 +216,25 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          curv.condition <- TRUE
          repeat 
              {  rho1 <- rho + alpha*Nstep 
-                b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE, del) 
+                b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=control$bfgs$check.analytical, del=control$bfgs$del, 
+                         maxit=control$maxit,maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit, 
+                         steptol.fit=control$steptol.fit) 
                 score1 <- b$gcv.ubre
                 if (score1 <= score+c1*alpha*initslope) 
                    {   grad1 <- b$dgcv.ubre
                        newslope <- sum(grad1 * Nstep)
                        curv.condition <- TRUE
                        if (newslope < 0.9*initslope) # the curvature condition is not satisfied
-                          {   if (alpha == 1 && Newtlen < maxNstep)
-                                 {   maxalpha <- maxNstep/Newtlen
+                          {   if (alpha == 1 && Newtlen < control$bfgs$maxNstep)
+                                 {   maxalpha <- control$bfgs$maxNstep/Newtlen
                                      repeat 
                                         {  old.alpha <- alpha
                                            old.score1 <- score1
                                            alpha <- min(2*alpha, maxalpha)
                                            rho1 <- rho + alpha*Nstep
-                                           b <- fn(rho=rho1,G,gamma=gamma, env,
-                                                check.analytical=FALSE, del) 
+                                           b <- fn(rho=rho1,G,gamma=gamma, env, check.analytical=control$bfgs$check.analytical, 
+                                                    del=control$bfgs$del, maxit=control$maxit,maxHalf.fit =control$maxHalf.fit,
+                                                    devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
                                            score1 <- b$gcv.ubre
                                            if (score1 <= score+c1*alpha*initslope)
                                               {   grad1 <- b$dgcv.ubre
@@ -257,7 +266,9 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                             alpha <- alpha.lo+alpha.incr
                                             rho1 <- rho + alpha*Nstep
                                             b <- fn(rho=rho1,G,gamma=gamma, env,
-                                                  check.analytical=FALSE, del) 
+                                                    check.analytical=control$bfgs$check.analytical, del=control$bfgs$del,
+                                                     maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, 
+                                                     devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
                                             score1 <- b$gcv.ubre
                                             if (score1 > score+c1*alpha*initslope)
                                                {  alpha.diff <- alpha.incr
@@ -281,20 +292,24 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                          {   curv.condition <- FALSE
                                              score1 <- sc.lo
                                              rho1 <- rho + alpha.lo*Nstep
-                                             b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE, del) 
+                                             b <- fn(rho=rho1,G,gamma=gamma,env, check.analytical=control$bfgs$check.analytical,
+                                                  del=control$bfgs$del, maxit=control$maxit, maxHalf.fit =control$maxHalf.fit,
+                                                  devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
                                           } 
                                   } ## end of "if ((alpha < 1) || (alpha>1 && ..."
                            }  ## end of "if (newslope < 0.9*initslope) ..."
                        retcode <- 0
                        if (newslope < 0.9*initslope) ## couldn't satisfy curvature condition
                              curv.condition <- FALSE
-                       if (alpha*Newtlen > 0.99*maxNstep)  
+                       if (alpha*Newtlen > 0.99*control$bfgs$maxNstep)  
                              maxtaken <- TRUE
                    } ## end of "if (score1 <= ...) ..."
                 else if (alpha < minalpha) ## no satisfactory rho+ can be found suff-ly distinct from previous rho
                     {   retcode <- 1
                         rho1 <- rho
-                        b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=FALSE,del)  
+                        b <- fn(rho=rho1,G,gamma=gamma,env,check.analytical=control$bfgs$check.analytical, del=control$bfgs$del,
+                                maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit,
+                                steptol.fit=control$steptol.fit)  
                      }
                 else   ## backtracking to satisfy the sufficient decrease condition...
                     {   ii <- ii+1
@@ -325,7 +340,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                         if (alpha.temp <= 0.1*alpha) alpha <- 0.1*alpha
                         else alpha <- alpha.temp 
                     }
-                if (ii == maxHalf)
+                if (ii == control$bfgs$maxHalf)
                     break
                 if (retcode < 2)
                     break 
@@ -346,7 +361,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          ## skip update if `step' is sufficiently close to B%*%yg ...
          for (i in 1:n.pen)
              {  closeness <- step[i]-B[i,]%*%yg  
-                if (abs(closeness) >= gradtol*max(abs(grad[i]),abs(old.grad[i])))   
+                if (abs(closeness) >= control$bfgs$gradtol.bfgs*max(abs(grad[i]),abs(old.grad[i])))   
                      skipupdate <- FALSE
              }
          ## skip update if curvature condition is not satisfied...
@@ -361,9 +376,9 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          termcode <- 0
          if (retcode ==1) 
                termcode <- 3
-         else if (max(abs(grad)*max(abs(rho),1/Sp)/max(abs(score),typf))<= gradtol)
+         else if (max(abs(grad)*max(abs(rho),1/Sp)/max(abs(score),typf))<= control$bfgs$gradtol.bfgs)
                termcode <- 1
-         else if (max(abs(rho-old.rho)/max(abs(rho),1/Sp))<= steptol)
+         else if (max(abs(rho-old.rho)/max(abs(rho),1/Sp))<= control$bfgs$steptol.bfgs)
                termcode <- 2
          else if (i==200) 
                termcode <- 4 
@@ -379,10 +394,10 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          else  ## if not converged...
              {   converged <- TRUE
                  score.scale <- b$scale.est + score
-                 unconv.ind <- abs(grad) > score.scale * gradtol
+                 unconv.ind <- abs(grad) > score.scale * control$bfgs$gradtol.bfgs
                  if (sum(unconv.ind))
                         converged <- FALSE
-                 if (abs(old.score - score) > score.scale*gradtol) 
+                 if (abs(old.score - score) > score.scale*control$bfgs$gradtol.bfgs) 
                      {  if (converged)
                             unconv.ind <- unconv.ind | TRUE
                         converged <- FALSE
@@ -404,5 +419,128 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    list (gcv.ubre=score, rho=rho, dgcv.ubre=grad, iterations=i, B=B, conv.bfgs = ct, object=b$object, score.plot=score.plot[1:(i+1)], termcode = termcode, check.grad= b$check.grad,
        dgcv.ubre.check = b$dgcv.ubre.check) 
 } ## end bfgs_gcv.ubre
+
+##################################################
+## Extended Fellner-Schall method for scam...
+#################################################
+
+efsudr.scam <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NULL,mustart=NULL,
+                   U1=diag(ncol(x)), intercept = TRUE,scale=1,Mp=-1,control=gam.control(),n.true=-1,...) {
+## Extended Fellner-Schall method for regular and extended families,
+## with PIRLS performed by gam.fit3/4.
+## tr(S^-S_j) is returned by ldetS1, rV %*% t(rV)*scale is 
+## cov matrix. I think b'S_jb will need to be  computed here.
+  nsp <- length(UrS)
+  if (inherits(family,"extended.family")) {
+    spind <- family$n.theta + 1:nsp
+    thind <- if (family$n.theta>0) 1:family$n.theta else rep(0,0)
+  } else {
+    thind <- rep(0,0)
+    spind <- 1:nsp ## index of smoothing params in lsp
+  }
+  estimate.scale <- (length(lsp)>max(spind))
+  lsp[spind] <- lsp[spind] + 2.5 
+  mult <- 1
+  fit <- gam.fit3(x=x, y=y, sp=lsp, Eb=Eb,UrS=UrS,
+            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
+            control = control, intercept = intercept,deriv=0,
+            gamma=1,scale=scale,scoreType="EFS",
+            n.true=n.true,...)
+  if (length(thind)>0) lsp[thind] <- family$getTheta()
+  if (estimate.scale) lsp[length(lsp)] <- log(fit$scale)
+  ## Also need scale estimate. OK from gam.fit3, but gam.fit4 version probably needs correcting
+  ## for edf, as obtained via MLE.
+  p <- ncol(x)
+  n <- nrow(x)
+  score.hist <- rep(0,200)
+  
+  bSb <- trVS <- rep(0,nsp)
+  for (iter in 1:200) {
+    start <- fit$coefficients
+    Y <- U1[,1:(ncol(U1)-Mp)] ## penalty range space
+    ## project coefs and rV to Y, since this is space of UrS[[i]]
+    Yb <- drop(t(Y)%*%start) 
+    rV <- t(fit$rV) ## so t(rV)%*%rV*scale is cov matrix
+    rVY <- rV %*% Y
+    ## ith penalty is UrS[[i]]%*%t(UrS[[i]])...
+    for (i in 1:length(UrS)) {
+      xx <- Yb %*% UrS[[i]] 
+      bSb[i] <- sum(xx^2)
+      xx <- rVY %*% UrS[[i]]
+      trVS[i] <- sum(xx^2)
+    }
+    edf <- p - sum(trVS*exp(lsp[spind]))
+    if (inherits(family,"extended.family")&&estimate.scale) {
+      fit$scale <- fit$scale*n/(n-edf) ## correct for edf.
+    }
+
+    a <- pmax(0,fit$ldetS1*exp(-lsp[spind]) - trVS) ## NOTE: double check scaling here
+    phi <- if (estimate.scale) fit$scale else scale
+    r <- a/pmax(0,bSb)*phi
+    r[a==0&bSb==0] <- 1
+    r[!is.finite(r)] <- 1e6
+    lsp1 <- lsp
+    lsp1[spind] <- pmin(lsp[spind] + log(r)*mult,control$efs.lspmax)
+    max.step <- max(abs(lsp1-lsp))
+    old.reml <- fit$REML
+    fit <- gam.fit3(x=x, y=y, sp=lsp1, Eb=Eb,UrS=UrS,
+            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
+            control = control, intercept = intercept,deriv=0,mustart=mustart,
+            gamma=1,scale=scale,scoreType="EFS",
+            n.true=n.true,...)
+    if (length(thind)>0) lsp1[thind] <- family$getTheta()
+    if (estimate.scale) lsp1[length(lsp)] <- log(fit$scale)
+    ## some step length control...
+   
+    if (fit$REML<=old.reml) { ## improvement
+      if (max.step<.05) { ## consider step extension (near optimum)
+        lsp2 <- lsp
+        lsp2[spind] <- pmin(lsp[spind] + log(r)*mult*2,control$efs.lspmax) ## try extending step...
+        fit2 <- gam.fit3(x=x, y=y, sp=lsp2, Eb=Eb,UrS=UrS,
+            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
+            control = control, intercept = intercept,deriv=0,mustart=mustart,
+            gamma=1,scale=scale,scoreType="EFS",
+            n.true=n.true,...)
+        if (length(thind)>0) lsp2[thind] <- family$getTheta()
+        if (estimate.scale) lsp2[length(lsp)] <- log(fit$scale)
+        if (fit2$REML < fit$REML) { ## improvement - accept extension
+          fit <- fit2;lsp <- lsp2
+	  mult <- mult * 2
+        } else { ## accept old step
+          lsp <- lsp1
+        }
+      } else lsp <- lsp1
+    } else { ## no improvement 
+      while (fit$REML > old.reml&&mult>1) { ## don't contract below 1 as update doesn't have to improve REML 
+          mult <- mult/2 ## contract step
+	  lsp1 <- lsp
+          lsp1[spind] <- pmin(lsp[spind] + log(r)*mult,control$efs.lspmax)
+	  fit <- gam.fit3(x=x, y=y, sp=lsp1, Eb=Eb,UrS=UrS,
+            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
+            control = control, intercept = intercept,deriv=0,mustart=mustart,
+            gamma=1,scale=scale,scoreType="EFS",
+            n.true=n.true,...)
+	  if (length(thind)>0) lsp1[thind] <- family$getTheta()
+          if (estimate.scale) lsp1[length(lsp)] <- log(fit$scale)
+      }
+      lsp <- lsp1
+      if (mult<1) mult <- 1
+    }
+    score.hist[iter] <- fit$REML
+    ## break if EFS step small and REML change negligible over last 3 steps.
+    if (iter>3 && max.step<.05 && max(abs(diff(score.hist[(iter-3):iter])))<control$efs.tol) break
+    ## or break if deviance not changing...
+    if (iter==1) old.dev <- fit$dev else {
+      if (abs(old.dev-fit$dev) < 100*control$eps*abs(fit$dev)) break
+      old.dev <- fit$dev
+    }
+  }
+  fit$sp <- exp(lsp)
+  fit$niter <- iter
+  fit$outer.info <- list(iter = iter,score.hist=score.hist[1:iter])
+  fit$outer.info$conv <- if (iter==200) "iteration limit reached" else "full convergence"
+  fit
+} ## efsudr
+
 
 

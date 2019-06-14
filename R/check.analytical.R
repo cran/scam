@@ -1,7 +1,7 @@
 ## function to check analytical gradient fo GCV/UBRE...
 
 
-check.analytical <- function(object,data, del=1e-6){
+check.analytical <- function(object,data, del=1e-6,control){
 
     # require(mgcv)
      G<-gam(object$formula,object$family,data,fit=FALSE)
@@ -36,7 +36,8 @@ check.analytical <- function(object,data, del=1e-6){
      for (j in 1:n.pen){
           sp1<- sp; sp1[j]<-sp[j]*exp(del)
 
-           m1 <- scam.fit(G=G, sp=sp1,env=env,devtol=1e-8, steptol=1e-8)
+           m1 <- scam.fit(G=G, sp=sp1,env=env,maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, 
+                          devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit)
 
           if (object$scale.known) gcv.ubre1 <- m1$deviance/n - object$sig2 +2*object$gamma*m1$trA*object$sig2/n
           else gcv.ubre1 <- m1$gcv

@@ -15,9 +15,8 @@
 scam(formula, family = gaussian(), data = list(), gamma = 1, 
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
-      scale = 0, knots=NULL, devtol = 1e-08, steptol= 1e-8,
-      check.analytical=FALSE, del=1e-4, start= NULL, etastart,
-      mustart,keepData=FALSE, not.exp=FALSE)
+      scale = 0, knots=NULL, not.exp=FALSE, start= NULL, etastart,
+      mustart,control=list())
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -47,10 +46,8 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 
   \item{weights}{Prior weights on the data.}
 
-  \item{offset}{Used to supply a model offset for use in fitting. Note
-that this offset will always be completely ignored when predicting, unlike an offset 
-included in \code{formula}. This conforms to the behaviour of
-\code{lm}, \code{glm} and \code{gam}.}
+  \item{offset}{Used to supply a model offset for use in fitting. Note that this offset will always be completely ignored when predicting, unlike an offset 
+                included in \code{formula}. This conforms to the behaviour of \code{lm}, \code{glm} and \code{gam}.}
 
   \item{optimizer}{The numerical optimization method to use to optimize the smoothing 
                    parameter estimation criterion. "bfgs" for the built in to \code{scam} package routine \code{\link{bfgs_gcv.ubre}},
@@ -63,27 +60,19 @@ included in \code{formula}. This conforms to the behaviour of
   \item{scale}{If this is positive then it is taken as the known scale parameter of the exponential family distribution.
      Negative value indicates that the scale paraemter is unknown. 0 indicates that the scale parameter is 1  for Poisson and binomial
     and unknown otherwise. This conforms to the behaviour of \code{gam}.} 
-  \item{knots}{An optional list containing user specified knot values to be used for basis construction. Different terms can use different numbers of knots.}
-  \item{devtol}{A positive scalar giving the convergence control for the model fitting algorithm}
   
-   \item{steptol}{A positive scalar giving the tolerance at which the scaled distance between
-        two successive iterates is considered close enough to zero to terminate the model fitting algorithm.}
- 
-  \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated.} 
-
-  \item{del}{A positive scalar (default is 1e-4) giving an increment for finite difference approximation when 
-             \code{check.analytical=TRUE}.}
-
-  \item{start}{Initial values for the model coefficients}
-
-  \item{etastart}{Initial values for the linear predictor}
-
-  \item{mustart}{Initial values for the expected values}
-
-  \item{keepData}{If this is \code{TRUE} a copy of the original \code{data} argument 
-     is kept. The default is \code{FALSE} which saves space.}
-
+  \item{knots}{An optional list containing user specified knot values to be used for basis construction. Different terms can use different numbers of knots.}
+  
   \item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring beta parameters re-parameterization.}
+
+  \item{start}{Initial values for the model coefficients.}
+
+  \item{etastart}{Initial values for the linear predictor.}
+
+  \item{mustart}{Initial values for the expected values.}
+
+  \item{control}{A list of fit control parameters to replace defaults returned by \code{\link{scam.control}}.
+                 Values not set assume default values.}
 }
 
 \details{

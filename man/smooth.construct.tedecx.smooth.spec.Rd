@@ -55,22 +55,23 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 ## tensor product `tedecx' example 
   ## simulating data...
 
-   set.seed(1)
+   set.seed(2)
    n <- 30
    x1 <- sort(runif(n)*4-1)
    x2 <- sort(2*runif(n)-1)
    f1 <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i])) + 2*x2[j]^2}  
+        f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i])) + 2*x2[j]^2  
    f <- as.vector(t(f1))
-   y <- f+rnorm(length(f))*0.1
+   y <- f+rnorm(length(f))*0.05
    x11 <-  matrix(0,n,n)
    x11[,1:n] <- x1
    x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tedecx",m=2), data=dat)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tedecx",m=2), not.exp=TRUE, data=dat)
+## b1 <- scam(y~s(x1,bs="mpd",m=2)+s(x2,bs="cx",m=2), data=dat)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
@@ -78,6 +79,13 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
    x11()
    vis.scam(b,theta=20,phi=20)
+   ## plotting the truth...
+   x11()
+   x1 <- seq(min(x1),max(x1),length.out=30)
+   x2 <- seq(min(x2),max(x2),length.out=30)
+   f1 <- matrix(0,n,n)
+   for (i in 1:n) for (j in 1:n) f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i])) + 2*x2[j]^2    
+   persp(x1,x2,f1,theta = 30, phi = 40)  
  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
