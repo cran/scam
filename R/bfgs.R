@@ -131,7 +131,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, check.analytical=FALSE, del,maxit,m
           check.grad <- 100*(gcv.ubre.rho-dgcv.ubre.check)/dgcv.ubre.check
    ## end of checking the derivatives ----------------------------
    list(dgcv.ubre=gcv.ubre.rho,gcv.ubre=gcv.ubre, scale.est=b$dev/(n-b$trA), 
-         check.grad=check.grad, dgcv.ubre.check=dgcv.ubre.check, object = b)
+         check.grad=check.grad, dgcv.ubre.check=dgcv.ubre.check, object = b, trA.rho=trA.rho,D.rho=D.rho)
  } ## end of gcv.ubre_grad
 
 
@@ -181,9 +181,11 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
            }
          B <- B + t(B)
          eh <- eigen(B)
-         ind <- eh$values < 0
-         eh$values[ind] <- -eh$values[ind] 
-         B <- eh$vectors%*%(t(eh$vectors)/eh$values)
+         eh$values[eh$values < 0] <- -eh$values[eh$values < 0] 
+        # B <- eh$vectors%*%(t(eh$vectors)/eh$values)
+         ind <- eh$values > max(eh$values)*.Machine$double.eps^75 ## index of non zero eigenvalues
+         eh$values[ind] <- 1/eh$values[ind]; eh$values[!ind] <- 0 
+         B <- eh$vectors%*%(eh$values*t(eh$vectors))
       } 
    else  
         B <- diag(n.pen)*100
@@ -419,128 +421,5 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    list (gcv.ubre=score, rho=rho, dgcv.ubre=grad, iterations=i, B=B, conv.bfgs = ct, object=b$object, score.plot=score.plot[1:(i+1)], termcode = termcode, check.grad= b$check.grad,
        dgcv.ubre.check = b$dgcv.ubre.check) 
 } ## end bfgs_gcv.ubre
-
-##################################################
-## Extended Fellner-Schall method for scam...
-#################################################
-
-efsudr.scam <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NULL,mustart=NULL,
-                   U1=diag(ncol(x)), intercept = TRUE,scale=1,Mp=-1,control=gam.control(),n.true=-1,...) {
-## Extended Fellner-Schall method for regular and extended families,
-## with PIRLS performed by gam.fit3/4.
-## tr(S^-S_j) is returned by ldetS1, rV %*% t(rV)*scale is 
-## cov matrix. I think b'S_jb will need to be  computed here.
-  nsp <- length(UrS)
-  if (inherits(family,"extended.family")) {
-    spind <- family$n.theta + 1:nsp
-    thind <- if (family$n.theta>0) 1:family$n.theta else rep(0,0)
-  } else {
-    thind <- rep(0,0)
-    spind <- 1:nsp ## index of smoothing params in lsp
-  }
-  estimate.scale <- (length(lsp)>max(spind))
-  lsp[spind] <- lsp[spind] + 2.5 
-  mult <- 1
-  fit <- gam.fit3(x=x, y=y, sp=lsp, Eb=Eb,UrS=UrS,
-            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
-            control = control, intercept = intercept,deriv=0,
-            gamma=1,scale=scale,scoreType="EFS",
-            n.true=n.true,...)
-  if (length(thind)>0) lsp[thind] <- family$getTheta()
-  if (estimate.scale) lsp[length(lsp)] <- log(fit$scale)
-  ## Also need scale estimate. OK from gam.fit3, but gam.fit4 version probably needs correcting
-  ## for edf, as obtained via MLE.
-  p <- ncol(x)
-  n <- nrow(x)
-  score.hist <- rep(0,200)
-  
-  bSb <- trVS <- rep(0,nsp)
-  for (iter in 1:200) {
-    start <- fit$coefficients
-    Y <- U1[,1:(ncol(U1)-Mp)] ## penalty range space
-    ## project coefs and rV to Y, since this is space of UrS[[i]]
-    Yb <- drop(t(Y)%*%start) 
-    rV <- t(fit$rV) ## so t(rV)%*%rV*scale is cov matrix
-    rVY <- rV %*% Y
-    ## ith penalty is UrS[[i]]%*%t(UrS[[i]])...
-    for (i in 1:length(UrS)) {
-      xx <- Yb %*% UrS[[i]] 
-      bSb[i] <- sum(xx^2)
-      xx <- rVY %*% UrS[[i]]
-      trVS[i] <- sum(xx^2)
-    }
-    edf <- p - sum(trVS*exp(lsp[spind]))
-    if (inherits(family,"extended.family")&&estimate.scale) {
-      fit$scale <- fit$scale*n/(n-edf) ## correct for edf.
-    }
-
-    a <- pmax(0,fit$ldetS1*exp(-lsp[spind]) - trVS) ## NOTE: double check scaling here
-    phi <- if (estimate.scale) fit$scale else scale
-    r <- a/pmax(0,bSb)*phi
-    r[a==0&bSb==0] <- 1
-    r[!is.finite(r)] <- 1e6
-    lsp1 <- lsp
-    lsp1[spind] <- pmin(lsp[spind] + log(r)*mult,control$efs.lspmax)
-    max.step <- max(abs(lsp1-lsp))
-    old.reml <- fit$REML
-    fit <- gam.fit3(x=x, y=y, sp=lsp1, Eb=Eb,UrS=UrS,
-            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
-            control = control, intercept = intercept,deriv=0,mustart=mustart,
-            gamma=1,scale=scale,scoreType="EFS",
-            n.true=n.true,...)
-    if (length(thind)>0) lsp1[thind] <- family$getTheta()
-    if (estimate.scale) lsp1[length(lsp)] <- log(fit$scale)
-    ## some step length control...
-   
-    if (fit$REML<=old.reml) { ## improvement
-      if (max.step<.05) { ## consider step extension (near optimum)
-        lsp2 <- lsp
-        lsp2[spind] <- pmin(lsp[spind] + log(r)*mult*2,control$efs.lspmax) ## try extending step...
-        fit2 <- gam.fit3(x=x, y=y, sp=lsp2, Eb=Eb,UrS=UrS,
-            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
-            control = control, intercept = intercept,deriv=0,mustart=mustart,
-            gamma=1,scale=scale,scoreType="EFS",
-            n.true=n.true,...)
-        if (length(thind)>0) lsp2[thind] <- family$getTheta()
-        if (estimate.scale) lsp2[length(lsp)] <- log(fit$scale)
-        if (fit2$REML < fit$REML) { ## improvement - accept extension
-          fit <- fit2;lsp <- lsp2
-	  mult <- mult * 2
-        } else { ## accept old step
-          lsp <- lsp1
-        }
-      } else lsp <- lsp1
-    } else { ## no improvement 
-      while (fit$REML > old.reml&&mult>1) { ## don't contract below 1 as update doesn't have to improve REML 
-          mult <- mult/2 ## contract step
-	  lsp1 <- lsp
-          lsp1[spind] <- pmin(lsp[spind] + log(r)*mult,control$efs.lspmax)
-	  fit <- gam.fit3(x=x, y=y, sp=lsp1, Eb=Eb,UrS=UrS,
-            weights = weights, start = start, offset = offset,U1=U1, Mp=Mp, family = family, 
-            control = control, intercept = intercept,deriv=0,mustart=mustart,
-            gamma=1,scale=scale,scoreType="EFS",
-            n.true=n.true,...)
-	  if (length(thind)>0) lsp1[thind] <- family$getTheta()
-          if (estimate.scale) lsp1[length(lsp)] <- log(fit$scale)
-      }
-      lsp <- lsp1
-      if (mult<1) mult <- 1
-    }
-    score.hist[iter] <- fit$REML
-    ## break if EFS step small and REML change negligible over last 3 steps.
-    if (iter>3 && max.step<.05 && max(abs(diff(score.hist[(iter-3):iter])))<control$efs.tol) break
-    ## or break if deviance not changing...
-    if (iter==1) old.dev <- fit$dev else {
-      if (abs(old.dev-fit$dev) < 100*control$eps*abs(fit$dev)) break
-      old.dev <- fit$dev
-    }
-  }
-  fit$sp <- exp(lsp)
-  fit$niter <- iter
-  fit$outer.info <- list(iter = iter,score.hist=score.hist[1:iter])
-  fit$outer.info$conv <- if (iter==200) "iteration limit reached" else "full convergence"
-  fit
-} ## efsudr
-
 
 

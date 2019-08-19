@@ -6,8 +6,8 @@
 control of the numerical options for fitting a SCAM. 
 }
 \usage{
-scam.control(maxit = 200, maxHalf.fit=40, devtol.fit=1e-8,steptol.fit=1e-8,
-             keepData=FALSE,nlm=list(),optim=list(),bfgs=list()) 
+scam.control(maxit = 200, maxHalf.fit=40, devtol.fit=1e-7,steptol.fit=1e-7,
+             keepData=FALSE,efs.lspmax=15,efs.tol=.1,nlm=list(),optim=list(),bfgs=list()) 
 }
 \arguments{ 
 
@@ -33,6 +33,12 @@ used for outer estimation of log smoothing parameters.}
 
 \item{keepData}{Should a copy of the original \code{data} argument be kept in the \code{scam} 
 object?}
+
+\item{efs.lspmax}{maximum log smoothing parameters to allow under extended Fellner Schall
+smoothing parameter optimization.}
+
+\item{efs.tol}{change in GCV to count as negligible when testing for EFS convergence. If the
+step is small and the last 3 steps led to a GCV change smaller than this, then stop.}
 
 }
 

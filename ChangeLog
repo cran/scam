@@ -1,3 +1,10 @@
+1.2-5
+
+* estimate.scam: Extended Fellner Schall optimizer for smoothing parameter selection is now available using scam(...,optimizer="efs") as in gam(mgcv). But rather than minimizing REML (in gam(mgcv)) it minimizes GCV criterion.
+
+* bfgs_gcv.ubre: bug fixed to avoid zero eigenvalues. Thanks to Pierre Masselot for reporting the bug.
+
+
 1.2-4
 
 * scam.control: function added. This allows control of the numerical options for fitting a SCAM in the similar way as gam.control(mgcv). scam, scam.fit, estimate.scam, bfgs_gcv.ubre, gcv.ubre_grad, check.analytical routines were corrected to account for scam.control setting.
@@ -10,7 +17,7 @@
 
 * scam: scam setup is changed. clone of the gam setup of gam(mgcv). 
 
-* *.Rd: examples for bivariate smothing constructors updated. 
+* *.Rd: examples for bivariate smothing constructors updated.
 
 
 1.2-3

@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.2-3}
+% \Rdversion{1.2-5}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -51,7 +51,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 
   \item{optimizer}{The numerical optimization method to use to optimize the smoothing 
                    parameter estimation criterion. "bfgs" for the built in to \code{scam} package routine \code{\link{bfgs_gcv.ubre}},
-                   "optim", "nlm", "nlm.fd" (based on finite-difference approximation of the derivatives).}
+                   "optim", "nlm", "nlm.fd" (based on finite-difference approximation of the derivatives). "efs" for the extended Fellner Schall method of Wood and Fasiolo (2017) (rather than minimizing REML as in \code{gam(mgcv)} this minimizes the GCV criterion).}
 
    \item{optim.method}{In case of \code{optimizer="optim"} this specifies the numerical method to be used in \code{optim}
                       in the first element, the second element of \code{optim.method} indicates whether the finite difference
@@ -231,6 +231,10 @@ Wood S.N. (2006a) \emph{Generalized Additive Models: An Introduction with R}. Ch
 and Hall/CRC Press.
 
 Wood, S.N. (2006b) On confidence intervals for generalized additive models based on penalized regression splines. Australian and New Zealand Journal of Statistics. 48(4): 445-464.
+
+Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing
+parameter optimization with application to Tweedie location, scale and shape models.
+Biometrics 73 (4), 1071-1081
 }
 \author{
 Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
@@ -291,6 +295,11 @@ plot(b,pages=1,scale=0)
 
 ##***********************************
 \dontrun{
+## using the extended Fellner-Schall method for smoothing parameter selection...
+b0 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
+    family=gaussian(link="identity"),data=dat, optimizer="efs")
+summary(b0)
+
 ## using optim() for smoothing parameter selection...
 b1 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
     family=gaussian(link="identity"),data=dat, optimizer="optim")

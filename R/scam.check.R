@@ -23,20 +23,26 @@ scam.check <- function(b,rl.col=3,...)
         cat("\nNumber of iterations of smoothing parameter selection performed was",boi$iter,".")
         cat("\n",boi$conv,".",sep="")
         cat("\nGradient range: [",min(boi$grad),",",max(boi$grad),"]",sep="")
-        cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,")",sep="")
+        cat("\n(score ",formatC(b$gcv.ubre, digits = 5)," & scale ",formatC(b$sig2, digits = 5),")",sep="")
      }
      else if (!is.null(b$optim.info)) { ## summarize optim() convergence information
         boi <- b$optim.info
         cat("\nNumber of iterations of smoothing parameter selection performed was",boi$iter[1],".")
         cat("\n",boi$conv,".",sep="")
-        cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,")",sep="")
+        cat("\n(score ",formatC(b$gcv.ubre, digits = 5)," & scale ",formatC(b$sig2, digits = 5),")",sep="")
      }
      else if (!is.null(b$nlm.info)) { ## summarize nlm() convergence information
         boi <- b$nlm.info
         cat("\nNumber of iterations of smoothing parameter selection performed was",boi$iter,".")
         cat("\n",boi$conv,".",sep="")
         cat("\nGradient range: [",min(boi$grad),",",max(boi$grad),"]",sep="")
-        cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,")",sep="")
+        cat("\n(score ",formatC(b$gcv.ubre, digits = 5)," & scale ",formatC(b$sig2, digits = 5),")",sep="")
+     }
+     else if (!is.null(b$efs.info)) { ## summarize 'efs' convergence information
+        boi <- b$efs.info
+        cat("\nNumber of iterations of smoothing parameter selection performed was",boi$iter[1],".")
+        cat("\n",boi$conv,".",sep="")
+        cat("\n(score ",formatC(b$gcv.ubre, digits = 5)," & scale ",formatC(b$sig2, digits = 5),")",sep="")
      }
      else {
        if (length(b$sp)==0) ## no sp's estimated  

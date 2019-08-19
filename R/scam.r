@@ -10,7 +10,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                  weights=NULL, offset=NULL, optimizer="bfgs", optim.method=c("Nelder-Mead","fd"),
                  scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart, mustart, control=list()) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
-   ## optimizer - numerical optimization method to use to optimize the smoothing      parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd"
+   ## optimizer - numerical optimization method to use to optimize the smoothing parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd", "efs"
    ## optim.method - if optimizer=="optim" then the first argument of optim.method     specifies the method, and the second can be either "fd" for finite-difference approximation of the gradient or "grad" - to use analytical gradient of gcv/ubre
    ## not.exp - if TRUE then notExp() function will be used in place of exp in positivity ensuring beta parameters re-parameterization
    
@@ -339,6 +339,12 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                      object$optim.info$iter <- re$iterations 
                      object$optim.method <- re$optim.method  
                  }
+         else if (optimizer=="efs")
+                 {   object$efs.info <- list()
+                     object$efs.info$conv <- re$conv 
+                     object$efs.info$iter <- re$iterations 
+                     object$efs.info$score.hist <- re$score.hist
+                 }        
       }
    if (scale.known)
          object$method <- "UBRE"
@@ -370,8 +376,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 ## control function for scam (similar to gam.control(mgcv)) ##
 ##############################################################
 
-scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-8, steptol.fit=1e-8,
-                          keepData=FALSE,nlm=list(),optim=list(),bfgs=list()) 
+scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-7, steptol.fit=1e-7,
+                          keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),bfgs=list()) 
 # Control structure for a scam. 
 # devtol.fit is the tolerance to use in the scam.fit call within each IRLS. 
 # check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked for bfgs method
@@ -419,9 +425,10 @@ scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-8, steptol.
     # and optim defaults
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
+    if (efs.tol<=0) efs.tol <- .1
     
     list(maxit = maxit, maxHalf.fit=maxHalf.fit, devtol.fit=devtol.fit, steptol.fit=steptol.fit,keepData=as.logical(keepData[1]),
-         nlm=nlm, optim=optim,bfgs=bfgs)    
+         nlm=nlm, optim=optim,bfgs=bfgs,efs.lspmax=efs.lspmax,efs.tol=efs.tol)    
 } ## end scam.control
 
 
