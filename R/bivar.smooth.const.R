@@ -60,10 +60,15 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
       {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  for (j in 1:q2)  IS[j,1:j] <- -1
-  IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
-  for (j in 1:q1)  IS1[j,1:j] <- 1
+ ## IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ ## for (j in 1:q2)  IS[j,1:j] <- -1
+  IS <- matrix(-1,q2,q2)  ## Define submatrix of Sigma
+  IS[upper.tri(IS)] <- 0
+ ## IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
+ ## for (j in 1:q1)  IS1[j,1:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define submatrix of Sigma
+  IS1[upper.tri(IS1)] <- 0
+
   Sig <- IS1%x%IS # Knonecker product to get Sigma
   Sig[,1] <- rep(1,ncol(Sig))
  
@@ -91,9 +96,7 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   object$S <- list()
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]]) ## t(object$P[[2]])%*%object$P[[2]]
-
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -128,10 +131,14 @@ Predict.matrix.tedmd.smooth <- function(object, data)
       {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  for (j in 1:q2)  IS[j,1:j] <- -1
-  IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
-  for (j in 1:q1)  IS1[j,1:j] <- 1
+  ## IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ ## for (j in 1:q2)  IS[j,1:j] <- -1
+  IS <- matrix(-1,q2,q2)  ## Define submatrix of Sigma
+  IS[upper.tri(IS)] <- 0
+ ## IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
+ ## for (j in 1:q1)  IS1[j,1:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define submatrix of Sigma
+  IS1[upper.tri(IS1)] <- 0
   Sig <- IS1%x%IS # Knonecker product to get Sigma
   Sig[,1] <- rep(1,ncol(Sig))
   X <- X%*%Sig
@@ -251,12 +258,16 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
       {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
-  IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
-  IS2[1:q2,1] <- rep(1,q2)
-    for (j in 2:q2)  IS2[j,2:j] <- 1
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+ # IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
+ # IS2[1:q2,1] <- rep(1,q2)
+ #   for (j in 2:q2)  IS2[j,2:j] <- 1
+ # IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS1[1:q1,1] <- rep(1,q1)
+ #   for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma
+  IS1[upper.tri(IS1)] <- 0
+  IS2 <- matrix(1,q2,q2)  ## Define marginal matrix of Sigma
+  IS2[upper.tri(IS2)] <- 0
   Sig <- IS1 %x% IS2 
   
   # apply identifiability constraint and get model matrix
@@ -283,9 +294,7 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   object$S <- list()
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
-
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)   ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -321,12 +330,16 @@ Predict.matrix.tedmi.smooth <- function(object, data)
       {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
-  IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
-  IS2[1:q2,1] <- rep(1,q2)
-    for (j in 2:q2)  IS2[j,2:j] <- 1
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+  # IS2 <- matrix(0,q2,q2)   # Define marginal matrix of Sigma
+ # IS2[1:q2,1] <- rep(1,q2)
+ #   for (j in 2:q2)  IS2[j,2:j] <- 1
+ # IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS1[1:q1,1] <- rep(1,q1)
+ #   for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma
+  IS1[upper.tri(IS1)] <- 0
+  IS2 <- matrix(1,q2,q2)  ## Define marginal matrix of Sigma
+  IS2[upper.tri(IS2)] <- 0
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
@@ -409,9 +422,12 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
     }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS[1:q1,1]<-1
-  for (j in 2:q1)  IS[j,2:j] <- -1
+ # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS[1:q1,1]<-1
+ # for (j in 2:q1)  IS[j,2:j] <- -1
+  IS <- matrix(-1,q1,q1)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
+  IS[,1] <- -IS[,1]
   I <- diag(q2)
   Sig <- IS%x%I
 
@@ -429,9 +445,8 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ##  t(D)%*%S[[1]]%*%D
   object$S[[2]] <- crossprod(D,S[[2]])%*%D ## t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[1:(q2-1)] <- rep(0, q2-1) 
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -470,9 +485,12 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
     {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
     }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS[1:q1,1]<-1
-  for (j in 2:q1)  IS[j,2:j] <- -1
+ # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS[1:q1,1]<-1
+ # for (j in 2:q1)  IS[j,2:j] <- -1
+  IS <- matrix(-1,q1,q1)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
+  IS[,1] <- -IS[,1]
   I <- diag(q2)
   Sig <- IS%x%I
   # get final model matrix
@@ -562,10 +580,12 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
-  
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  IS[1:q2,1]<-1
-  for (j in 2:q2)  IS[j,2:j] <- -1
+ # IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ # IS[1:q2,1]<-1
+ # for (j in 2:q2)  IS[j,2:j] <- -1
+  IS <- matrix(-1,q2,q2)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
+  IS[,1] <- -IS[,1]
   I <- diag(q1)
   Sig <- I%x%IS
     
@@ -591,9 +611,8 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- t(D)%*%S[[1]]%*%D
   object$S[[2]] <- t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[ind] <- 0
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -673,9 +692,12 @@ Predict.matrix.tesmd2.smooth<-function(object,data)
     {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  IS[1:q2,1]<-1
-  for (j in 2:q2)  IS[j,2:j] <- -1
+ # IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ # IS[1:q2,1]<-1
+ # for (j in 2:q2)  IS[j,2:j] <- -1
+  IS <- matrix(-1,q2,q2)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
+  IS[,1] <- -IS[,1]
   I <- diag(q1)
   Sig <- I%x%IS
   # get final model matrix
@@ -765,9 +787,11 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS[1:q1,1]<-1
-  for (j in 2:q1)  IS[j,2:j] <- 1
+ # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS[1:q1,1]<-1
+ # for (j in 2:q1)  IS[j,2:j] <- 1
+  IS <- matrix(1,q1,q1)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
   I <- diag(q2)
   Sig <- IS%x%I
 
@@ -786,9 +810,8 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ## t(D)%*%S[[1]]%*%D
   object$S[[2]] <- crossprod(D,S[[2]])%*%D ## t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[1:(q2-1)] <- rep(0, q2-1) 
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -858,9 +881,11 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
     {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
   }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
-  IS[1:q1,1]<-1
-  for (j in 2:q1)  IS[j,2:j] <- 1
+ # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
+ # IS[1:q1,1]<-1
+ # for (j in 2:q1)  IS[j,2:j] <- 1
+  IS <- matrix(1,q1,q1)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
   I <- diag(q2)
   Sig <- IS%x%I
 
@@ -948,11 +973,12 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   for (i in 1:n)
     {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
     }
-  # get a matrix Sigma -----------------------
-  
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  IS[1:q2,1]<-1
-  for (j in 2:q2)  IS[j,2:j] <- 1
+  # get a matrix Sigma -----------------------  
+ # IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ # IS[1:q2,1]<-1
+ # for (j in 2:q2)  IS[j,2:j] <- 1
+  IS <- matrix(1,q2,q2)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
   I <- diag(q1)
   Sig <- I%x%IS
     
@@ -978,9 +1004,8 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- t(D)%*%S[[1]]%*%D
   object$S[[2]] <- t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[ind] <- 0
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[ind]<-FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -1060,9 +1085,11 @@ Predict.matrix.tesmi2.smooth<-function(object,data)
     {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
     }
   # get a matrix Sigma -----------------------
-  IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
-  IS[1:q2,1]<-1
-  for (j in 2:q2)  IS[j,2:j] <- 1
+ # IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
+ # IS[1:q2,1]<-1
+ # for (j in 2:q2)  IS[j,2:j] <- 1
+  IS <- matrix(1,q2,q2)  ## coef summation matrix
+  IS[upper.tri(IS)] <-0
   I <- diag(q1)
   Sig <- I%x%IS
     
@@ -1148,9 +1175,12 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
   IS2[2:q2,2]<- -c(1:(q2-1))
   for (i in 3:q2) IS2[i:q2,i] <- c(1:(q2-i+1))  
 
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+#  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
+#  IS1[1:q1,1] <- rep(1,q1)
+#    for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma for increasing constraint
+  IS1[upper.tri(IS1)] <-0
+
   Sig <- IS1 %x% IS2 
   
   # apply identifiability constraint and get model matrix
@@ -1178,8 +1208,7 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -1219,9 +1248,12 @@ Predict.matrix.temicx.smooth <- function(object, data)
   IS2[2:q2,2]<- -c(1:(q2-1))
   for (i in 3:q2) IS2[i:q2,i] <- c(1:(q2-i+1))  
 
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+ #  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
+ #  IS1[1:q1,1] <- rep(1,q1)
+ #    for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma for increasing constraint
+  IS1[upper.tri(IS1)] <-0
+
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
@@ -1307,9 +1339,12 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
   IS2[2:q2,2]<- c(1:(q2-1))
   for (i in 3:q2) IS2[i:q2,i] <- -c(1:(q2-i+1))  
 
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+ #  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
+ #  IS1[1:q1,1] <- rep(1,q1)
+ #    for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma for increasing constraint
+  IS1[upper.tri(IS1)] <-0
+
   Sig <- IS1 %x% IS2 
   
   # apply identifiability constraint and get model matrix
@@ -1337,8 +1372,7 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -1378,9 +1412,12 @@ Predict.matrix.temicv.smooth <- function(object, data)
   IS2[2:q2,2]<- c(1:(q2-1))
   for (i in 3:q2) IS2[i:q2,i] <- -c(1:(q2-i+1))  
 
-  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
-  IS1[1:q1,1] <- rep(1,q1)
-    for (j in 2:q1)  IS1[j,2:j] <- 1
+ #  IS1 <- matrix(0,q1,q1)   # Define marginal matrix of Sigma for increasing constraint
+ #  IS1[1:q1,1] <- rep(1,q1)
+ #    for (j in 2:q1)  IS1[j,2:j] <- 1
+  IS1 <- matrix(1,q1,q1)  ## Define marginal matrix of Sigma for increasing constraint
+  IS1[upper.tri(IS1)] <-0
+
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
@@ -1502,8 +1539,7 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -1659,8 +1695,7 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -1856,9 +1891,8 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(D,S[[1]])%*%D  ## t(D)%*%S[[1]]%*%D
   object$S[[2]] <- crossprod(D,S[[2]])%*%D  ## t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[ind] <- 0
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -2013,9 +2047,8 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(D,S[[1]])%*%D  ## t(D)%*%S[[1]]%*%D
   object$S[[2]] <- crossprod(D,S[[2]])%*%D  ## t(D)%*%S[[2]]%*%D
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  b[ind] <- 0
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)  
+  object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -2170,8 +2203,7 @@ smooth.construct.tecvcv.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
 
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -2327,9 +2359,7 @@ smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
   object$S <- list()
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
-
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)    ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -2487,9 +2517,7 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   object$S <- list()
   object$S[[1]] <- crossprod(object$P[[1]]) ## t(object$P[[1]])%*%object$P[[1]]
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
-
-  b <- rep(1,q1*q2-1)  # define vector of 0's & 1's for model parameters identification
-  object$p.ident <- b  
+  object$p.ident <- rep(TRUE,q1*q2-1)   ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <- m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 

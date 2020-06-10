@@ -56,6 +56,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   \dontrun{
 ## Monotone decreasing P-splines example 
   ## simulating data...
+   require(scam)
    set.seed(3)
    n <- 100
    x <- runif(n)*3-1

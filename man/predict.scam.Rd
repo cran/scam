@@ -17,8 +17,9 @@ It now alows prediction outside the range of knots, and use linear extrapolation
 }
 
 \usage{
-\method{predict}{scam}(object,newdata,type="link",se.fit=FALSE,terms=NULL,
+\method{predict}{scam}(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
     block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...)
+
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -52,6 +53,10 @@ outside \code{R} (see example code, below). }
 
 \item{terms}{if \code{type=="terms"} then only results for the terms given in this array
 will be returned.}
+
+\item{exclude}{if \code{type=="terms"} or \code{type="iterms"} then terms (smooth or parametric) named
+ in this array will not be returned. Otherwise any smooth terms named in this
+ array will be set to zero. If \code{NULL} then no terms are excluded.}
 
 \item{block.size}{maximum number of predictions to process per call to underlying
 code: larger is quicker, but more memory intensive. Set to < 1 to use total number
@@ -201,9 +206,7 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
    fe <- predict(b,newd)
    fc <- t(matrix(fe,n.out,n.out))
    persp(xp,zp,fc,expand= 0.85,ticktype = "simple",xlab="x1",
-     ylab="x2",zlab="f^",main="d", theta = 80, phi = 40)
-
-
+     ylab="x2",zlab="f^",main="", theta = 80, phi = 40)
 
 
 ## obtaining a 'prediction matrix'...

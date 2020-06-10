@@ -1,4 +1,4 @@
-## useDynLib(scam, .registration = TRUE, .fixes = "C_")
+useDynLib(scam, .registration = TRUE, .fixes = "C_")
 
 export(scam, bfgs_gcv.ubre, 
        derivative.scam, 

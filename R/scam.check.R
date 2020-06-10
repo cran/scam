@@ -1,10 +1,10 @@
 
-scam.check <- function(b,rl.col=3,...)
+scam.check <- function(b,rl.col=3,pch=".",...)
 # takes a fitted scam object and produces some standard diagnostic plots
 {   old.par<-par(mfrow=c(2,2))
     sc.name<-b$method
-   # qqnorm(residuals(b),pch=".",...)
-    qqnorm(residuals(b),...)
+    qqnorm(residuals(b),pch=pch,...)
+   ## qqnorm(residuals(b),...)
     qqline(residuals(b),col=rl.col,...)
     plot(b$linear.predictors,residuals(b),main="Resids vs. linear pred.",
          xlab="linear predictor",ylab="residuals",...);

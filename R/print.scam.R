@@ -23,7 +23,8 @@ print.scam <- function (x,...)
         }
         cat(" total =",round(sum(x$edf),digits=2),"\n")    ##  (" total =", x$trA, "\n")
     }
-    cat("\n",x$method," score: ", formatC(x$gcv.ubre, digits = 5), "\n", sep = "")
+    if (!is.null(x$gcv.ubre))
+         cat("\n",x$method," score: ", formatC(x$gcv.ubre, digits = 5), "\n", sep = "")
     cat("\n")
     invisible(x)
 }

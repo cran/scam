@@ -12,10 +12,10 @@ The function is not normally called directly, but rather service routines for \c
 }
 \usage{
 bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
-        n.pen=length(rho), typx=rep(1,n.pen), typf=1, 
-        control) 
-}
+            n.pen=length(rho), typx=rep(1,n.pen), typf=1, control) 
+
 %- maybe also 'usage' for other objects documented here.
+}
 \arguments{
   \item{fn}{GCV/UBRE Function which returs the GCV/UBRE value and its derivative wrt log smoothing parameter.}
 

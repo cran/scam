@@ -13,8 +13,7 @@ with respect to the log smoothing parameter using the method of Wood (2009).
 The function is not normally called directly, but rather service routines for \code{\link{bfgs_gcv.ubre}}.
 }
 \usage{
-gcv.ubre_grad(rho, G, gamma, env, check.analytical=FALSE, del, maxit, maxHalf.fit, 
-              devtol.fit, steptol.fit)
+gcv.ubre_grad(rho, G, gamma,env, control)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,22 +26,7 @@ gcv.ubre_grad(rho, G, gamma, env, check.analytical=FALSE, del, maxit, maxHalf.fi
 
   \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
   
-  \item{check.analytical}{If this is \code{TRUE} then finite difference derivatives of GCV/UBRE score will be calculated,
-                         otherwise \code{NULL}.} 
-
-  \item{del}{A positive scalar (default is 1e-4) giving an increment for finite difference approximation when 
-             \code{check.analytical=TRUE}, otherwise \code{NULL}.} 
-
-  \item{maxit}{Maximum number of IRLS iterations to perform used in \code{\link{scam.fit}}.}
-
-  \item{maxHalf.fit}{If a step of  the Newton-Raphson optimization method leads 
-                  to a worse penalized deviance, then the step length of the model coefficients is halved. This is
-                  the number of halvings to try before giving up used in \code{\link{scam.fit}}.}
-
-  \item{devtol.fit}{A positive scalar giving the convergence control for the model fitting algorithm in \code{\link{scam.fit}}.}
-
-  \item{steptol.fit}{A positive scalar giving the tolerance at which the scaled distance between
-        two successive iterates is considered close enough to zero to terminate the model fitting algorithm in \code{\link{scam.fit}}.}
+  \item{control}{A list of fit control parameters as returned by \code{scam.control}.}
 
 }
 

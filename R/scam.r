@@ -1,14 +1,12 @@
 
-#setwd("~/Documents/research/SCAM_package/SCAM_PACKAGE_1.2-0")
-#source("scam-try-notExp.r"); source("estimate.scam.R")
-
 #############################################################
 ## the wrapper overall function to fit scam...             ##
 #############################################################
 
 scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
                  weights=NULL, offset=NULL, optimizer="bfgs", optim.method=c("Nelder-Mead","fd"),
-                 scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart, mustart, control=list()) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
+                 scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart, mustart, control=list(),
+                 AR1.rho=0, AR.start=NULL) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
    ## optimizer - numerical optimization method to use to optimize the smoothing parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd", "efs"
    ## optim.method - if optimizer=="optim" then the first argument of optim.method     specifies the method, and the second can be either "fd" for finite-difference approximation of the gradient or "grad" - to use analytical gradient of gcv/ubre
@@ -22,8 +20,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    mf <- match.call(expand.dots=FALSE)
    mf$formula <- gp$fake.formula 
    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
-                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <-
-                mf$in.out <- mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
+                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
    pmf <- mf
    mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
@@ -71,6 +68,9 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
   
    if (family$family[1]=="gaussian" && family$link=="identity") am <- TRUE
    else am <- FALSE
+
+   if (AR1.rho!=0&&!is.null(mf$"(AR.start)")) if (!is.logical(mf$"(AR.start)")) stop("AR.start must be logical")
+   if (AR1.rho!=0 && !am) stop("residual autocorrelation, AR1, is currently available only for the Gaussian identity link model.")
     
    if (!control$keepData) rm(data) ## save space
 
@@ -105,6 +105,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    G$terms<-terms;
    G$mf<-mf;G$cl<-cl;
    G$am <- am
+   G$AR1.rho <- AR1.rho; G$AR.start <- AR.start
 
    if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
@@ -186,8 +187,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    assign("sp.last",rep(0,0),envir=env)
    
    q.f <- rep(0,n.terms)
-   for (i in 1:n.terms) 
-            { q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 }
+   if (n.terms >0) for (i in 1:n.terms) 
+                      q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 
    G$S <- Q$S
    G$q.f <- q.f
    G$q0 <- G$off[1]-1  ## number of the parameters of the strictly parametric model
@@ -209,20 +210,19 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          nobs <- NROW(y)
          eval(family$initialize)
          G$y <- y  ## needed to set factor response values as numeric
-         def.sp <- initial.sp.scam(G,Q,q.f=q.f,n.terms=n.terms,family=family,
+         def.sp <- initial.sp.scam(G, Q,q.f=q.f,n.terms=n.terms,family=family,
               intercept=intercept,offset=G$offset, env=env,
-              weights=weights, devtol.fit=1e-4, steptol.fit=1e-4) 
+              weights=weights, control=control) 
          rho <- log(def.sp+1e-4) ## get initial log(sp) ...
          ## minimize GCV/UBRE by optimizer....
          ptm <- proc.time()
          re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
-               rho=rho, gamma=gamma, env=env,control=control) 
-            ##  check.analytical=control$bfgs$check.analytical, del=control$bfgs$del, devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
+               rho=rho, gamma=gamma, env=env,control=control)  
          CPU.time <- proc.time()-ptm
          best <- re
          object$gcv.ubre <- re$gcv.ubre
          object$dgcv.ubre <- re$dgcv.ubre
-         object$aic <- re$aic
+     #    object$aic <- re$aic
          best$p.ident <- Q$p.ident
          best$S <- Q$S
          object$optimizer <- optimizer
@@ -233,9 +233,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                 object$dgcv.ubre.check <- re$dgcv.ubre.check
             }
    } else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,gamma=gamma,maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, 
-                              devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit, env=env) 
-            object$aic <- best$aic
+            best <- scam.fit(G=G, sp=sp,gamma=gamma,env=env, control=control) 
             object$optimizer <- "NA"           
       }
    ## post-fitting values...
@@ -247,32 +245,35 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    object$R <- best$R
    if (is.null(object$R)){
-         rr <- scam.fit(G=G, sp=best$sp,gamma=gamma,maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, 
-                        devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit, env=env) 
+         rr <- scam.fit(G=G, sp=best$sp, gamma=gamma,env=env, control=control) 
          object$R <- rr$R } ## not sure if it's needed?
   
-   object$df.residual <- nrow(best$X) - sum(best$edf)
+  # object$df.residual <- nrow(best$X) - sum(best$edf)
 
    object$sp <- best$sp
    names(object$sp) <- names(G$sp)
    if (sum(is.na(names(object$sp)))!=0){  ## create names for sp if NA's from G
-      for (i in 1:n.terms) names(object$sp)[i] <- object$smooth[[i]]$label
+      if (n.terms >0) for (i in 1:n.terms) names(object$sp)[i] <- object$smooth[[i]]$label
    }
-   object$deviance <- best$deviance
-   object$residuals <- best$residuals
+  # object$deviance <- best$deviance
+  # object$residuals <- best$residuals
 #   object$X <- best$X
 
    object$conv <- best$conv # whether or not the inner full Newton method converged
-   post <- scam.fit.post(y=G$y,X=G$X,object=best,sig2=sig2,offset = G$offset,
-                   intercept=G$intercept, weights=weights, scale.known=scale.known) 
+   post <- scam.fit.post(G, object=best) ##,sig2=sig2,offset = G$offset,
+                 ##  intercept=G$intercept, weights=weights, scale.known=scale.known,not.exp=not.exp) 
 
-   object$edf <- post$edf
+   object$edf <- best$edf  # post$edf 
    object$edf1 <- post$edf1
-   object$trA <- post$trA
+   object$trA <- best$trA  # post$trA
    names(object$edf) <- G$term.names
    names(object$edf1) <- G$term.names
+   object$aic <- post$aic  # best$aic
+   object$null.deviance <- post$null.dev
+   object$deviance <- post$deviance
+   object$residuals <- post$residuals
+   object$df.residual <- nrow(G$X) - sum(post$edf)
 
-   object$null.deviance <- post$nulldev
    object$var.summary <- G$var.summary 
    object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
    object$model<-G$mf # store the model frame
@@ -298,14 +299,15 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$y <- G$y
  #  object$data <- G$mf
    if (control$keepData) object$data <- data 
+   object$control <- control
    object$offset <- G$offset
    object$not.exp <- G$not.exp
  #  object$scale.known <- scale.known # to be passed in the summary function
    object$scale.estimated <- !scale.known # to be passed in the summary function
    object$prior.weights <-weights # prior weights on observations
    object$weights <- best$w  # final weights used in full Newton iteration
-   object$fitted.values <- best$mu
-   object$linear.predictors <- best$eta
+   object$fitted.values <- post$mu  #best$mu
+   object$linear.predictors <- post$eta #best$eta
  #  cl<-match.call() # call needed in gam object for update to work
    object$call <- cl 
    object$p.ident <- Q$p.ident
@@ -317,6 +319,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          object$CPU.time <- CPU.time
    else 
          object$CPU.time <- NULL
+   object$AR1.rho <- AR1.rho
 
    ## get the optimizer info (smoothing parameter selection).....
   if (is.null(sp))
@@ -326,6 +329,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                 object$bfgs.info$conv <- re$conv.bfgs  
                 object$bfgs.info$iter <- re$iterations 
                 object$bfgs.info$grad <- re$dgcv.ubre
+                object$bfgs.info$score.hist <- re$score.hist
             }
          else if (optimizer == "nlm.fd" || optimizer == "nlm")
                  {   object$nlm.info <- list()
@@ -352,7 +356,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    if (G$nsdf > 0) 
          term.names <- colnames(G$X)[1:G$nsdf]
    else term.names <- array("", 0)
-   if (n.terms) 
+   if (n.terms >0) 
         for (i in 1:n.terms) 
             {   k <- 1  
                 for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para) 
@@ -367,7 +371,18 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                  rownames(G$y)
              else names(G$y)
    names(object$residuals) <- ynames
-   class(object) <- c("scam","glm","lm")   
+   class(object) <- c("scam","glm","lm")  
+   rm(G)
+   dev <- object$deviance
+   if (AR1.rho!=0){
+      object$std.rsd <- AR.resid(object$residuals,AR1.rho,object$model$"(AR.start)") ##standardised residuals for AR1 model (approximately uncorrelated under correct model)
+      dev <- sum(object$std.rsd^2)
+      object$deviance <- sum(object$residuals^2) ## ss of the working residuals of the fitted model
+   }
+   object$aic <- object$family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
+   object$aic <- object$aic -
+                2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-AR1.rho^2)) + ## correction for AR
+                2*sum(object$edf)
    object
 }  ## end scam
 
@@ -376,24 +391,26 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 ## control function for scam (similar to gam.control(mgcv)) ##
 ##############################################################
 
-scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-7, steptol.fit=1e-7,
-                          keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),bfgs=list()) 
+scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=1e-7,
+                          keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),bfgs=list(),
+                          trace =FALSE, print.warn=FALSE) 
 # Control structure for a scam. 
 # devtol.fit is the tolerance to use in the scam.fit call within each IRLS. 
 # check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked for bfgs method
 # del - increment for finite differences when checking analytical gradients for bfgs method
-# mgcv.half is the number of step halvings to employ in the mgcv search for the optimal GCV score, before giving up 
-# on a search direction. trace turns on or off some de-bugging information.
-# outerPIsteps is the number of performance iteration steps used to intialize
-#                         outer iteration
+# maxHalf is the number of step halvings to employ in bfgs_gcv.ubre search, before giving up on a search direction. 
+# trace turns on or off some de-bugging information.
+# print.warn =FALSE - when set to 'FALSE' turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if mu or eta are out of bounds.
 {   if (!is.numeric(devtol.fit) || devtol.fit <= 0) 
         stop("value of devtol.fit must be > 0")
     if (!is.numeric(steptol.fit) || devtol.fit <= 0) 
         stop("value of steptol.fit must be > 0")
     if (!is.numeric(maxit) || maxit <= 0) 
         stop("maximum number of iterations must be > 0")
-    if (!is.numeric(maxHalf.fit) || maxHalf.fit <= 0) 
+    if (!is.numeric(maxHalf) || maxHalf <= 0) 
         stop("maximum number of step halving must be > 0")
+    if (!is.logical(trace)) stop("trace must be logical")
+    if (!is.logical(print.warn)) stop("print.warn must be logical")
 
     # work through nlm defaults
     if (is.null(nlm$ndigit)||nlm$ndigit<2) nlm$ndigit <- max(2,ceiling(-log10(1e-7)))
@@ -418,17 +435,17 @@ scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-7, steptol.
     if (is.null(bfgs$check.analytical)) bfgs$check.analytical <- FALSE
     if (is.null(bfgs$del)) bfgs$del <- 1e-4
     if (is.null(bfgs$steptol.bfgs)) bfgs$steptol.bfgs <- 1e-7
-    if (is.null(bfgs$gradtol.bfgs)) bfgs$gradtol.bfgs <- 6.0554*1e-06
-    if (is.null(bfgs$maxNstep)) bfgs$maxNstep <- 5
-    if (is.null(bfgs$maxHalf)) bfgs$maxHalf <- 30
+
+    if (is.null(bfgs$gradtol.bfgs)) bfgs$gradtol.bfgs <- 1e-06
+    if (is.null(bfgs$maxNstep)) bfgs$maxNstep <- 5 ## the maximum allowable step length
+    if (is.null(bfgs$maxHalf)) bfgs$maxHalf <- maxHalf ## the maximum number of step halving in "backtracking"
  
     # and optim defaults
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
     if (efs.tol<=0) efs.tol <- .1
     
-    list(maxit = maxit, maxHalf.fit=maxHalf.fit, devtol.fit=devtol.fit, steptol.fit=steptol.fit,keepData=as.logical(keepData[1]),
-         nlm=nlm, optim=optim,bfgs=bfgs,efs.lspmax=efs.lspmax,efs.tol=efs.tol)    
+    list(maxit=maxit, devtol.fit=devtol.fit, steptol.fit=steptol.fit, keepData=as.logical(keepData[1]), nlm=nlm, optim=optim,bfgs=bfgs,efs.lspmax=efs.lspmax,efs.tol=efs.tol,trace = trace, print.warn=print.warn)    
 } ## end scam.control
 
 
@@ -437,26 +454,28 @@ scam.control <- function (maxit = 200, maxHalf.fit=40, devtol.fit=1e-7, steptol.
 #################################################################
 
 initial.sp.scam <- function(G,Q,q.f,n.terms,family,intercept,offset, env= env,
-                      weights,devtol.fit=1e-4,steptol.fit=1e-4) 
+                      weights, control=control) 
 {  ## function to get initial estimates of smoothing parameters
-   ## step 1: set sp=rep(0.5,p) and estimate hessian...
-   b <- scam.fit(G=G,sp=rep(0.5,length(G$off)), devtol.fit=devtol.fit, steptol.fit=steptol.fit, env=env) 
+   control$devtol.fit <- 1e-4
+   control$steptol.fit <- 1e-4
+   ## step 1: set sp=rep(0.5,p) and estimate hessian... 
+   b <- scam.fit(G=G,sp=rep(0.05,length(G$off)), env=env, control=control) 
    H <- crossprod(b$wX1) - b$E
    ## step 2:...
    n.p <- length(Q$S) ## number of penalty matrices
    def.sp <- array(0,n.p) ## initialize the initial sp values
    j <- 1
-   for (i in 1:n.terms)
-       {   for (kk in 1:length(G$smooth[[i]]$S))
-               {   start <- G$off[j]
-                   finish <- start + ncol(G$smooth[[i]]$S[[kk]])-1
-                   # matrix norm of the Hessian elements penalized by S[[kk]]...
-                   Hi.norm <- sum(H[start:finish,start:finish]*H[start:finish,start:finish]) 
-                   Si.norm <- sum(G$smooth[[i]]$S[[kk]]*G$smooth[[i]]$S[[kk]])
-                   def.sp[j] <- (Hi.norm/Si.norm)^0.5
-                   j <- j+1
-               }
-       }
+   if (n.terms >0)  for (i in 1:n.terms){
+                       for (kk in 1:length(G$smooth[[i]]$S)){
+                          start <- G$off[j]
+                          finish <- start + ncol(G$smooth[[i]]$S[[kk]])-1
+                          # matrix norm of the Hessian elements penalized by S[[kk]]...
+                          Hi.norm <- sum(H[start:finish,start:finish]*H[start:finish,start:finish]) 
+                          Si.norm <- sum(G$smooth[[i]]$S[[kk]]*G$smooth[[i]]$S[[kk]])
+                          def.sp[j] <- (Hi.norm/Si.norm)^0.5
+                          j <- j+1
+                       }
+                    }
    ## Create again new environments with `start' initially empty...
    env <- new.env()
    assign("start",rep(0,0),envir=env)
@@ -478,12 +497,12 @@ penalty_pident <- function(object)
    n.terms <- length(object$smooth)  # number of terms in the model
    q <- ncol(object$X)          # total number of parameters
    cons.terms <- rep(0,n.terms) # define whether each term is constrained or not
-   for (i in 1:n.terms)
-       {   if (!is.null(object$smooth[[i]]$p.ident))
-           cons.terms[i] <- 1  
-       }
-   p.ident <- rep(0,q) # initialize vector of parameter identifications
-                      # with `1' - for a parameter to be exponentiated, `0' - otherwise
+   if (n.terms>0) for (i in 1:n.terms){
+                     if (!is.null(object$smooth[[i]]$p.ident))
+                     cons.terms[i] <- 1  
+                  }
+   p.ident <- rep(FALSE,q) # initialize vector of parameter identifications
+                      # with `TRUE' - for a parameter to be exponentiated, `FALSE' - otherwise
    off.terms <- rep(0,n.terms) # starting points for each term
    off <- object$off
    if (n.terms ==length(off))
@@ -501,22 +520,22 @@ penalty_pident <- function(object)
               }
      
       }
-   for (i in 1:n.terms)
-       {   if (cons.terms[i]==1) 
-              p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
-                 object$smooth[[i]]$p.ident
-       }
+   if (n.terms>0) for (i in 1:n.terms){
+                    if (cons.terms[i]==1) 
+                        p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                                                                       object$smooth[[i]]$p.ident
+                   }
    ## getting the list of penalty matrices in terms of the full model vector of coefficients...
    S <- list()
    j <- 1
-   for(i in 1:n.terms)
-        { for (kk in 1:length(object$smooth[[i]]$S))
-              {    S[[j]] <- matrix(0,q,q) # initialize penalty matrix
-                   S[[j]][off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1),
-                       off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1)] <- object$smooth[[i]]$S[[kk]]
-                   j <- j+1       
-              }
-        }
+   if (n.terms>0) for(i in 1:n.terms){
+                      for (kk in 1:length(object$smooth[[i]]$S)){
+                            S[[j]] <- matrix(0,q,q) # initialize penalty matrix
+                            S[[j]][off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1),
+                   off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1)] <- object$smooth[[i]]$S[[kk]]
+                            j <- j+1       
+                      }
+                   }
    object$S <- S 
    object$p.ident <- p.ident
    object
@@ -530,16 +549,21 @@ penalty_pident <- function(object)
 ## Function to fit SCAM based on Full Newton method        ##     
 #############################################################
 
-scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fit=1e-8,
-                gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env) 
+scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env, 
+              null.coef=rep(0,ncol(G$X)), control=scam.control()) 
+##  maxit=200, devtol.fit=1e-8, steptol.fit=1e-8, trace=FALSE, print.warn=FALSE
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
    ## sp- vector of smoothing parameters
-   ## maxit - a positive scalar which gives the maximum number of iterations for Newton's method
-   ## maxHalf.fit - a positive scalar which gives the maximum number of step halving.
-   ## devtol.fit - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
-   ## steptol.fit - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm 
    ## not.exp - if TRUE then notExp() function will be used in place of exp in positivity ensuring beta parameters re-parameterization
-{ y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp
+   ## null.coef - coefficients for a null model, in order to be able to check for immediate divergence. null.coef give some sort of upper bound on deviance. This allows immediate divergence problems to be controlled (from mgcv). here some of coeff need to be exponentiated. 
+   ## control - control list; it includes:
+      ##* maxit - a positive scalar which gives the maximum number of iterations for Newton's method
+      ##* devtol.fit - a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm
+      ##* steptol.fit - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm 
+      ##* trace turns on or off some de-bugging information.
+      ##* print.warn =FALSE - when set to 'FALSE' turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if mu or eta are out of bounds. 
+{ y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp;
+  AR1.rho <- G$AR1.rho
   attr(X,"dimnames") <- NULL
   q0 <- G$q0; q.f <- G$q.f
   p.ident <- G$p.ident; n.terms <- G$n.terms
@@ -560,7 +584,27 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
   mu.eta <- family$mu.eta
   mu.eta <- family$mu.eta
   
- 
+   if (AR1.rho!=0) {
+        ld <- 1/sqrt(1-AR1.rho^2) ## leading diagonal of root inverse correlation
+        sd <- -AR1.rho*ld         ## sub diagonal
+        row <- c(1,rep(1:nobs,rep(2,nobs))[-c(1,2*nobs)])
+        weight.r <- c(1,rep(c(sd,ld),nobs-1))
+        end <- c(1,1:(nobs-1)*2+1) 
+        if (!is.null(G$mf$"(AR.start)")) { ## need to correct the start of new AR sections...
+                 ii <- which(G$mf$"(AR.start)"==TRUE)
+                 if (length(ii)>0) {
+                    if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
+                    weight.r[ii*2-2] <- 0 ## zero sub diagonal
+                    weight.r[ii*2-1] <- 1 ## set leading diagonal to 1
+                 }
+        }
+        ## apply transform...
+        X <- rwMatrix(end,row,weight.r,X)
+        y <- rwMatrix(end,row,weight.r,y)    
+      }   
+
+
+
   if (!is.function(variance) || !is.function(linkinv)) 
         stop("illegal `family' argument")
   valideta <- family$valideta
@@ -569,6 +613,7 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
   validmu <- family$validmu
   if (is.null(validmu)) 
         validmu <- function(mu) TRUE
+
   if (is.null(mustart)) {
         eval(family$initialize)
   }
@@ -577,11 +622,23 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
         eval(family$initialize)
         mustart <- mukeep
   }
+
+   ## Added code...
+   if (family$family=="gaussian"&&family$link=="identity") strictly.additive <- TRUE else
+      strictly.additive <- FALSE
+
+   ## end of added code
+
   if (EMPTY) {
       eta <- rep.int(0, nobs) + offset
       if (!valideta(eta)) 
             stop("Invalid linear predictor values in empty model")
       mu <- linkinv(eta)
+
+      if (AR1.rho!=0) {
+        mu <- rwMatrix(end,row,weight.r,mu)  
+      }   
+
       if (!validmu(mu)) 
           stop("Invalid fitted means in empty model")
       dev <- sum(dev.resids(y, mu, weights))
@@ -595,7 +652,7 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
       alpha <- dev
       trA <- 0
       GCV <- nobs * alpha/(nobs - gamma * trA)^2
-      UBRE <- alpha/nobs - scale + 2 * gamma/n * trA
+      UBRE <- alpha/nobs + 2 * gamma* trA*scale/n - scale 
       scale.est <- alpha/(nobs - trA)
       aic.model <- aic(y, n, mu, weights, dev) +  2 * trA
   } ### end if (EMPTY)
@@ -604,21 +661,21 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
           etastart
             else family$linkfun(mustart)
       mu <- as.numeric(linkinv(eta))
-      if (!(validmu(mu) && valideta(eta))) 
-            stop("Can't find valid starting values: please specify some")
+    # if (!(validmu(mu) && valideta(eta))) 
+    #        stop("Can't find valid starting values: please specify some")
       S.t <- matrix(0,q,q) # define the total sum of the penalties times sp
       n.pen <- length(S) # number of penalties 
       if (length(sp)!=n.pen) stop (paste("length of sp has to be equal to", n.pen))
-      for (j in 1:n.pen) S.t <- S.t + sp[j]*S[[j]]
+      if (n.pen>0) for (j in 1:n.pen) S.t <- S.t + sp[j]*S[[j]]
       # get sqrt of total penalty matrix...
       er <- eigen(S.t,symmetric=TRUE);  er$values[er$values<0] <- 0
       rS <- crossprod(sqrt(sqrt(er$values))*t(er$vectors))
-      ii <- p.ident==1
-      count <- sum(ii)
-      iv <- array(0, dim=c(count,1)) # define an index vector for the monotone parameters
-      iv <- (1:q)[ii]
-      #----------------------------------------
-      ## Initialization of parameters start here 
+     # ii <- p.ident==1 ## set to TRUE/FALSE
+     ## count <- sum(p.ident) 
+     ## iv <- array(0, dim=c(count,1)) # define an index vector for the coeff-s to be exponentiated
+      iv <- (1:q)[p.ident] # define an index vector for the coeff-s to be exponentiated
+      ##############################################
+      ## Initialization of parameters start here... 
       beta0 <- get("start",envir=env)
       dbeta0 <- get("dbeta.start",envir=env)
       sp.old <- get("sp.last",envir=env)
@@ -628,44 +685,73 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
           M$Ain <- matrix(0,q,q); diag(M$Ain) <- rep(1,q);
           M$bin <- rep(-1e+12,q); M$bin[iv] <- 1e-12
           M$off <- rep(0,n.pen); M$S <- list()
-          for (j in 1:n.pen) {M$S[[j]] <- matrix(0,q,q); M$S[[j]] <- S[[j]]}
+          if (n.pen>0) for (j in 1:n.pen) {M$S[[j]] <- matrix(0,q,q); M$S[[j]] <- S[[j]]}
           beta.t <- pcls(M)      # initialize model coefficients (re-parameterized beta)
           beta <- beta.t         # initialize beta
           beta[iv] <- log(beta.t[iv]) # values of beta of the constrained terms
       }
       else {
           beta <- beta0
-          beta.t <- beta               # current beta tilde
+          beta.t <- beta    ## current beta tilde
           beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) # values of re-para beta of the constrained term
       }
       ## Initialization of parameters finishes here 
-      #-------------------------------------------
-      eta <- as.numeric(X%*%beta.t + offset)  # define initial linear predictor
+      #################################################
+      eta <- as.numeric(X%*%beta.t + as.numeric(offset))  # define initial linear predictor
       mu <- linkinv(eta)  # define initial fitted model
-      dev <- sum(dev.resids(y,mu,weights)) # define initial norm/deviance
-      pdev <- dev + sum((rS%*%beta)^2) # define initial penalized deviance 
-      old.pdev <- pdev       # initialize convergence control for penalized deviance
+    ##  dev <- sum(dev.resids(y,mu,weights)) # define initial norm/deviance
+    ##  pdev <- dev + sum((rS%*%beta)^2) # define initial penalized deviance 
+    ## old.pdev <- pdev       # initialize convergence control for penalized deviance
+
+      ##################################################################
+      ## added code here made on May 6, 2020 for scam version 1-2-6,
+      ## following gam.fit3(mgcv_1.8-31))....
+      ################################################################### 
+        ## shrink towards null.coef if immediately invalid 
+      ##  betaold <- null.coef
+      ##  etaold <- null.eta <- as.numeric(X%*%null.coef + as.numeric(offset))
+      ##  old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + sum((rS%*%null.coef)^2) 
+      ##  null.eta <- as.numeric(X%*%null.coef + as.numeric(offset))    
+        ii <- 0
+        while (!(validmu(mu) && valideta(eta))) { ## shrink towards null.coef if immediately invalid
+          ii <- ii + 1
+          if (ii>20) stop("Can't find valid starting values: please specify some")
+          beta <- beta * .9 + null.coef * .1
+          beta.t <- beta    ## current beta tilde
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])
+          eta <- as.numeric(X%*%beta.t + offset)   
+          mu <- linkinv(eta)
+        }
+        betaold <- null.coef <- beta
+        betaold.t <- beta   
+        betaold.t[iv] <- if (!not.exp) exp(betaold[iv]) else notExp(betaold[iv])
+        etaold <- as.numeric(X%*%betaold.t + offset) 
+        old.pdev <- sum(dev.resids(y,linkinv(etaold),weights)) + sum((rS%*%betaold)^2)
+      ##################################################################
+
       pdev.plot <- 0     # define initial pen dev for plotting it 
       E <- matrix(0,q,q)   # define diagonal matrix E- second term of the Hessian
       Cdiag <- rep(1,q); C1diag <- rep(0,q)
-      if (!not.exp) {
-          Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
-      } else {
-          Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
-      }
-
-      tX1 <- Cdiag*t(X)
-      g.deriv <- 1/mu.eta(eta)        # diag(G)
-      w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1)
-      Dp.g <- - drop(tX1%*%(w1*g.deriv*(y-mu))) + S.t%*%beta
+    ##  if (!not.exp) {
+    ##      Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+    ##  } else {
+    ##      Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+    ##  }
+    ##  tX1 <- Cdiag*t(X)
+    ##  g.deriv <- 1/mu.eta(eta)        # diag(G)
+    ##  w1 <- weights/(variance(mu)*g.deriv^2)    # diag(W1)
+    ##  Dp.g <- - drop(tX1%*%(w1*g.deriv*(y-mu))) + S.t%*%beta
                      # the gradient vector of the penalized deviance
-      Dp.gnorm <- max(abs(Dp.g)) # set convergence on the max value of the Dp.g
-      old.beta <- beta
-      conv <- FALSE
-     # -----------------------------------------------
-     # MAIN ITERATIONS START HERE --------------------
+    ##  Dp.gnorm <- max(abs(Dp.g)) # set convergence on the max value of the Dp.g
+     ## betaold <- beta
+      boundary <- conv <- FALSE
+      old.warn <- getOption("warn")
+      if (!control$print.warn) curr.warn <- -1 else curr.warn <- old.warn
+
+     ###################################################
+     ## MAIN ITERATIONS START HERE...
      #cat("\nscam.fit iter start")
-     for (iter in 1:maxit)  {
+     for (iter in 1:control$maxit)  {
          #cat(".")
          good <- weights > 0
          var.val <- variance(mu)
@@ -701,7 +787,7 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
          abs.w <- abs(w)      # absolute values of the diag(W)
          I.minus <- rep(0,nobs)  # define diagonal elements of the matrix I^{-}
          z1 <- g.deriv*y.mu/alpha  # the first term of the pseudodata
-         ii <- w < 0;  I.minus[ii] <- 1;z1[ii] <- -z1[ii]
+         iin <- w < 0;  I.minus[iin] <- 1;z1[iin] <- -z1[iin]
          wX11 <- rbind(sqrt(abs.w)[1:nobs]*t(tX1),rS)
            illcond <- FALSE
            Q <- qr(wX11,LAPACK=TRUE) 
@@ -715,9 +801,9 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
              R <- R[,rp] ## unpivoted R
              svd.r <- svd(R)
              d.inv <- rep(0,q)  # initial vector of inverse singular values
-             good <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
-             d.inv[good] <- 1/svd.r$d[good]
-             if (sum(!good)>0) illcond <- TRUE
+             good1 <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
+             d.inv[good1] <- 1/svd.r$d[good1]
+             if (sum(!good1)>0) illcond <- TRUE
              R <- svd.r$d*t(svd.r$v)
              Q <- qr.qy(Q,rbind(svd.r$u,matrix(0,nobs,q))) ## this is inefficient don't need to extract Q really
              tR.inv <- d.inv*t(svd.r$v)    # inverse of transpose of R
@@ -726,7 +812,7 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
            
           QtQRER <- tR.inv%*%(diag(E)*R.inv)
           if (sum(I.minus)>0) {
-             if (is.qr(Q)) { 
+             if (is.qr(Q)) { c(betaold)
             # QtQRER <- QtQRER + 2*tcrossprod(qr.qty(Q,diag(nrow(wX11))[,(1:nobs)[as.logical(I.minus)]]))
              QtQRER <- QtQRER + 2*crossprod(I.minus*qr.Q(Q)[1:nobs,])  
              } else {
@@ -760,8 +846,8 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
          }  ### end of if (ok1) - Fisher step 
          else  {       ##  full Newton step
              Id.inv.r<-1/(1-d)^.5   # vector of inverse values of (1-sv)^.5
-             ii <- (1-d) < .Machine$double.eps
-             Id.inv.r[ii] <- 0
+             iin <- (1-d) < .Machine$double.eps
+             Id.inv.r[iin] <- 0
              eidrop <- t(Id.inv.r*t(ei$vectors))
              wz1<-sqrt(abs.w)*z1  # the first term of the weighted pseudodata
              if (is.qr(Q)) {
@@ -769,68 +855,208 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
              } else {
                beta <- R.inv%*%(eidrop%*%(t(eidrop)%*%(t(Q[1:nobs,])%*%wz1)[1:nrow(eidrop)]))
              }
-             beta <- old.beta + 
-                     drop(beta - R.inv%*%(eidrop%*%(t(eidrop)%*%(tR.inv%*%(S.t%*%old.beta)))))
+             beta <- betaold + 
+                     drop(beta - R.inv%*%(eidrop%*%(t(eidrop)%*%(tR.inv%*%(S.t%*%betaold)))))
          }  ###  end of if (!ok1) - Newton step
-         delta <- beta-c(old.beta)         # trial step
-         step <- 1                      # initial trial step length
-         beta <- c(old.beta)+step*delta    # current parameter estimates
+
+
+      ##   delta <- beta-c(betaold)         # trial step
+      ##   step <- 1                      # initial trial step length
+      ##   beta <- c(betaold)+step*delta    # current parameter estimates
          beta.t <- beta                 # current reparameterized beta
          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])  # values of re-para beta of the shape constrained term
-         eta <- as.numeric(X%*%beta.t + offset)     # linear predictor
+       ##  eta <- drop(as.numeric(X%*%beta.t + offset))  # linear predictor
+       ##  mu <- linkinv(eta)          # fitted values
+       ##  dev <- sum(dev.resids(y,mu,weights)) # deviance of the working model
+       ##  pdev <- dev + sum((rS%*%beta)^2) # deviance + penalty of the working model
+
+         ##################################################################
+         ## added code here made on May 6, 2020 for scam version 1-2-6,
+         ## following gam.fit3(mgcv_1.8-31))....
+         ###################################################################   
+         if (any(!is.finite(beta))) {
+                conv <- FALSE
+                warning(gettextf("Non-finite coefficients at iteration %d", 
+                  iter))
+                break
+         }  
+
+         options(warn = curr.warn) ## turn of/on printing warning messages under non-finite deviance resulted in non-finite exponentiated coefficients...      
+         if (any(!is.finite(beta.t))) {
+                conv <- FALSE
+                warning(gettextf("Non-finite exponentiated coefficients at iteration %d", 
+                  iter))
+             #   break ## takes out of the main iteration loop 'iter in 1:maxit'
+         }     
+
+         eta <- drop(as.numeric(X%*%beta.t + offset))  # linear predictor
          mu <- linkinv(eta)          # fitted values
          dev <- sum(dev.resids(y,mu,weights)) # deviance of the working model
-         pdev <- dev + sum((rS%*%beta)^2) # deviance + penalty of the working model
-               
-         ## `step reduction' approach starts here ---------------------
-         ii <- 1 
+         penalty <- sum((rS%*%beta)^2)
+
+         if (control$trace) 
+             message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-scam"))
+          boundary <- FALSE
+         
+         ## step halve under non-finite deviance...
+         if (!is.finite(dev)) {
+                if (is.null(betaold)) {
+                  if (is.null(null.coef)) 
+                  stop("no valid set of coefficients has been found:please supply starting values", 
+                    call. = FALSE)
+                  ## Try to find feasible coefficients from the null.coef and null.eta
+                  betaold <- null.coef                
+                }
+                warning("Step size truncated due to divergence", 
+                  call. = FALSE)
+                ii <- 0
+             ##   step <- 1
+                while (!is.finite(dev)) {
+                  if (ii > control$maxit) 
+                    stop("inner loop 1; can't correct step size")
+                  ii <- ii + 1
+               ## beta <- (beta + betaold)/2 
+               ## eta <- (eta + etaold)/2               
+               ## mu <- linkinv(eta)
+               ## step <- step/2      ## decrease step length 
+               ## beta <- c(betaold)+step*delta   ## update current parameter estimates
+                  beta <- (beta + c(betaold))/2 
+                  beta.t <- beta       ## update current re-para beta
+                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                  eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
+                  mu <- linkinv(eta)   ## fitted values
+                  dev <- sum(dev.resids(y, mu, weights))
+                }
+                boundary <- TRUE 
+                penalty <- sum((rS%*%beta)^2) ## t(beta)%*%S.t%*%beta # reset penalty too
+                if (control$trace) 
+                  cat("Step halved: new deviance =", dev, "\n")
+            } ## end of infinite deviance correction
+
+          ## now step halve if mu or eta are out of bounds... 
+          if (!(valideta(eta) && validmu(mu))) {
+                warning("Step size truncated: out of bounds", 
+                  call. = FALSE)
+                ii <- 0
+               ## step <- 1
+                while (!(valideta(eta) && validmu(mu))) {
+                  if (ii > control$maxit) 
+                    stop("inner loop 2; can't correct step size")
+                  ii <- ii + 1
+               ## beta <- (beta + betaold)/2 
+               ## eta <- (eta + etaold)/2               
+               ## mu <- linkinv(eta)
+               ## step <- step/2      ## decrease step length 
+               ## beta <- c(betaold)+step*delta   ## update current parameter estimates
+                  beta <- (beta + c(betaold))/2 ## update current parameter estimates
+                  beta.t <- beta       ## update current re-para beta
+                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                  eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
+                  mu <- linkinv(eta)   ## fitted values
+                }
+                boundary <- TRUE
+                penalty <- sum((rS%*%beta)^2) ## t(beta)%*%S.t%*%beta
+                dev <- sum(dev.resids(y, mu, weights))
+                if (control$trace) 
+                  cat("Step halved: new deviance =", dev, "\n")
+          } ## end of invalid mu/eta handling
+
+         options(warn = old.warn) ## return to the default option for printing warning messages (which is '0')
+
+         ## now check for divergence of penalized deviance....
+         pdev <- dev +  penalty  ## the penalized deviance   
+
+         if (control$trace) 
+                message(gettextf("penalized deviance = %s", pdev, domain = "R-scam"))
+
+         ######################################################
+         ## end of added coding
+         ######################################################        
+
          div.thresh <- 10*(.1 +abs(old.pdev))*.Machine$double.eps^.5
-         while (is.na(pdev) || (pdev-old.pdev) > div.thresh) { # 'step reduction' approach
-             if (ii > maxHalf.fit) 
-                 break ## stop ("step reduction failed")
-             ii <- ii+1
-             step <- step/2         # decrease step length 
-             beta <- c(old.beta)+step*delta   # update current parameter estimates
-             beta.t <- beta                # update current re-para beta
-             beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
-             eta <- as.numeric(X%*%beta.t + offset)    # linear predictor  
-             mu <- linkinv(eta)         # fitted values
-             dev <- sum(dev.resids(y,mu,weights)) # update deviance of the working model
-             pdev <- dev+sum((rS%*%beta)^2) # update pen deviance of the working model
-         }
-         ## `step reduction' finishes here -----------------------
+
+         ## `step reduction' approach starts here...
+       ##  ii <- 1  
+       ##  while ( (pdev-old.pdev) > div.thresh) { # 'step reduction' approach
+       ##      if (ii > maxHalf.fit) 
+       ##          break ## stop ("step reduction failed")
+       ##      ii <- ii+1
+       ##      step <- step/2         # decrease step length 
+       ##      beta <- c(old.beta)+step*delta   # update current parameter estimates
+       ##      beta.t <- beta                # update current re-para beta
+       ##      beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+       ##      eta <- as.numeric(X%*%beta.t + offset)    # linear predictor  
+       ##      mu <- linkinv(eta)         # fitted values
+       ##      dev <- sum(dev.resids(y,mu,weights)) # update deviance of the working model
+       ##      pdev <- dev+sum((rS%*%beta)^2) # update pen deviance of the working model
+       ##  }
+         ## `step reduction' finishes here 
      
+           ## ... threshold for judging divergence --- too tight and near
+           ## perfect convergence can cause a failure here
+
+          if (pdev-old.pdev>div.thresh) { ## solution diverging
+             ii <- 0 ## step halving counter
+           ##  step <- 1
+           ##  if (iter==1) { ## immediate divergence, need to shrink towards zero 
+           ##     betaold <- null.coef
+           ##  }
+             while (pdev -old.pdev > div.thresh){ ## step halve until pdev <= old.pdev
+                if (ii > 100) 
+                   stop("inner loop 3; can't correct step size")
+                ii <- ii + 1
+              ## beta <- (beta + betaold)/2 
+              ## eta <- (eta + etaold)/2               
+              ## mu <- linkinv(eta)
+              ##  step <- step/2      ## decrease step length 
+              ## beta <- c(betaold)+step*delta   ## update current parameter estimates
+                beta <- (beta + c(betaold))/2
+                beta.t <- beta       ## update current re-para beta
+                beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
+                mu <- linkinv(eta)   ## fitted values
+                dev <- sum(dev.resids(y, mu, weights)) ## update deviance of the working model
+                pdev <- dev + sum((rS%*%beta)^2) ## update the penalized deviance
+                if (control$trace) 
+                  message(gettextf("Step halved: new penalized deviance = %g", pdev, "\n"))
+              }
+          } ## end of pdev divergence
+
          Dp.g <- -drop(tX1%*%(w1*g.deriv*(y-mu)))+S.t%*%beta # the gradient vector of the penalized deviance
          Dp.gnorm <- max(abs(Dp.g)) 
          pdev.plot[iter] <- pdev      # store penilized deviance of the working model for plotting
           
-         ## checking convergence ...
-         if (abs(pdev - old.pdev)/(.1 + abs(pdev)) < devtol.fit) {
-             if (max(abs(beta - c(old.beta))) > steptol.fit * 
-                          max(abs(beta + c(old.beta)))/2) {
-                old.beta <- beta
-                old.pdev <- pdev
-             }
-             else {
-                conv <- TRUE
-                beta <- beta
-                break
-             }
-         }
-         else {
-             old.pdev <- pdev
-             old.beta <- beta
-         }
-     } ## main iteration procedure is completed here... 
+      ##   if (strictly.additive) { conv <- TRUE; break;}
 
-     
-     ## define matrices at their converged values from the full Newton method...
+         ## checking convergence adequately...
+         if (abs(pdev - old.pdev)/(.1 + abs(pdev)) < control$devtol.fit) {
+              if (Dp.gnorm > control$devtol.fit*max(abs(beta+c(betaold)))/2) {
+           ## if (max(abs(beta - c(betaold))) > control$steptol.fit*max(abs(beta + c(betaold)))/2) {
+                old.pdev <- pdev ## not converged quite enough
+                betaold <- beta                   
+              }
+              else { ## converged
+                 conv <- TRUE
+                 beta <- beta              
+                 break
+              }
+         }
+         else { ## not converged
+             old.pdev <- pdev
+             betaold <- beta              
+         }
+     } ## main iteration procedure is completed here.
+     #######################################################
+     ## at this stage the model has been fully estimated
+
+
+     ## now define matrices at their converged values from the full Newton method...
   
-     dev <- sum(dev.resids(y,mu,weights))
-     beta.t <- beta               # estimates of re-para beta
-     beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
-     eta <- as.numeric(X%*%beta.t + offset)      # linear predictor  
-     mu <- linkinv(eta)         # fitted values
+   #  beta.t <- beta   ## estimates of re-para beta
+   #  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+   #  eta <- as.numeric(X%*%beta.t + offset)      ## linear predictor  
+   #  mu <- linkinv(eta)   ## fitted values
+   #  dev <- sum(dev.resids(y,mu,weights))
 
      if (!not.exp) {
              Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
@@ -866,9 +1092,9 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
            R <- R[,rp] ## unpivoted R
            svd.r <- svd(R)
            d.inv <- rep(0,q)  # initial vector of inverse singular values
-           good <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
-           d.inv[good] <- 1/svd.r$d[good]
-           if (sum(!good)>0) illcond <- TRUE
+           good1 <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
+           d.inv[good1] <- 1/svd.r$d[good1]
+           if (sum(!good1)>0) illcond <- TRUE
            R <- svd.r$d*t(svd.r$v)
            Q <- qr.qy(Q,rbind(svd.r$u,matrix(0,nobs,q))) ## this is inefficient don't need to extract Q really
            tR.inv <- d.inv*t(svd.r$v)    # inverse of transpose of R
@@ -927,7 +1153,7 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
      Dp.g <- -t(X1)%*%(w1*g.deriv*(y-mu))+S.t%*%beta # the gradient vector of the penalized deviance
      Dp.gnorm<-max(abs(Dp.g)) 
 
-     # calculating tr(A) ----------------------------------------------
+     # calculating tr(A)...
      I.plus <- rep(1,nobs)   # define diagonal elements of the matrix I^{+}
      I.plus[w<0] <- -1
      L <- c(1/alpha)    # define diagonal elements of L=diag(1/alpha)
@@ -946,32 +1172,52 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
      XC2 <- t(C2diag*t(X))
      XC1 <- t(C1diag*t(X))
      
-     # ---------------------------------------------------------------------------
-     scale.est <- dev/(nobs-trA)  #  scale estimate...
+     ############################
+     ## some return values....
+     dlink.mu  <- 1/mu.eta(eta); Var<- variance(mu)
+     link <- family$linkfun(mu); d2link.mu <- dg$d2link(mu)
+     dvar.mu <- dv$dvar(mu); d2var.mu <- dv$d2var(mu)
+     d3link.mu <- dg$d3link(mu)
+     z <- g.deriv*(y-mu)+X1%*%beta
+     #############################
+     #############################
+     scale.est <- dev/(nobs-trA)  #  scale estimate
+     ## re-transforming 'mu' back on original scale and hence residuals, in case of correlated errors...
      residuals <- rep.int(NA, nobs)
      residuals <- (y-mu)*g.deriv
-
-     # ---------------------------------------------------------------------------
+   #  if (AR1.rho==0)  residuals <- (y-mu)*g.deriv
+   #  else {
+   #         eta <- as.numeric(G$X%*%beta.t + offset) # linear predictor on original scale
+   #         mu <- linkinv(eta)    # fitted values on original scale 
+   #         g.deriv <- 1/ mu.eta(eta)        # diag(G)
+   #         residuals <- (G$y-mu)*g.deriv
+   #  }
+     ################################
      ## calculation of the derivatives of beta by the Implicit Function Theorem starts here
      dbeta.rho <- matrix(0,q,n.pen) # define matrix of the parameters derivatives
-     for (j in 1:n.pen) {
-        dbeta.rho[,j] <- - sp[j]*P%*%(t(P)%*%(S[[j]]%*%beta)) # derivative of beta wrt rho[j]
-     }
+     if (n.pen>0) for (j in 1:n.pen) {
+                     dbeta.rho[,j] <- - sp[j]*P%*%(t(P)%*%(S[[j]]%*%beta)) # derivative of beta wrt rho[j]
+                  }
      # end of calculating the parameters derivatives
      aic.model <- aic(y, n, mu, weights, dev) +  2 * sum(edf)
+     if (AR1.rho!=0) { ## correct aic for AR1 transform
+        df <- 1 ## if (getARs) sum(b$model$"(AR.start)") else 1
+        aic.model <- aic.model - 2*(n-df)*log(ld) 
+     }
      assign("start",beta,envir=env)
      assign("dbeta.start",dbeta.rho,envir=env)
      assign("sp.last",sp,envir=env)
   } ### end if (!EMPTY) 
 
- list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=old.beta, step=step,gcv=dev*nobs/(nobs-gamma *trA)^2, sp=sp, mu=mu,X=X, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
+ list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=betaold, gcv=dev*nobs/(nobs-gamma *trA)^2, sp=sp,
+      mu=mu,X=G$X,y=G$y, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
       P=P,K=K, C2diag=C2diag, KtILQ1R= KtILQ1R, KtIQ1R=KtIQ1R, ## XC1=XC1, XC2=XC2,
-      dlink.mu=1/mu.eta(eta),Var=variance(mu), abs.w=abs.w,
-      link=family$linkfun(mu),w=as.numeric(w),w1=w1,d2link.mu=dg$d2link(mu),wX1=wX1,I.plus=I.plus,
-      dvar.mu=dv$dvar(mu),d2var.mu=dv$d2var(mu),deviance=dev,scale.est=scale.est,
-      ok1=ok1,alpha=as.numeric(alpha),d3link.mu=dg$d3link(mu),eta=eta,iter=iter,
+      dlink.mu=dlink.mu,Var=Var, abs.w=abs.w,
+      link=link,w=as.numeric(w),w1=w1,d2link.mu=d2link.mu,wX1=wX1,I.plus=I.plus,
+      dvar.mu=dvar.mu,d2var.mu=d2var.mu,deviance=dev,scale.est=scale.est,
+      ok1=ok1,alpha=as.numeric(alpha),d3link.mu=d3link.mu,eta=eta,iter=iter,
       Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,R=R.out, edf=edf,trA=trA,
-      residuals=residuals,z=g.deriv*(y-mu)+X1%*%beta,dbeta.rho=dbeta.rho, aic=aic.model)
+      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
 } ## end of scam.fit
 
 
@@ -982,48 +1228,159 @@ scam.fit <- function(G,sp, maxit=200,maxHalf.fit=40, devtol.fit=1e-8, steptol.fi
 #######################################################################
 
 
-scam.fit.post <- function(y,X,object,sig2,offset,intercept,
-                         weights,scale.known)
+scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.known, not.exp)
 {  ## Function to compute null deviance and covariance matrices after a scam fit.
    ## covariance matrix should use expected Hessian, so re-computation of factors 
    ## is required.  
    ## object - object from estimate.scam()
+   y <- G$y; X <- G$X;
+   sig2 <- G$sig2; offset <- G$offset; intercept <- G$intercept; 
+   weights <- G$weights; scale.known <- G$scale.known; not.exp <- G$not.exp
    n <- nobs <- NROW(y) # number of observations
+   q <- ncol(X)
+   if (G$AR1.rho!=0) {
+        ld <- 1/sqrt(1-G$AR1.rho^2) ## leading diagonal of root inverse correlation
+        sd <- -G$AR1.rho*ld         ## sub diagonal
+        row <- c(1,rep(1:nobs,rep(2,nobs))[-c(1,2*nobs)])
+        weight.r <- c(1,rep(c(sd,ld),nobs-1))
+        end <- c(1,1:(nobs-1)*2+1) 
+        if (!is.null(G$AR.start)) { ## need to correct the start of new AR sections...
+                 ii <- which(G$AR.start==TRUE)
+                 if (length(ii)>0) {
+                    if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
+                    weight.r[ii*2-2] <- 0 ## zero sub diagonal
+                    weight.r[ii*2-1] <- 1 ## set leading diagonal to 1
+                 }
+        }
+        ## apply transform...
+        X <- rwMatrix(end,row,weight.r,X)
+        y <- rwMatrix(end,row,weight.r,y)    
+      }   
+  
    linkinv <- object$family$linkinv
    dev.resids <- object$family$dev.resids
+   dg <- fix.family.link(object$family)
+   dv <- fix.family.var(object$family)
+
+   eta <- as.numeric(X%*%object$beta.t + offset) # linear predictor
+   mu <- linkinv(eta)          # fitted values
+   dev <- sum(dev.resids(y,mu,weights)) # deviance of the final model
    
-   wtdmu <- if (intercept) sum(weights * y)/sum(weights) 
+   wtdmu <- if (intercept) sum(weights * G$y)/sum(weights) 
               else linkinv(offset)
 
-   nulldev <- sum(dev.resids(y, wtdmu, weights))
+   null.dev <- sum(dev.resids(G$y, wtdmu, weights))
  
    n.ok <- nobs - sum(weights == 0)
    nulldf <- n.ok - as.integer(intercept)
    
-   # calculating the approximate covariance matrices 
-   # (dealing with the expected Hessian of the log likelihood) ...
+   ## define matrices at their converged values from the full Newton method...
+   Cdiag <- rep(1,q); C1diag <- rep(0,q)
+   iv <- object$iv
+   if (!not.exp) {
+             Cdiag[iv] <- C1diag[iv] <- object$beta.t[iv]
+     } else {
+             Cdiag[iv] <- DnotExp(object$beta[iv]); C1diag[iv] <- D2notExp(object$beta[iv])
+      }
+    X1 <- t(Cdiag*t(X)) 
+    g.deriv <- 1/object$family$mu.eta(eta)        # diag(G)
+    w1 <- weights/(object$family$variance(mu)*g.deriv^2)    # diag(W1)
+    alpha <- 1+(y-mu)*(dv$dvar(mu)/object$family$variance(mu)+dg$d2link(mu)/g.deriv) # alpha elements of W
+    w <- w1*alpha         # diag(W)
+    E <- matrix(0,q,q)
+    diag(E) <- drop((C1diag*t(X))%*%(w1*g.deriv*(y-mu))) # diagonal elements of E
+    abs.w <- abs(w)      # absolute values of the diag(W)
+    I.minus <- rep(0,nobs)  # define diagonal elements of the matrix I^{-}
+    I.minus[w<0] <- 1
+    wX1 <- sqrt(abs.w)[1:nobs]*X1 
+    wX11 <- rbind(wX1,object$rS) # augmented model matrix 
+     ## Faster version only does SVD when needed (and then only on QR factor)
+        illcond <- FALSE
+        Q <- qr(wX11,LAPACK=TRUE) 
+        R <- qr.R(Q)
+        rp <- 1:ncol(R)
+        rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
+ 
+        R.out <- R[,rp]  ## unpivoted R, needed for summary function
 
-   if (!scale.known) sig2 <- object$scale.est
+        if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+           R.inv <- backsolve(R,diag(ncol(R)))[rp,] ## inverse of unpivoted R
+           tR.inv <- t(R.inv)
+        } else { ## need SVD step
+           R <- R[,rp] ## unpivoted R
+           svd.r <- svd(R)
+           d.inv <- rep(0,q)  # initial vector of inverse singular values
+           good <- svd.r$d >= max(svd.r$d)*.Machine$double.eps^.5
+           d.inv[good] <- 1/svd.r$d[good]
+           if (sum(!good)>0) illcond <- TRUE
+           R <- svd.r$d*t(svd.r$v)
+           Q <- qr.qy(Q,rbind(svd.r$u,matrix(0,nobs,q))) ## this is inefficient don't need to extract Q really
+           tR.inv <- d.inv*t(svd.r$v)    # inverse of transpose of R
+           R.inv <- t(tR.inv)
+         }
+       QtQRER <- tR.inv%*%(diag(E)*R.inv)
+         if (sum(I.minus)>0) {
+              if (is.qr(Q)) { 
+              QtQRER <- QtQRER + 2*crossprod(I.minus*qr.Q(Q)[1:nobs,])  
+              } else {
+              QtQRER <- QtQRER + 2*crossprod(I.minus*Q[1:nobs,])
+              }
+         }
+      ei <- eigen(QtQRER,symmetric=TRUE)    # eigen-decomposition of QtQRER
+      d <- ei$values        # vector of eigenvalues
+      ok1 <- sum(d>1)>0
+      if (ok1) { ## Fisher step in case of not positive semi-definiteness of penalized loglikelihood
+                 ## set alpha =1 ...
+         wX1<-sqrt(w1)[1:nobs]*X1
+         wX11<-rbind(wX1,object$rS)
+         Q <- qr(wX11,LAPACK=TRUE) 
+         R <- qr.R(Q)
+         rp <- 1:ncol(R)
+         rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
+
+         R.out <- R[,rp]  ## unpivoted R, needed for summary function
+
+         if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+             P <- backsolve(R,diag(ncol(R)))[rp,]
+             K <- qr.Q(Q)[1:nobs,]
+         } else { ## need SVD step
+             R <- R[,rp] ## unpivoted R
+             s1 <- svd(R)
+             d.inv1 <- rep(0,q)
+             good1 <- s1$d >= max(s1$d)*.Machine$double.eps^.5
+             d.inv1[good1] <- 1/s1$d[good1]
+             P <- t(d.inv1*t(s1$v))
+             K <- qr.qy(Q,rbind(s1$u,matrix(0,nobs,q)))[1:nobs,]
+          }
+     } ## end of if (ok1)
+     else  {   ## full Newton step
+         Id.inv.r<-1/(1-d)^.5   # vector of inverse values of (1-sv)^1/2
+         ii <- (1-d) < .Machine$double.eps
+         Id.inv.r[ii] <- 0
+         eidrop <- t(Id.inv.r*t(ei$vectors))
+         P <- R.inv%*%eidrop  ## ei$vectors%*%diag(Id.inv.r) # define matrix P
+         if (is.qr(Q)) {
+           K <- qr.qy(Q,rbind(eidrop,matrix(0,nobs,q)))[1:nobs,]
+         } else {
+           K <- Q[1:nobs,]%*%eidrop ## (ei$vectors%*%diag(Id.inv.r))  # define matrix K 
+         }
+     }  ## end of if (!ok1)
+     # end of calculation of the matrices at their converged values...
+
+    ## calculating edf and trA...
+    I.plus <- rep(1,nobs)   # define diagonal elements of the matrix I^{+}
+    I.plus[w<0] <- -1
+    L <- c(1/alpha)
+    KtILQ1R <- crossprod(L*I.plus*K,wX1) ## t(object$L*object$I.plus*K)%*%object$wX1
+    F <- P%*%(KtILQ1R)
+    edf <- diag(F) ## effective degrees of freedom
+    edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
+    trA <- sum(edf)
+    
+   ## calculating the approximate covariance matrices 
+   ## (dealing with the expected Hessian of the log likelihood) ...
    ## get the inverse of the expected Hessian...
-  ## wX1 <- sqrt(object$w1)[1:n]*object$X1
-   wX11 <- rbind(object$wX1,object$rS)
-   q <- ncol(object$wX1)
-   Q <- qr(wX11,LAPACK=TRUE) 
-   R <- qr.R(Q)
-   rp <- 1:ncol(R)
-   rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
-   if (Rrank(R)==ncol(R))  ## no need to truncate, can just use QR
-      {  P <- backsolve(R,diag(q))[rp,]
-         K <- qr.Q(Q)[1:n,]
-      } else {  ## need SVD step
-                R <- R[,rp] ## unpivoted R
-                s1 <- svd(R)
-                d.inv1 <- rep(0,q)
-                good1 <- s1$d >= max(s1$d)*.Machine$double.eps^.5
-                d.inv1[good1] <- 1/s1$d[good1]
-                P <- t(d.inv1[good1]*t(s1$v[,good1]))
-                K <- qr.qy(Q,rbind(s1$u,matrix(0,n,q))[,good1])[1:n,]         
-             }
+   if (!scale.known) sig2 <-  dev/(nobs-trA)  # scale estimate
    Vb <- tcrossprod(P) * sig2 
           ## P%*%t(P)*sig2 # Bayesian posterior covariance matrix for the parameters 
    Ve <- crossprod(K%*%t(P)) *sig2
@@ -1033,15 +1390,21 @@ scam.fit.post <- function(y,X,object,sig2,offset,intercept,
    df.p[object$iv] <- object$beta.t[object$iv]
    Vb.t <- t(df.p*t(df.p*Vb))
    Ve.t <- t(df.p*t(df.p*Ve))
-
-   ## calculating edf and trA...
-   KtILQ1R <- crossprod(object$L*object$I.plus*K,object$wX1) ## t(object$L*object$I.plus*K)%*%object$wX1
-   F <- P%*%(KtILQ1R)
-   edf <- diag(F) ## effective degrees of freedom
-   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
-   trA <- sum(edf)
-   list (nulldev=nulldev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,
-        sig2=sig2,edf=edf,edf1=edf1,trA=trA)
+   
+   eta <- as.numeric(G$X%*%object$beta.t + offset)
+   mu <- linkinv(eta)     # fitted values
+   residuals <- rep.int(NA, nobs)
+   g.deriv <- 1/object$family$mu.eta(eta) # diag(G)
+   residuals <- (G$y-mu)*g.deriv # the working residuals for the fitted model
+      
+   aic.model <- object$family$aic(y, n, mu, weights, dev) +  2 * sum(edf)
+   if (G$AR1.rho!=0) { ## correct aic for AR1 transform
+        df <- 1 ## if (getARs) sum(G$AR.start) else 1
+        aic.model <- aic.model - 2*(n-df)*log(1/sqrt(1-G$AR1.rho^2)) 
+   }
+    
+   list (null.dev=null.dev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,
+        sig2=sig2,edf=edf,edf1=edf1,trA=trA, deviance=dev,residuals=residuals, aic=aic.model, mu=mu, eta=eta)
 } ## end of scam.fit.post
 
 
@@ -1139,9 +1502,10 @@ formula.scam <- function(x, ...)
 }
 
 
-################
-## gam.setup function from mgcv package, copied as this function is exported by 'namespace:mgcv' 
-#################
+###############################################################################################
+## below are functions from mgcv package, copied as they are not exported by 'namespace:mgcv' 
+## Copyright (c) Simon N. Wood 2008-2019 simon.wood@r-project.org
+
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
@@ -1830,6 +2194,42 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
 } ## parametricPenalty
 
 
+## copied from bam(mgcv)..
+## (c) Simon N. Wood 2009-2019
+
+rwMatrix <- function(stop,row,weight,X,trans=FALSE) {
+## Routine to recombine the rows of a matrix X according to info in 
+## stop, row and weight. Consider the ith row of the output matrix 
+## ind <- 1:stop[i] if i==1 and ind <- (stop[i-1]+1):stop[i]
+## otherwise. The ith output row is then X[row[ind],]*weight[ind]
+  if (is.matrix(X)) { n <- nrow(X);p<-ncol(X);ok <- TRUE} else { n<- length(X);p<-1;ok<-FALSE}
+  stop <- stop - 1;row <- row - 1 ## R indices -> C indices
+  oo <-.C(C_rwMatrix,as.integer(stop),as.integer(row),as.double(weight),X=as.double(X),
+          as.integer(n),as.integer(p),trans=as.integer(trans),work=as.double(rep(0,n*p)))
+  if (ok) return(matrix(oo$X,n,p)) else
+  return(oo$X) 
+} ## rwMatrix
+
+AR.resid <- function(rsd,rho=0,AR.start=NULL) {
+## standardised residuals for AR1 model
+  if (rho==0) return(rsd)
+  ld <- 1/sqrt(1-rho^2) ## leading diagonal of root inverse correlation
+  sd <- -rho*ld         ## sub diagonal
+  N <- length(rsd)    
+  ## see rwMatrix() for how following are used...
+  ar.row <- c(1,rep(1:N,rep(2,N))[-c(1,2*N)]) ## index of rows to reweight
+  ar.weight <- c(1,rep(c(sd,ld),N-1))     ## row weights
+  ar.stop <- c(1,1:(N-1)*2+1)    ## (stop[i-1]+1):stop[i] are the rows to reweight to get ith row
+  if (!is.null(AR.start)) { ## need to correct the start of new AR sections...
+    ii <- which(AR.start==TRUE)
+    if (length(ii)>0) {
+          if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
+          ar.weight[ii*2-2] <- 0 ## zero sub diagonal
+          ar.weight[ii*2-1] <- 1 ## set leading diagonal to 1
+    }
+  }
+  rwMatrix(ar.stop,ar.row,ar.weight,rsd)
+} ## AR.resid
 
 ###############################################################
 ## loading functions, copied from mgcv() package of Simon Wood

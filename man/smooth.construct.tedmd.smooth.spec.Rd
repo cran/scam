@@ -56,6 +56,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  \dontrun{
 ## tensor product `tedmd' example 
   ## simulating data...
+   require(scam)
    set.seed(2)
    n <- 30
    x1 <- sort(runif(n)*4-1)

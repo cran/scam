@@ -3,11 +3,11 @@
 # Function to return gcv/ubre ...                      ##
 #########################################################
 
-gcv.ubre <- function(rho,G,gamma,env,maxit, maxHalf.fit, devtol.fit, steptol.fit) 
+gcv.ubre <- function(rho,G,gamma,env,control) 
 {  ## function to get GCV.UBRE value for optim()...
    if (length(rho)!= length(G$off)) stop (paste("length of rho and n.terms has to be the same"))
    sp <- exp(rho)
-   b <- scam.fit(G=G, sp=sp, env=env,gamma=gamma, maxit=maxit, maxHalf.fit=maxHalf.fit, devtol.fit=devtol.fit, steptol.fit=steptol.fit) 
+   b <- scam.fit(G=G, sp=sp, env=env,gamma=gamma, control=scam.control()) 
    if (G$scale.known) #  value of Mallow's Cp/UBRE/AIC ....
       {  n <- nrow(G$X)
          gcv.ubre <- b$dev/n - G$sig2 +2*gamma*b$trA*G$sig2/n
@@ -20,9 +20,9 @@ gcv.ubre <- function(rho,G,gamma,env,maxit, maxHalf.fit, devtol.fit, steptol.fit
 ## function to get the gradient of the gcv/ubre.....   ##
 #########################################################
 
-gcv.ubre.derivative <- function(rho,G, gamma,env, check.analytical=FALSE, del, maxit,maxHalf.fit, devtol.fit, steptol.fit)  
+gcv.ubre.derivative <- function(rho,G, gamma,env, control)  
 {  ## function to return derivative of GCV or UBRE for optim...
-   gcv.ubre_grad(rho, G, gamma,env,check.analytical, del, maxit,maxHalf.fit,devtol.fit, steptol.fit)$gcv.ubre.rho
+   gcv.ubre_grad(rho, G, gamma,env, control=control)$gcv.ubre.rho
 }
 
 
@@ -30,9 +30,9 @@ gcv.ubre.derivative <- function(rho,G, gamma,env, check.analytical=FALSE, del, m
 ## for nlm() function to get the gcv/ubre and gradient of the gcv/ubre.....##
 #############################################################################
 
-dgcv.ubre.nlm <- function(rho,G, gamma,env, check.analytical=FALSE, del,maxit,maxHalf.fit, devtol.fit, steptol.fit) 
+dgcv.ubre.nlm <- function(rho,G, gamma,env,  control) 
 {  ## GCV UBRE objective function for nlm
-   gg <- gcv.ubre_grad(rho, G, gamma,env,check.analytical, del, maxit,maxHalf.fit,devtol.fit, steptol.fit) 
+   gg <- gcv.ubre_grad(rho, G, gamma,env, control=control) 
    attr(gg$gcv.ubre,"gradient") <- gg$gcv.ubre.rho
    gg$gcv.ubre
 }
@@ -44,14 +44,18 @@ dgcv.ubre.nlm <- function(rho,G, gamma,env, check.analytical=FALSE, del,maxit,ma
 #######################################################
 
 
-estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
+estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,  control)
                    ##  check.analytical, del, devtol.fit, steptol.fit)
 {  ## function to select smoothing parameter...
    if (!(optimizer %in% c("bfgs", "nlm", "optim","nlm.fd","efs")) )
           stop("unknown outer optimization method")
-   if (optimizer == "bfgs") ## minimize GCV/UBRE by BFGS...
-      {  b <- bfgs_gcv.ubre(gcv.ubre_grad,rho=rho, G=G,gamma=gamma,env=env, control=control)
-                        ## check.analytical=check.analytical, del=del,devtol.fit=devtol.fit, steptol.fit=steptol.fit) 
+
+   if (length(rho)==0) { ## no sp estimation to do -- run a fit instead
+     optimizer <- "no.sps" ## will cause scam.fit to be called, below
+   }
+
+   if (optimizer == "bfgs") {## minimize GCV/UBRE by BFGS...
+         b <- bfgs_gcv.ubre(gcv.ubre_grad,rho=rho, G=G,gamma=gamma,env=env, control=control) ## check.analytical=check.analytical, del=del,devtol.fit=devtol.fit, steptol.fit=steptol.fit) 
          sp <- exp(b$rho)
          object <- b$object
          object$gcv.ubre <- b$gcv.ubre
@@ -61,9 +65,10 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
          object$dgcv.ubre.check <- b$dgcv.ubre.check
          object$conv.bfgs <- b$conv.bfgs
          object$iterations <- b$iterations
-      }
-   else if (optimizer=="optim")  ## gr=gcv.ubre.derivative
-           {  if (!(optim.method[1] %in% c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN")))
+         object$score.hist <- b$score.hist
+   }
+   else if (optimizer=="optim"){  ## gr=gcv.ubre.derivative
+              if (!(optim.method[1] %in% c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN")))
                  {   warning("unknown optim() method, `L-BFGS-B' were used")
                      optim.method[1] <- "L-BFGS-B"
                  }
@@ -80,8 +85,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
                               else 
                                  grr <- NULL
               b <- optim(par=rho,fn=gcv.ubre, gr=grr, method=optim.method[1],G=G, control=
-         list(factr=control$optim$factr,lmm=min(5,length(rho))), gamma=gamma,env=env, maxit=control$maxit,
-               maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
+         list(factr=control$optim$factr,lmm=min(5,length(rho))), gamma=gamma,env=env) 
               sp <- exp(b$par)
               gcv.ubre <- b$value
               dgcv.ubre <- NULL
@@ -97,32 +101,28 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
                       conv <- "A warning from the `L-BFGS-B' method; see help for `optim' for further details"
               else if (termcode == 52)  
                       conv <- "An error from the `L-BFGS-B' method; see help for `optim' for further details"
-           }
-   else if (optimizer=="nlm.fd") ## nlm() with finite difference derivatives...
-           {  b <- nlm(f=gcv.ubre, p=rho,typsize=rho, stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
+   }
+   else if (optimizer=="nlm.fd") {## nlm() with finite difference derivatives...
+             b <- nlm(f=gcv.ubre, p=rho,typsize=rho, stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	               gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
-                       iterlim = control$nlm$iterlim,  G=G, gamma=gamma,env=env, maxit=control$maxit,maxHalf.fit =control$maxHalf.fit,
-                       devtol.fit=control$devtol.fit,steptol.fit=control$steptol.fit) 
-           }
-   else if (optimizer=="nlm")  ## nlm() with analytical derivatives...
-           { b <- nlm(f=dgcv.ubre.nlm, p=rho,typsize=rho, stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
-	              gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, iterlim = control$nlm$iterlim, 
-                      G=G,gamma=gamma,env=env, check.analytical=control$bfgs$check.analytical, del=control$bfgs$del, 
-                      maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit) 
-           }
-    else if (optimizer=="efs")  ## Extended Fellner-Schall method
-           { b <- efsudr.scam(G=G,lsp=rho,gamma=gamma,env=env, control=control)
+                       iterlim = control$nlm$iterlim,  G=G, gamma=gamma,env=env, control=control) 
+   }
+   else if (optimizer=="nlm"){  ## nlm() with analytical derivatives...
+            b <- nlm(f=dgcv.ubre.nlm, p=rho,typsize=rho, stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit, gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, iterlim = control$nlm$iterlim, G=G,gamma=gamma,env=env, control=control) 
+   }
+   else if (optimizer=="efs"){  ## Extended Fellner-Schall method
+             b <- efsudr.scam(G=G,lsp=rho,gamma=gamma,env=env, control=control)
              sp <- b$sp
              object <- b
              object$iterations <- b$niter
              object$conv <- b$outer.info$conv
              object$score.hist <- b$outer.info$score.hist
              object$gcv.ubre <- b$gcv
-           }
+  }
 
 
-   if (optimizer== "nlm.fd" || optimizer== "nlm") 
-      {   sp <- exp(b$estimate)
+   if (optimizer== "nlm.fd" || optimizer== "nlm"){ 
+          sp <- exp(b$estimate)
           gcv.ubre <- b$minimum
           dgcv.ubre <- b$gradient
           iterations <- b$iterations
@@ -141,23 +141,27 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
                  conv <- "Maximum step size `stepmax' exceeded five consecutive 
                          times. Either the function is unbounded below, becomes asymptotic 
                          to a finite value from above in some direction or stepmax is too small"   
-      }
+   }
    ## fit the model using the optimal sp from "optim" or "nlm"...
    if (optimizer== "nlm.fd" || optimizer== "nlm" || optimizer== "optim"){
-         object <- scam.fit(G=G, sp=sp,env=env,maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-                             steptol.fit=control$steptol.fit) 
+         object <- scam.fit(G=G, sp=sp,env=env,control=control) 
          object$gcv.ubre <- gcv.ubre
          object$dgcv.ubre <- dgcv.ubre 
          object$termcode <- termcode
          object$conv <- conv
          object$iterations <- iterations 
-      }
+   }
+   else if (optimizer=="no.sps"){
+         object <- scam.fit(G=G, sp=exp(rho),env=env,control=control)      
+         sp <- rep(0,0)    
+   }
    if (optimizer=="optim"){
          object$optim.method <- rep(NA,2)
          object$optim.method[1] <- optim.method[1]
          if (!is.null(grr))
               object$optim.method[2] <- "grad"
-      }
+   }
+   
    object$sp <- sp
    object$q.f <- G$q.f
    object$p.ident <- G$p.ident
@@ -172,7 +176,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, gamma,env,control)
 ##########################################################################
 
 
-efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, devtol.fit=1e-7, steptol.fit=1e-7,
+efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200, devtol.fit=1e-7, steptol.fit=1e-7,
                                             # gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env){
 ## Extended Fellner-Schall method for regular families,
 ## with PIRLS performed by scam.fit
@@ -183,7 +187,7 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, de
      nsp <- length(G$S) 
      q <- ncol(G$X)
      n <- nrow(G$X) 
-     y.mu <- G$y-b$mu
+     y.mu <- b$y-b$mu
      c <- -2*y.mu/(b$Var*b$dlink.mu)
      D.beta <- t(b$X1)%*%c  # derivative of the deviance w.r.t. beta 
      
@@ -237,8 +241,7 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, de
   spind <- 1:nsp ## index of smoothing params in lsp
   lsp[spind] <- lsp[spind] + 2.5 
   mult <- 1
-  fit <- scam.fit(G=G,sp=exp(lsp), maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-                  steptol.fit=control$steptol.fit,gamma=gamma, env=env)
+  fit <- scam.fit(G=G,sp=exp(lsp), gamma=gamma, env=env,control=control)
   q <- ncol(G$X)
   n <- nrow(G$X)
   score.hist <- rep(0,200)
@@ -259,16 +262,14 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, de
      lsp1 <- pmin(lsp + log(r)*mult,control$efs.lspmax)
      max.step <- max(abs(lsp1-lsp))
      old.gcv <- fit$gcv
-     fit <- scam.fit(G=G,sp=exp(lsp1), maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-                  steptol.fit=control$steptol.fit,gamma=gamma, env=env)
+     fit <- scam.fit(G=G,sp=exp(lsp1), gamma=gamma, env=env,control=control)
       ## some step length control...
    
      if (fit$gcv<=old.gcv) { ## improvement
        if (max.step<.05) { ## consider step extension (near optimum)
          lsp2 <- lsp
          lsp2 <- pmin(lsp + log(r)*mult*2,control$efs.lspmax) ## try extending step...
-         fit2 <- scam.fit(G=G,sp=exp(lsp2), maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-                  steptol.fit=control$steptol.fit,gamma=gamma, env=env)
+         fit2 <- scam.fit(G=G,sp=exp(lsp2), gamma=gamma, env=env,control=control)
          if (fit2$gcv < fit$gcv) { ## improvement - accept extension
            fit <- fit2;lsp <- lsp2
 	   mult <- mult * 2
@@ -281,8 +282,7 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, de
       #     mult <- mult/2 ## contract step
       #	   lsp1 <- lsp
       #     lsp1 <- pmin(lsp + log(r)*mult,control$efs.lspmax)
-      #	   fit <- scam.fit(G=G,sp=exp(lsp1), maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-      #            steptol.fit=control$steptol.fit,gamma=gamma, env=env)
+      #	   fit <- scam.fit(G=G,sp=exp(lsp1), gamma=gamma, env=env,control=control)
       #  }
         gcv.thresh <- 10*(.1 +abs(old.gcv))*.Machine$double.eps^.5
         ii <- 1
@@ -294,8 +294,7 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200,maxHalf.fit=40, de
              mult <- mult/2 ## contract step
              lsp1 <- lsp
              lsp1 <- pmin(lsp + log(r)*mult,control$efs.lspmax)
-             fit <- scam.fit(G=G,sp=exp(lsp1), maxit=control$maxit,maxHalf.fit=control$maxHalf.fit, devtol.fit=control$devtol.fit,
-                    steptol.fit=control$steptol.fit,gamma=gamma, env=env)
+             fit <- scam.fit(G=G,sp=exp(lsp1), gamma=gamma, env=env,control=control)
          }
         lsp <- lsp1
         if (mult<1) mult <- 1

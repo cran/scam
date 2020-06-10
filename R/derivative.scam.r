@@ -2,7 +2,7 @@
 ## function to get derivatives of the smooth model terms ....  ##
 ## (currently only univariate smooths)                         ##
 ## analytic derivatives for P-, SCOP-splines                   ##
-## finite differencing using predict.gam() for others          ##                          ##
+## finite differencing using predict.gam() for others          ##                    
 ################################################################# 
 
 

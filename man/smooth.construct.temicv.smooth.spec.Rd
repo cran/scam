@@ -55,7 +55,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
  \dontrun{
 ## tensor product `temicv' example 
   ## simulating data...
-   set.seed(2)
+   set.seed(4)
    n <- 30
    x1 <- sort(runif(n)*4-1)
    x2 <- sort(2*runif(n)-1)

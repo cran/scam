@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.2-5}
+% \Rdversion{1.2-6}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -16,7 +16,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
       scale = 0, knots=NULL, not.exp=FALSE, start= NULL, etastart,
-      mustart,control=list())
+      mustart,control=list(),AR1.rho=0, AR.start=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -73,6 +73,12 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 
   \item{control}{A list of fit control parameters to replace defaults returned by \code{\link{scam.control}}.
                  Values not set assume default values.}
+
+  \item{AR1.rho}{The AR1 correlation parameter. An AR1 error model can be used for the residuals of Gaussian-identity link models. Standardized residuals (approximately uncorrelated under correct model) returned in
+\code{std.rsd} if non zero. }
+
+  \item{AR.start}{logical variable of same length as data, \code{TRUE} at first observation of an independent section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} (default) then there are no breaks in AR1 correlaion.}
+
 }
 
 \details{
@@ -86,7 +92,7 @@ is subject to monotone increasing constraint.
 
 All available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
 
-
+Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero.
 }
 \value{The function returns an object of class \code{"scam"} with the following elements (this agrees with \code{gamObject}):
 
@@ -96,9 +102,8 @@ All available shape constrained smooths are decsribed in \code{\link{shape.const
            \code{pterms}) each parameter relates to: applies only to non-smooth terms.}
 
 \item{bfgs.info}{If \code{optimizer="bfgs"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
-              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
-              BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
-              convergence.} 
+              \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of the BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
+              convergence; \code{score.hist}, the succesive values of the score up until convergence.} 
 
 \item{call}{the matched call.}
 
@@ -122,6 +127,9 @@ All available shape constrained smooths are decsribed in \code{\link{shape.const
 \item{edf}{estimated degrees of freedom for each model parameter. Penalization
        means that many of these are less than 1.}
 \item{edf1}{alternative estimate of edf.}
+
+\item{efs.info}{If \code{optimizer="efs"}, a list of convergence diagnostics relating to the extended Fellner Schall method fot smoothing parameter selection. The items are: 
+              \code{conv}, indicates why the efs algorithm of the smoothness selection terminated; \code{iter}, number of iterations of the efs taken to get convergence; \code{score.hist}, the succesive values of the score up until convergence. }
 
 \item{family}{family object specifying distribution and link used.}
 
@@ -181,6 +189,8 @@ the \code{\link{smooth.construct}} objects.}
 
 \item{sp}{estimated smoothing parameters for the model. These are the underlying smoothing
 parameters, subject to optimization.}
+
+\item{std.rsd}{Standardized residuals (approximately uncorrelated under correct model) if \code{AR1.rho} non zero }
 
 \item{termcode}{an integer indicating why the optimization process of the smoothness selection
           terminated (see \code{\link{bfgs_gcv.ubre}}).}
@@ -253,7 +263,6 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 ## Gaussian model, 2 terms, 1 monotonic increasing....
    ## simulating data...
 require(scam)
-
 set.seed(0)
 n <- 200
 x1 <- runif(n)*6-3
@@ -386,7 +395,6 @@ plot(b)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
 
 ## example with random effect smoother...
-
    set.seed(2)
    n <- 200
    x1 <- runif(n)*6-3
@@ -406,6 +414,25 @@ plot(b)
    scam.check(b)
    plot(b,pages=1)
 
+## example with AR1 errors...
+set.seed(8)
+n <- 500
+x1 <- runif(n)*6-3
+f1 <- 3*exp(-x1^2) # unconstrained term
+x2 <- runif(n)*4-1;
+f2 <- exp(4*x2)/(1+exp(4*x2)) # increasing smooth
+f <- f1+f2
+e <- rnorm(n,0,sd=2)
+for (i in 2:n) e[i] <- 0.6*e[i-1] + e[i]
+y <- f + e
+dat <- data.frame(x1=x1,x2=x2,y=y)  
+b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=25,bs="mpi"),
+            data=dat, AR1.rho=0.6, optimizer="efs")
+b
+## Raw residuals still show correlation...
+acf(residuals(b)) 
+## But standardized are now fine...
+acf(b$std.rsd)
  }
 }
 

@@ -1,4 +1,5 @@
 \name{scam.fit}
+% \Rdversion{1.2-6}
 \alias{scam.fit}
 \title{Newton-Raphson method to fit SCAM}
 \description{
@@ -10,8 +11,8 @@ log smoothing parameters. Routine \code{\link{bfgs_gcv.ubre}} estimates the smoo
 The function is not normally called directly, but rather service routines for \code{\link{scam}}. 
 }
 \usage{
-scam.fit(G, sp, maxit=200, maxHalf.fit=40, devtol.fit=1e-8, steptol.fit=1e-8,
-                gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env)
+scam.fit(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env, 
+              null.coef=rep(0,ncol(G$X)), control=scam.control())
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,28 +20,23 @@ scam.fit(G, sp, maxit=200, maxHalf.fit=40, devtol.fit=1e-8, steptol.fit=1e-8,
 
   \item{sp}{The vector of smoothing parameters.}
 
-  \item{maxit}{Maximum iterations in the Newton-Raphson procedure.}
-
-  \item{maxHalf.fit}{If a step of  the Newton-Raphson optimization method leads 
-                  to a worse penalized deviance, then the step length of the model coefficients is halved. This is
-                  the number of halvings to try before giving up.}
-
-  \item{devtol.fit}{A positive scalar giving the tolerance at which the scaled distance between
-        two successive penalized deviances is considered close enough to zero to terminate the algorithm.}
-  
-   \item{steptol.fit}{A positive scalar giving the tolerance at which the scaled distance between
-        two successive iterates is considered close enough to zero to terminate the algorithm.}
-
-   \item{gamma}{This constant allows to inflate the model degrees of
+  \item{gamma}{This constant allows to inflate the model degrees of
           freedom in the GCV or UBRE/AIC score.}  
 
-   \item{start}{Initial values for the model coefficients.}
+  \item{start}{Initial values for the model coefficients.}
 
   \item{etastart}{Initial values for the linear predictor.}
 
   \item{mustart}{Initial values for the expected values.}
 
-   \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
+  \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
+
+  \item{null.coef}{coefficients for a null model, needed for an ability to check for immediate divergence.}
+
+  \item{control}{A list of fit control parameters returned by \code{scam.control}. It includes: \code{maxit}, a positive scalar which gives the maximum number of iterations for Newton's method; \code{devtol.fit}, a scalar giving the tolerance at which the relative penalized deviance is considered to be close enougth to 0 to terminate the algorithm;
+      \code{steptol.fit}, a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm; 
+      \code{trace} turns on or off some de-bugging information;
+      \code{print.warn}, when set to \code{FALSE} turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if \code{mu} or \code{eta} are out of bounds.}
     
 }
 \details{

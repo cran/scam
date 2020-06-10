@@ -6,30 +6,22 @@
 control of the numerical options for fitting a SCAM. 
 }
 \usage{
-scam.control(maxit = 200, maxHalf.fit=40, devtol.fit=1e-7,steptol.fit=1e-7,
-             keepData=FALSE,efs.lspmax=15,efs.tol=.1,nlm=list(),optim=list(),bfgs=list()) 
+scam.control(maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=1e-7,
+            keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),
+            bfgs=list(), trace =FALSE, print.warn=FALSE) 
 }
 \arguments{ 
 
 \item{maxit}{Maximum number of IRLS iterations to perform used in \code{\link{scam.fit}}.}
 
-\item{maxHalf.fit}{If a step of  the Newton-Raphson optimization method leads 
+\item{maxHalf}{If a step of  the BFGS optimization method leads 
 to a worse penalized deviance, then the step length of the model coefficients is halved. This is
-the number of halvings to try before giving up used in \code{\link{scam.fit}}.}
+the number of halvings to try before giving up used in \code{\link{bfgs_gcv.ubre}}.}
 
 \item{devtol.fit}{A positive scalar giving the convergence control for the model fitting algorithm in \code{\link{scam.fit}}.}
 
 \item{steptol.fit}{A positive scalar giving the tolerance at which the scaled distance between
         two successive iterates is considered close enough to zero to terminate the model fitting algorithm in \code{\link{scam.fit}}.}
-
-\item{nlm}{list of control parameters to pass to \code{\link{nlm}} if this is
-used for outer estimation of smoothing parameters (not default). }
-
-\item{optim}{list of control parameters to pass to \code{\link{optim}} if this
-is used for outer estimation of smoothing parameters (not default).}
-
-\item{bfgs}{list of control parameters to pass to default BFGS optimizer
-used for outer estimation of log smoothing parameters.}
 
 \item{keepData}{Should a copy of the original \code{data} argument be kept in the \code{scam} 
 object?}
@@ -40,6 +32,18 @@ smoothing parameter optimization.}
 \item{efs.tol}{change in GCV to count as negligible when testing for EFS convergence. If the
 step is small and the last 3 steps led to a GCV change smaller than this, then stop.}
 
+\item{nlm}{list of control parameters to pass to \code{\link{nlm}} if this is
+used for outer estimation of smoothing parameters (not default). }
+
+\item{optim}{list of control parameters to pass to \code{\link{optim}} if this
+is used for outer estimation of smoothing parameters (not default).}
+
+\item{bfgs}{list of control parameters to pass to default BFGS optimizer
+used for outer estimation of log smoothing parameters.}
+
+\item{trace}{turns on or off some de-bugging information.}
+
+\item{print.warn}{ when set to \code{FALSE} turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if \code{mu} or \code{eta} are out of bounds.}
 }
 
 \details{ Outer iteration is used to estimate smoothing parameters of SCAM by GCV/UBRE score optimization. The default procedure is the built-in BFGS method which is controlled by the list \code{bfgs} with the following elements: \code{steptol.bfgs} (default 1e-7) is the relative convergence tolerance; 

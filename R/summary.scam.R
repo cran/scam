@@ -569,10 +569,10 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
    mean.y <- sum(w*object$y)/sum(w)
    w <- sqrt(w)
    nobs <- nrow(object$model)
-   r.sq<- 1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df) 
+   r.sq<- 1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df)
    dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
    ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
-       s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
+       s.pv=s.pv,scale=dispersion,r.sq=round(r.sq,digits=4),family=object$family,formula=object$formula,n=nobs,
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
        pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
        pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
@@ -585,6 +585,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
 
    
 ################## mgcv::: pinvXVX
+## (c) Simon N. Wood 
 
 pinvXVX <- function (X, V, rank = NULL) 
 {
@@ -628,6 +629,7 @@ pinvXVX <- function (X, V, rank = NULL)
 }
  
 ################ mgcv::: eigXVX
+## (c) Simon N. Wood 
 
 eigXVX <- function (X, V, rank = NULL, tol = .Machine$double.eps^0.5) 
 {
@@ -680,7 +682,7 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
             sep = "")
     cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
         flag = "-"), "  n = ", x$n, "\n", sep = "")
-    if (x$optimizer == "bfgs"){
+    if (x$optimizer == "bfgs" && x$m>0){
                if (x$termcode!= 1) {
                    dgcv.ubre <- max(abs(x$dgcv.ubre)*max(abs(log(x$sp)),1)/max(abs(x$gcv.ubre),1))
                   cat("\nBFGS termination condition:\n", dgcv.ubre,"\n",sep = "")
@@ -696,6 +698,7 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
 ###############################################
 ## anova for scam models (clone of summary.gam())...
 ## of mgcv versions up to 1.8-11...
+## (c) Simon N. Wood 
 ###############################################
 
 

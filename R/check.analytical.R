@@ -36,8 +36,7 @@ check.analytical <- function(object,data, del=1e-6,control){
      for (j in 1:n.pen){
           sp1<- sp; sp1[j]<-sp[j]*exp(del)
 
-           m1 <- scam.fit(G=G, sp=sp1,env=env,maxit=control$maxit, maxHalf.fit =control$maxHalf.fit, 
-                          devtol.fit=control$devtol.fit, steptol.fit=control$steptol.fit)
+           m1 <- scam.fit(G=G, sp=sp1,env=env,control=control)
 
           if (object$scale.known) gcv.ubre1 <- m1$deviance/n - object$sig2 +2*object$gamma*m1$trA*object$sig2/n
           else gcv.ubre1 <- m1$gcv

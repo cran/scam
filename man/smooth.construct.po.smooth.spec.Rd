@@ -11,7 +11,7 @@
   \code{s(x,k,bs="po",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 
-  Note: currently this smooth can work only with models with no intercept. See examples below. 
+  Note: Models that include this smooth should not have an intercept. See examples below. 
 }
 \usage{
 \method{smooth.construct}{po.smooth.spec}(object, data, knots)
@@ -58,6 +58,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 ##  SCOP-splines example with positivity constraint... 
   ## simulating data...
 \dontrun{
+   require(scam)
    set.seed(3)
    n <- 100
    x <- seq(-3,3,length.out=100)
@@ -72,7 +73,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    lines(x,fitted(b1),col=3)
 
   ## two-term example...
-  set.seed(8)
+  set.seed(3)
   n <- 200
   x1 <- seq(-3,3,length.out=n)
   f1 <- 3*exp(-x1^2) ## positively constrained smooth
@@ -82,7 +83,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   y <- f+rnorm(n)*0.3
   dat <- data.frame(x1=x1,x2=x2,y=y)
   ## fit model, results, and plot...
-  b2 <- scam(y~s(x1,bs="po")+s(x2,k=15,bs="mpi")-1,data=dat)
+  b2 <- scam(y~s(x1,bs="po")+s(x2,bs="mpi")-1,data=dat)
   summary(b2)
   plot(b2,pages=1)
 

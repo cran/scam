@@ -1,6 +1,32 @@
+1.2-6
+
+* An AR1 error model has been added. This can be used for the residuals of Gaussian-identity link models only. Standardized residuals (approximately uncorrelated under correct model) returned in 'std.rsd'. 
+
+* vis.scam.Rd: Factor 'by' variable example with increasing smooths has been added.
+
+* smooth.construct: tidied up coding for setting Sigma matrices, p.ident; bug fixed with the smooth contructor 'po'. 
+
+* predict.scam, plot.scam: corrected for the smooth 'po'. a `constant' attribute has been corrected to the object returned by predict.scam(...,type="terms"), to match what is returned to what `predict.gam' would do.
+
+* plot.scam: scop-spline smooths are now centred when being plotted to be in line with unconstrained smooths. Although 'zeroed intercept' constraint is applied to fit the scam model. 
+
+* scam.fit: improved routine for SCAM coefficients estimation  via the Newton-Raphson method; step halving under non-finite deviance, checking convergence adequately, trace option for some de-bugging information, etc.
+
+* scam.control: control structure for scam is now being passed on in more efficient way.
+
+* scam.Rd: added output values convergence info 
+
+* bfgs_gcv.ubre: slightly improved routine to give faster convergence
+
+* predict.scam: fix of handling newdata with a single row, prediction with 1001 rows, 2002 rows, etc., when 'terms' supplied. fixed by adding missed [,,drop=FALSE] in predict.scam. Thanks Timothy Hyndman.  
+
+* fix to fitting and predicting models of the form y~1
+
+
+
 1.2-5
 
-* estimate.scam: Extended Fellner Schall optimizer for smoothing parameter selection is now available using scam(...,optimizer="efs") as in gam(mgcv). But rather than minimizing REML (in gam(mgcv)) it minimizes GCV criterion.
+* estimate.scam: Extended Fellner-Schall optimizer for smoothing parameter selection is now available using scam(...,optimizer="efs") as in gam(mgcv). But rather than minimizing REML (in gam(mgcv)) it minimizes GCV criterion.
 
 * bfgs_gcv.ubre: bug fixed to avoid zero eigenvalues. Thanks to Pierre Masselot for reporting the bug.
 

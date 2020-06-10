@@ -49,7 +49,7 @@ X <- matrix(x,200,100,byrow=TRUE)
 
 b <- scam(y~s(X,by=L,k=20,bs="mpd")) 
 par(mfrow=c(1,1))
-plot(b,shade=TRUE);lines(x,f,col=2); 
+plot(b,shade=TRUE);lines(x,f-sum(f)/length(f),col=2); 
 ## compare with gam() of mgcv package...
 g <- gam(y~s(X,by=L,k=20)) 
 x11()
@@ -69,7 +69,7 @@ X <- matrix(x,200,100,byrow=TRUE)
 
 b <- scam(y~s(X,by=L,k=20,bs="mpi")) 
 par(mfrow=c(1,1))
-plot(b,shade=TRUE);lines(x,f,col=2); 
+plot(b,shade=TRUE);lines(x,f-sum(f)/length(f),col=2); 
 
 g <- gam(y~s(X,by=L,k=20)) 
 x11()

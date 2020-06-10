@@ -113,18 +113,24 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      se1.mult=se1.mult,se2.mult=se2.mult,shift=shift,trans=trans,
                      by.resids=by.resids,scheme=scheme[i],...)
 
-    if (is.null(P)) pd[[i]] <- list(plot.me=FALSE) else if (is.null(P$fit)) {
+    if (is.null(P)) pd[[i]] <- list(plot.me=FALSE) 
+    else if (is.null(P$fit)) {
       p <- x$coefficients[first:last]   ## relevent coefficients 
       offset <- attr(P$X,"offset")      ## any term specific offset
       ## get fitted values ....
 ### addition for univariate shape-constrained smooths ...
-     intercept <- 0
-     if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
-                        q <- ncol(P$X)
-                        beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p))
+      const.dif <- 0  
+      if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "po.smooth",      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+                        q <- ncol(P$X) ## length(p)
+                       ## beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p)) 
+                        p.ident <- x$p.ident[first:last]
+                        iv <- (1:length(p))[p.ident] # define an index vector for the coeff-s to be exponentiated
+                        p[iv] <- if (!x$not.exp) exp(p[iv]) else notExp(p[iv])   
+                        beta.c <- c(0,p)
                         fit.c <- P$X%*%beta.c # fitted values for the SCOP-splines identifiability constraints
-                          # get an intercept that is a difference between the fit with SCOP-spline constraints and with the centering constraint...
-                        intercept <- -sum(fit.c)/n 
+                        ## get a constant, a difference between two fits obtained by using 'zeroed intercept' constraint of the SCOP-spline  and the centering constraint; centered-fit= SCOP-fit + const...
+                        ## this vertical shift to be applied to achieve the centered smooth term)
+                        const.dif <- -sum(fit.c)/n 
                         onet <- matrix(rep(1,n),1,n)
                         A <- onet%*%P$X 
                         qrX <- qr(P$X)
@@ -134,26 +140,24 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                         RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
                         RZa.inv <- solve(RZa)
                         RZaR <- RZa.inv%*%R
-                        beta.a <- RZaR%*%beta.c
-                        p <- c(0,beta.a)
-                        p <- qr.qy(qrA,p)
+                        beta.a <- RZaR%*%beta.c ## re-parametrized coeffs to meet centering identif. constraint
+                        if (inherits(x$smooth[[i]], c("po.smooth"))) p <- c(0,p)
+                        else { p <- c(0,beta.a)
+                               p <- qr.qy(qrA,p)
+                             }
                 }
 ### addition for double and single monotonicity...
         if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth",                     "tesmi1.smooth","tesmi2.smooth","tesmd1.smooth","tesmd2.smooth","temicx.smooth",
 "temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth",
 "tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                    { p.ident <- x$p.ident[first:last]
-                     ii <- p.ident == 1
-                     count <- sum(ii) ## the number of exponentiated parameters 
-                     iv<-array(0, dim=c(count,1)) # index vector for the exponent. parameters
-                     k<-1
-                     for (j in 1:length(p))
-                        {if (p.ident[j]==1) {iv[k]<-j; k<-k+1}}
+                     iv <- (1:length(p))[p.ident] # define an index vector for the coeff-s to be exponentiated
                      p[iv] <- if (!x$not.exp) exp(p[iv]) else notExp(p[iv])
                      beta <- x$smooth[[i]]$Zc%*%p
                      fit.c <- P$X%*%beta # fitted values for the SCOP-spline identifiability constraints
-                     # get an intercept as a difference between the fit with SCOP-spline constraints and fit with the centering constraint...
-                     intercept <- -sum(fit.c)/length(fit.c)
+                     ## get a constant, a difference between two fits obtained by using 'zeroed intercept' constraint
+                     ## of the SCOP-spline  and the centering constraint; centered.fit= SCOP.fit + const...
+                     const.dif <- -sum(fit.c)/length(fit.c)
                      onet <- matrix(rep(1,nrow(P$X)),1,nrow(P$X))
                      A <- onet%*%P$X
                      qrX <- qr(P$X)
@@ -167,7 +171,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                          RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
                          RZa.inv <- solve(RZa)
                          RZaR <- RZa.inv%*%R
-                         beta.a <- RZaR%*%beta
+                         beta.a <- RZaR%*%beta ## re-parametrized coeffs to meet centering identif. constraint
                      }
                      else # get `beta.a' for single monotonicity...
                      { RZa <- t(qr.qty(qrA,t(R)))[,2:q]
@@ -175,31 +179,38 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                        Q <- qr.Q(qrX)
                        B1 <- RZatRZa.inv%*%t(RZa)
                        RZaR <- B1%*%R
-                       beta.a <- RZaR%*%beta + B1%*%(intercept*colSums(Q))
+                       beta.a <- RZaR%*%beta + B1%*%(const.dif*colSums(Q))
                      }
                      p <- c(0,beta.a)
                      p <- qr.qy(qrA,p)
                 }
 ## end shape constrained supplement...
-
+     
 ## added code to centralize the fit if no 'by' variable...
-      ft <- P$X%*%p 
-  ##  if (is.null(offset)) P$fit <- P$X%*%p else P$fit <- P$X%*%p + offset 
-      if (is.null(x$smooth[[i]]$by)){
-            if (is.null(offset)) P$fit <- ft-sum(ft)/length(ft) 
-                else P$fit <- ft-sum(ft)/length(ft) + offset 
-      } else{ if (is.null(offset)) P$fit <- ft-intercept else P$fit <- ft + offset -intercept}
+      ft <- P$X%*%p ## centred fit
+      if (is.null(offset)) P$fit <- ft ## centred fit
+              else P$fit <- ft + offset 
+     ## if (x$smooth[[i]]$by=="NA"){
+     ##       if (is.null(offset)) P$fit <- ft ## get the fit with the centering identifiability constraint
+     ##           else P$fit <- ft + offset 
+     ## } else{ if (is.null(offset)) P$fit <- ft-const.dif ## 'zeroed intercept' SCOP.fit
+     ##             else P$fit <- ft + offset - const.dif
+     ##       } 
+      ## 'minus'- const.dif is applied to get back to the scop fit with the original 'zeroed intercept'constraint:
+      ## SCOP.fit = centered.fit - const(const.dif)
+     
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se && P$se) { ## get standard errors for fit
 ## shape constrained supplement...
-        if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth"))){
+        if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth"))){
                         XZa <- t(qr.qty(qrA,t(P$X)))[,2:q]
                         Ga <- XZa%*%RZaR
                         Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
                         Vp.c <- Vp
                         Vp.c[,1] <- rep(0,nrow(Vp))
                         Vp.c[1,] <- rep(0,ncol(Vp))
-                        se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
+                        if (inherits(x$smooth[[i]], c("po.smooth"))) se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))      
+                        else se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))                      
         } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",  "tesmi1.smooth", "tesmi2.smooth","tesmd1.smooth", "tesmd2.smooth","temicx.smooth",
 "temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth","tescv.smooth",
 "tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
@@ -223,13 +234,15 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       } ## standard errors for fit completed
       if (partial.resids) { 
              P$p.resid <- fv.terms[,length(order)+i] + w.resid 
-         #   if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth"))){ P$p.resid <- P$p.resid + intercept } 
+             if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth", "micv.smooth", "micx.smooth")))
+                  P$p.resid <- P$p.resid + const.dif ## to shift the resid/fitted smooth, to get a centering smooth, as
+                                                 ## centered.fit= SCOP.fit + const(const.dif)           
       }
       if (se && P$se) P$se <- se.fit*P$se.mult  # Note multiplier
       P$X <- NULL
       P$plot.me <- TRUE
       pd[[i]] <- P;rm(P) 
-    } else { ## P$fit created directly
+    } else { ## P$fit created directly (from if (is.null(P$fit)))
       if (partial.resids) { P$p.resid <- fv.terms[,length(order)+i] + w.resid }
       P$plot.me <- TRUE
       pd[[i]] <- P;rm(P)

@@ -8,7 +8,10 @@
    takes a fitted \code{scam} object produced by \code{scam()} and plots the 
    component smooth functions that make it up, on the scale of the linear
    predictor. Optionally produces term plots for parametric model components
-   as well.}
+   as well.
+
+   Note: The fitted shape constrained smooth functions are centred when plotted, which is done in order to be in line with plots of unconstrained smooths (as in gam()). Although 'zeroed intercept' constraints are applied to deal with identifiability of the scop-splines.
+}
 
 \usage{
 \method{plot}{scam}(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,

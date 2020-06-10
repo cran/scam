@@ -87,6 +87,44 @@ g <- gam(y~fac+s(x,by=z))
 
 vis.scam(b,theta=-35,color="terrain",cond=list(z=1)) # by variable example
 vis.scam(b,view=c("z","x"),theta= 65) # plot against by variable
+## compare with gam(mgcv)...
+vis.gam(g,theta=-35,color="terrain",cond=list(z=1)) # by variable example
+vis.gam(g,view=c("z","x"),theta= 65) # plot against by variable
 
+## all three smooths are increasing...
+set.seed(2)
+n <- 400
+x0 <- runif(n, 0, 1)
+x <- runif(n, 0, 1)
+f1 <- log(x *5)
+f2 <-  exp(2 * x) - 4
+f3 <-  5* sin(x)
+e <- rnorm(n, 0, 2)
+fac <- as.factor(sample(1:3,n,replace=TRUE))
+fac.1 <- as.numeric(fac==1)
+fac.2 <- as.numeric(fac==2)
+fac.3 <- as.numeric(fac==3)
+y <- f1*fac.1 + f2*fac.2 + f3*fac.3 + e 
+dat <- data.frame(y=y,x=x,fac=fac,f1=f1,f2=f2,f3=f3)
+
+b1 <- scam(y ~ s(x,by=fac,bs="mpi"),data=dat,optimizer="efs")
+plot(b1,pages=1,scale=0)
+summary(b1)
+vis.scam(b1,theta=-40,color="terrain",cond=list(z=1))
+
+## note that the preceding, b1, fit is the same as....
+b2 <- scam(y ~ s(x,by=as.numeric(fac==1),bs="mpi")+s(x,by=as.numeric(fac==2),bs="mpi")+
+    s(x,by=as.numeric(fac==3),bs="mpi"),data=dat,optimizer="efs")
+summary(b2)
+
+## Also note that as in gam() when using factor 'by' variables, centering
+## constraints are applied to the smooths, which usually means that the 'by'
+## variable should be included as a parametric term, as well. That is not 
+## the case with scam(), since here a 'zero intercept' constraint is 
+## applied (although scam's fitted smooths are centred for plotting).
+g1 <- gam(y ~ fac+s(x,by=fac),data=dat)
+g2 <- gam(y ~ s(x,by=fac),data=dat)
+summary(g1)
+summary(g2)
 }
 \keyword{hplot} \keyword{models} \keyword{smooth} \keyword{regression}
