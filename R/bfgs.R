@@ -232,8 +232,8 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    consecmax <- 0
 
    ## Quasi-Newton algorithm to minimize GCV...
-   for (i in 1:max.step) 
-      {  ## compute a BFGS search direction ...
+   for (i in 1:max.step) {
+        ## compute a BFGS search direction ...
          Nstep <- 0*grad   ## initialize the quasi-Newton step
          Nstep[unconv.ind] <- -drop(B[unconv.ind, unconv.ind]%*%grad[unconv.ind])
  
@@ -408,9 +408,9 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          skipupdate <- TRUE 
          ## skip update if `step' is sufficiently close to B%*%yg ...
          #if (n.pen>0) 
-                     for (i in 1:n.pen){
-                          closeness <- step[i]-B[i,]%*%yg  
-                          if (abs(closeness) >= control$bfgs$gradtol.bfgs*max(abs(grad[i]),abs(old.grad[i])))   
+                     for (j in 1:n.pen){
+                          closeness <- step[j]-B[j,]%*%yg  
+                          if (abs(closeness) >= control$bfgs$gradtol.bfgs*max(abs(grad[j]),abs(old.grad[j])))   
                      skipupdate <- FALSE
                        }
          ## skip update if curvature condition is not satisfied...

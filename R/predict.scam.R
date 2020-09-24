@@ -142,46 +142,70 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   ## now check the factor levels and split into blocks...
 
-  if (new.data.ok)
-  { ## check factor levels are right ...
+  if (new.data.ok){
+    ## check factor levels are right ...
     names(newdata)->nn # new data names
     colnames(object$model)->mn # original names
     for (i in 1:length(newdata)) 
-    if (nn[i]%in%mn && is.factor(object$model[,nn[i]])) # then so should newdata[[i]] be 
-    { newdata[[i]]<-factor(newdata[[i]],levels=levels(object$model[,nn[i]])) # set prediction levels to fit levels
+    if (nn[i]%in%mn && is.factor(object$model[,nn[i]])){ # then so should newdata[[i]] be 
+       ## newdata[[i]]<-factor(newdata[[i]],levels=levels(object$model[,nn[i]])) # set prediction levels to fit levels
+      levm <- levels(object$model[,nn[i]]) ## original levels
+      levn <- levels(factor(newdata[[i]])) ## new levels
+      if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
+        msg <- paste("factor levels",paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
+        warning(msg)
+      }
+      ## set prediction levels to fit levels...
+      if (is.matrix(newdata[[i]])) {
+        dum <- factor(newdata[[i]],levels=levm)
+	dim(dum) <- dim(newdata[[i]])
+	newdata[[i]] <- dum
+      } else newdata[[i]] <- factor(newdata[[i]],levels=levm)
     }
+    if (type=="newdata") return(newdata)
 
     # split prediction into blocks, to avoid running out of memory
     if (length(newdata)==1) newdata[[2]]<-newdata[[1]] # avoids data frame losing its labels and dimensions below!
     if (is.null(dim(newdata[[1]]))) np<-length(newdata[[1]]) 
-    else np<-dim(newdata[[1]])[1] 
-    nb<-length(object$coefficients)
-    if (block.size<1) block.size <- np
-    n.blocks<-np%/%block.size
-    b.size<-rep(block.size,n.blocks)
-    last.block<-np-sum(b.size)
-    if (last.block>0) 
-    { n.blocks<-n.blocks+1  
-      b.size[n.blocks]<-last.block
-    }
-  } else # no new data, just use object$model
-  { np <- nrow(object$model)
+    else np <- dim(newdata[[1]])[1] 
     nb <- length(object$coefficients)
+    if (is.null(block.size)) block.size <- 1000
+    if (block.size < 1) block.size <- np
+  } else { # no new data, just use object$model
+    np <- nrow(object$model)
+    nb <- length(object$coefficients)
+  }
+
+  if (type=="lpmatrix") block.size <- NULL ## nothing gained by blocking in this case - and offset handling easier this way
+
+  ## split prediction into blocks, to avoid running out of memory
+  if (is.null(block.size)) { 
+    ## use one block as predicting using model frame
+    ## and no block size supplied... 
     n.blocks <- 1
     b.size <- array(np,1)
+  } else {
+    n.blocks <- np %/% block.size
+    b.size <- rep(block.size,n.blocks)
+    last.block <- np-sum(b.size)
+    if (last.block>0) {
+      n.blocks <- n.blocks+1  
+      b.size[n.blocks] <- last.block
+    }
   }
+
+
 
   # setup prediction arrays...
   n.smooth<-length(object$smooth)
   if (type=="lpmatrix"){
    H<-matrix(0,np,nb)
-  } else
-  if (type=="terms"||type=="iterms"){
+  } else if (type=="terms"||type=="iterms"){
     term.labels<-attr(object$pterms,"term.labels")
-    if (is.null(attr(object,"para.only"))) para.only <-FALSE else
-    para.only <- TRUE  # if true then only return information on parametric part
+    para.only <- attr(object,"para.only")
+    if (is.null(para.only)) para.only <- FALSE  # if TRUE then only return information on parametric part
     n.pterms <- length(term.labels)
-    fit<-array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
+    fit<-array(0,c(np,n.pterms+as.numeric(para.only==0)*n.smooth))
     if (se.fit) se<-fit
     ColNames<-term.labels
   } else { ## "response" or "link"
@@ -194,14 +218,15 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   ## Actual prediction starts here...
   ####################################
 
+ # Terms <- list(delete.response(object$pterms))
   Terms <- delete.response(object$pterms)
+
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
   if (n.blocks > 0) for (b in 1:n.blocks){  # work through prediction blocks
     start<-stop+1
     stop<-start+b.size[b]-1
-    if (n.blocks==1) data <- newdata
-    else data<-newdata[start:stop,]
+    if (n.blocks==1) data <- newdata  else data<-newdata[start:stop,]
     X <- matrix(0,b.size[b],nb)
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
     ## implements safe prediction for parametric part as described in
@@ -212,7 +237,14 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         mf <- model.frame(Terms,data,xlev=object$xlevels)
         if (!is.null(cl <- attr(object$pterms,"dataClasses"))) .checkMFClasses(cl,mf)
       } 
-      Xp <- model.matrix(Terms,mf,contrasts=object$contrasts) 
+       ## next line is just a work around to prevent a spurious warning (e.g. R 3.6) from
+       ## model.matrix if contrast relates to a term in mf which is not
+       ## part of Terms (model.matrix doc actually defines contrast w.r.t. mf,
+       ## not Terms)...
+        # Xp <- model.matrix(Terms,mf,contrasts=object$contrasts) 
+      oc <- if (length(object$contrasts)==0) object$contrasts else
+	      object$contrasts[names(object$contrasts)%in%attr(Terms,"term.labels")]
+      Xp <- model.matrix(Terms,mf,contrasts=oc)
     } else {
        Xp <- model.matrix(Terms,object$model)
        mf <- newdata # needed in case of offset, below

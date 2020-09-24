@@ -16,7 +16,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
       sp = NULL, weights = NULL, offset = NULL, 
       optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
       scale = 0, knots=NULL, not.exp=FALSE, start= NULL, etastart,
-      mustart,control=list(),AR1.rho=0, AR.start=NULL)
+      mustart,control=list(),AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -78,6 +78,8 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 \code{std.rsd} if non zero. }
 
   \item{AR.start}{logical variable of same length as data, \code{TRUE} at first observation of an independent section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} (default) then there are no breaks in AR1 correlaion.}
+
+  \item{drop.unused.levels}{as with \code{gam} by default unused levels are dropped from factors before fitting.}
 
 }
 
@@ -222,6 +224,9 @@ parameters, subject to optimization.}
 %\item{X}{model matrix.}
 
 \item{cmX}{column means of the model matrix (with elements corresponding to smooths set to zero).}
+
+\item{contrasts}{contrasts associated with a factor.}
+\item{xlevels}{levels of a factor variable used in the model.}
 
 \item{y}{response data.}
 

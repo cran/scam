@@ -6,7 +6,7 @@
 scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
                  weights=NULL, offset=NULL, optimizer="bfgs", optim.method=c("Nelder-Mead","fd"),
                  scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart, mustart, control=list(),
-                 AR1.rho=0, AR.start=NULL) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
+                 AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
    ## optimizer - numerical optimization method to use to optimize the smoothing parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd", "efs"
    ## optim.method - if optimizer=="optim" then the first argument of optim.method     specifies the method, and the second can be either "fd" for finite-difference approximation of the gradient or "grad" - to use analytical gradient of gcv/ubre
@@ -21,6 +21,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    mf$formula <- gp$fake.formula 
    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
+   mf$drop.unused.levels <- drop.unused.levels
    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
    pmf <- mf
    mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
@@ -295,6 +296,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$pterms <- G$pterms
    object$terms <- G$terms
    object$assign <- G$assign
+   object$contrasts <- G$contrasts
+   object$xlevels <- G$xlevels
    object$nsdf <- G$nsdf
    object$y <- G$y
  #  object$data <- G$mf
@@ -1649,7 +1652,7 @@ gam.setup <- function(formula,pterms,
     # idea here is that terms are set up in accordance with information given in split$smooth.spec
     # appropriate basis constructor is called depending on the class of the smooth
     # constructor returns penalty matrices model matrix and basis specific information
-    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,sparse.cons=sparse.cons) ## old code
+  
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
@@ -1695,11 +1698,12 @@ gam.setup <- function(formula,pterms,
     if (is.null(sm[[i]]$L)) Li <- diag(length.S) else Li <- sm[[i]]$L 
      
     if (length.S > 0) { ## there are smoothing parameters to name
-       if (length.S == 1) spn <- sm[[i]]$label else {
+       if (length.S == 1) lspn <- sm[[i]]$label else {
           Sname <- names(sm[[i]]$S)
-          if (is.null(Sname)) spn <- paste(sm[[i]]$label,1:length.S,sep="") else
-          spn <- paste(sm[[i]]$label,Sname,sep="")
+          lspn <- if (is.null(Sname)) paste(sm[[i]]$label,1:length.S,sep="") else
+                  paste(sm[[i]]$label,Sname,sep="") ## names for all sp's
        }
+       spn <- lspn[1:ncol(Li)] ## names for actual working sps
     }
 
     ## extend the global L matrix...
@@ -1712,7 +1716,7 @@ gam.setup <- function(formula,pterms,
                  cbind(matrix(0,nrow(Li),ncol(L)),Li))
       if (length.S > 0) { ## there are smoothing parameters to name
         sp.names <- c(sp.names,spn) ## extend the sp name vector
-        lsp.names <- c(lsp.names,spn) ## extend full.sp name vector
+        lsp.names <- c(lsp.names,lspn) ## extend full.sp name vector
       }
     } else { ## it's a repeat id => shares existing sp's
       L0 <- matrix(0,nrow(Li),ncol(L))
@@ -1722,7 +1726,7 @@ gam.setup <- function(formula,pterms,
       L0[,idx[[id]]$c:(idx[[id]]$c+ncol(Li)-1)] <- Li
       L <- rbind(L,L0)
       if (length.S > 0) { ## there are smoothing parameters to name
-        lsp.names <- c(lsp.names,spn) ## extend full.sp name vector
+        lsp.names <- c(lsp.names,lspn) ## extend full.sp name vector
       }
     }
   }
@@ -1974,19 +1978,24 @@ gam.setup <- function(formula,pterms,
   if (G$nsdf > 0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
   n.smooth <- length(G$smooth)
   if (n.smooth)
-  for (i in 1:n.smooth) { ## create coef names, if smooth has any coefs!
-    k<-1
+  ## create coef names, if smooth has any coefs, and create a global indicator of non-linear parameters
+  ## g.index, if needed
+  for (i in 1:n.smooth) {
+    k <- 1
     jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para
     if (G$smooth[[i]]$df > 0) for (j in jj) {
       term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
       k <- k+1
     }
+    if (!is.null(G$smooth[[i]]$g.index)) {
+      if (is.null(G$g.index)) G$g.index <- rep(FALSE,n.p)
+      G$g.index[jj] <- G$smooth[[i]]$g.index
+    } 
   }
   G$term.names <- term.names
 
-  # now run some checks on the arguments
-  
-  ### Should check that there are enough unique covariate combinations to support model dimension
+  ## Deal with non-linear parameterizations...
+ 
 
   G$pP <- PP ## return paraPen object, if present
 
@@ -2029,8 +2038,6 @@ clone.smooth.spec <- function(specb,spec) {
   }
   specb ## return clone
 } ## clone.smooth.spec
-
-
 
 
 all.vars1 <- function(form) {
@@ -2120,6 +2127,7 @@ variable.summary <- function(pf,dl,n) {
    }
    vs
 } ## end variable.summary
+
 
 
 parametricPenalty <- function(pterms,assign,paraPen,sp0) {
