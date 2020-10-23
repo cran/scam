@@ -18,7 +18,7 @@ It now alows prediction outside the range of knots, and use linear extrapolation
 
 \usage{
 \method{predict}{scam}(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
-    block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...)
+    block.size=NULL,newdata.guaranteed=FALSE,na.action=na.pass,...)
 
 }
 %- maybe also `usage' for other objects documented here.

@@ -3,7 +3,7 @@
 
 
 predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
-                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
+                       block.size=NULL,newdata.guaranteed=FALSE,na.action=na.pass,...) 
 {
 # This function is used for predicting from a SCAM. object is a scam object, newdata a dataframe to
 # be used in prediction......

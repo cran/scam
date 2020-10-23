@@ -1,3 +1,6 @@
+1.2-8
+* predict.scam: bug fixed with restricting the number of samples to be > 1000. Thanks to Armin Rauschenberger for reporting the bug.
+
 
 1.2-7
 
@@ -5,7 +8,7 @@
 
 * predict.scam: the function now mirrors the behaviour of predict.gam(mgcv) when dealing with factor variables. Thanks Giampiero Marra for bringing the issue up.   
 
-
+R
 1.2-6
 
 * An AR1 error model has been added. This can be used for the residuals of Gaussian-identity link models only. Standardized residuals (approximately uncorrelated under correct model) returned in 'std.rsd'. 
