@@ -525,7 +525,11 @@ penalty_pident <- function(object)
       }
    if (n.terms>0) for (i in 1:n.terms){
                     if (cons.terms[i]==1) 
-                        p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                       # if (inherits(object$smooth[[i]], c("mipc.smooth")))
+                        #    p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                         #             object$smooth[[i]]$p.ident[2:length(object$smooth[[i]]$p.ident)]
+                       # else 
+                            p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
                                                                        object$smooth[[i]]$p.ident
                    }
    ## getting the list of penalty matrices in terms of the full model vector of coefficients...

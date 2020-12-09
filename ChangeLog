@@ -1,6 +1,12 @@
+
+1.2.9
+* smooth.construct: added 'miso' smooth, a monotone increasing SCOP-spline with an additional 'start-at-zero' constraint, a smooth should be zero at the left-end point of the covariate range. Thanks to Sean Wu for bringing this up.
+
+* smooth.construct: added 'mifo' smooth, a monotone increasing SCOP-spline with an additional 'finish-at-zero' constraint, a smooth should be zero at the right-end point of the covariate range. Care should be taken when using this smooth (see manual)
+
+
 1.2-8
 * predict.scam: bug fixed with restricting the number of samples to be > 1000. Thanks to Armin Rauschenberger for reporting the bug.
-
 
 1.2-7
 
@@ -8,7 +14,7 @@
 
 * predict.scam: the function now mirrors the behaviour of predict.gam(mgcv) when dealing with factor variables. Thanks Giampiero Marra for bringing the issue up.   
 
-R
+
 1.2-6
 
 * An AR1 error model has been added. This can be used for the residuals of Gaussian-identity link models only. Standardized residuals (approximately uncorrelated under correct model) returned in 'std.rsd'. 
