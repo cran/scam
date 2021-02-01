@@ -1,4 +1,8 @@
 
+1.2-10 
+* plot.scam: now silently returns a list of plotting data, to help users to produce customized plot. Thanks to Raphael Knevels.
+
+
 1.2.9
 * smooth.construct: added 'miso' smooth, a monotone increasing SCOP-spline with an additional 'start-at-zero' constraint, a smooth should be zero at the left-end point of the covariate range. Thanks to Sean Wu for bringing this up.
 

@@ -387,6 +387,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
     }
   }
   if (pages>0) par(oldpar)
+  invisible(pd)
 } ## end plot.scam
 
 

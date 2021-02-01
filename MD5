@@ -1,5 +1,5 @@
-b238302f20ba6499bc5ab8bb697db769 *ChangeLog
-ae471fe6cb334326899bfc7e8d0dfb01 *DESCRIPTION
+b5cc0d627b688c0e77126ee8ef9559be *ChangeLog
+8152f34058d4fe67efd50e5b89e45273 *DESCRIPTION
 b73ab48c0e1d3eadd533257083a1853b *NAMESPACE
 f86903e3d76f3dd23d0ff1e9ae76e050 *R/bfgs.r
 c48d7f9bb0526d3f71332f8af2a897bb *R/bivar.smooth.const.R
@@ -7,7 +7,7 @@ e93b6eac46d891cc6cb7a4872742bdf2 *R/check.analytical.R
 89e263b735b4ecbd4159ea6cddbdcac6 *R/derivative.scam.r
 3b79dec2b06deb549ee20c1ab4271b77 *R/derivative.smooth.R
 542b009a0178a11644c3c069ce87451c *R/estimate.scam.R
-cf75776cf2c520d1529513b173a24090 *R/plot.r
+10144d397b9f7461825c872e1c706456 *R/plot.r
 1a6f7fd17be3b3e2f4d63aa1283d4514 *R/predict.scam.R
 bce4ab23d56ff1efeb6c5dab510ac6ed *R/print.scam.R
 31c99aad62f78a5bbfb2881730c048bf *R/residuals.scam.R
@@ -16,7 +16,7 @@ c1bde90b12a2346685b89f83eaec08bf *R/scam.r
 23d7ffb21ff50f247e8c810ce05763a8 *R/summary.scam.R
 50018838e49816bd638e0b717e6cfa25 *R/uni.smooth.const-with-po.r
 95f2606335c73200a93d4b529d59eba6 *R/vis.scam.r
-dc062517e3817c51ad2609eeac6a0ec9 *build/partial.rdb
+5f9df12c5a8f9c041f9c28c7cd3d6e40 *build/partial.rdb
 56b1c543c5dd7c66d425623af7563464 *man/Predict.matrix.mpi.smooth.Rd
 21e1c5c8027a156d0720dea107ba9fbb *man/anova.scam.Rd
 331f400dda9b4c26751aeb1569ce5fe5 *man/bfgs_gcv.ubre.Rd
