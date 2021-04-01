@@ -128,7 +128,7 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 f <- f1+f2
 y <- f+rnorm(n)*0.2
 dat <- data.frame(x1=x1,x2=x2,y=y)
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2),
+b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi"),
     family=gaussian(link="identity"),data=dat)
 
 newd <- data.frame(x1=seq(-3,3,length.out=20),x2=seq(-1,3,length.out=20))
@@ -144,7 +144,7 @@ x <- sort(runif(n)*3-1)
 f <- exp(-1.3*x)
 y <- rpois(n,exp(f))
 dat <- data.frame(x=x,y=y)
-b <- scam(y~s(x,k=15,bs="mpd",m=2),family=poisson(link="log"),data=dat)
+b <- scam(y~s(x,k=15,bs="mpd"),family=poisson(link="log"),data=dat)
 newd <- data.frame(x=c(2.3,2.7,3.2))
 fe <- predict(b,newd,type="link",se=TRUE)
 ylim<- c(min(y,exp(fe$fit)),max(y,exp(fe$fit)))
@@ -159,7 +159,7 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
  f <- exp(4*x)/(1+exp(4*x)) # monotone increasing smooth
  y <- f+rnorm(n)*0.1
  dat <- data.frame(x=x,y=y)
- b <- scam(y~ s(x,k=25,bs="mpi",m=2),family=gaussian,data=dat)
+ b <- scam(y~ s(x,k=25,bs="mpi"),family=gaussian,data=dat)
  newd <- data.frame(x=c(3.2,3.3,3.6))
  fe <- predict(b,newd)
  plot(c(x,newd[[1]]),c(y,NA,NA,NA))
@@ -183,17 +183,18 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
  
 
 ## bivariate example...
+   set.seed(2)
    n <- 30
    x1 <- sort(runif(n));  x2 <- sort(runif(n)*4-1)
    f1 <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
        { f1[i,j] <- 2*sin(pi*x1[i]) +exp(4*x2[j])/(1+exp(4*x2[j]))}
-   f1 <- as.vector(t(f1));   f <- (f1-min(f1))/(max(f1)-min(f1))
+   f <- as.vector(t(f));  
    y <- f+rnorm(length(f))*0.1
    x11 <-  matrix(0,n,n); x11[,1:n] <- x1;  x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmi2"),family=gaussian, data=dat)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmi2"),data=dat,optimizer="efs")
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE);   plot(b,pers=TRUE,theta = 80, phi = 40)
 
@@ -210,10 +211,9 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
 
 
 ## obtaining a 'prediction matrix'...
-
 newd <- data.frame(x1=c(-2,-1),x2=c(0,1))
 Xp <- predict(b,newdata=newd,type="lpmatrix")
-fv <- Xp%*%b$beta.t
+fv <- Xp\%*\% b$beta.t
 fv
  }
 }

@@ -94,7 +94,6 @@ vis.gam(g,view=c("z","x"),theta= 65) # plot against by variable
 ## all three smooths are increasing...
 set.seed(2)
 n <- 400
-x0 <- runif(n, 0, 1)
 x <- runif(n, 0, 1)
 f1 <- log(x *5)
 f2 <-  exp(2 * x) - 4
@@ -108,7 +107,7 @@ y <- f1*fac.1 + f2*fac.2 + f3*fac.3 + e
 dat <- data.frame(y=y,x=x,fac=fac,f1=f1,f2=f2,f3=f3)
 
 b1 <- scam(y ~ s(x,by=fac,bs="mpi"),data=dat,optimizer="efs")
-plot(b1,pages=1,scale=0)
+plot(b1,pages=1,scale=0,shade=TRUE)
 summary(b1)
 vis.scam(b1,theta=-40,color="terrain",cond=list(z=1))
 
@@ -117,14 +116,16 @@ b2 <- scam(y ~ s(x,by=as.numeric(fac==1),bs="mpi")+s(x,by=as.numeric(fac==2),bs=
     s(x,by=as.numeric(fac==3),bs="mpi"),data=dat,optimizer="efs")
 summary(b2)
 
-## Also note that as in gam() when using factor 'by' variables, centering
+## Note that as in gam() when using factor 'by' variables, centering
 ## constraints are applied to the smooths, which usually means that the 'by'
-## variable should be included as a parametric term, as well. That is not 
-## the case with scam(), since here a 'zero intercept' constraint is 
-## applied (although scam's fitted smooths are centred for plotting).
+## variable should be included as a parametric term, as well. 
+## The difference with scam() is that here a 'zero intercept' constraint is 
+## applied in place of 'centering' (although scam's fitted smooths are centred for plotting).
+## compare with the gam() fits..  
 g1 <- gam(y ~ fac+s(x,by=fac),data=dat)
 g2 <- gam(y ~ s(x,by=fac),data=dat)
 summary(g1)
 summary(g2)
+plot(g1,pages=1,scale=0,shade=TRUE)
 }
 \keyword{hplot} \keyword{models} \keyword{smooth} \keyword{regression}

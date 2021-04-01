@@ -26,6 +26,14 @@
 \alias{Predict.matrix.tecvcv.smooth}
 \alias{Predict.matrix.tecxcv.smooth}
 \alias{Predict.matrix.tecxcx.smooth}
+\alias{Predict.matrix.mpdBy.smooth}
+\alias{Predict.matrix.mpiBy.smooth}
+\alias{Predict.matrix.cxBy.smooth}
+\alias{Predict.matrix.cvBy.smooth}
+\alias{Predict.matrix.micxBy.smooth}
+\alias{Predict.matrix.micvBy.smooth}
+\alias{Predict.matrix.mdcxBy.smooth}
+\alias{Predict.matrix.mdcvBy.smooth}
 
 \title{Predict matrix method functions for SCAMs
 }
@@ -44,6 +52,14 @@
 \method{Predict.matrix}{mdcx.smooth}(object, data)
 \method{Predict.matrix}{mdcv.smooth}(object, data)
 \method{Predict.matrix}{po.smooth}(object, data)
+\method{Predict.matrix}{mpdBy.smooth}(object, data)
+\method{Predict.matrix}{mpiBy.smooth}(object, data)
+\method{Predict.matrix}{cxBy.smooth}(object, data)
+\method{Predict.matrix}{cvBy.smooth}(object, data)
+\method{Predict.matrix}{mdcxBy.smooth}(object, data)
+\method{Predict.matrix}{mdcvBy.smooth}(object, data)
+\method{Predict.matrix}{micxBy.smooth}(object, data)
+\method{Predict.matrix}{micvBy.smooth}(object, data)
 \method{Predict.matrix}{tedmd.smooth}(object, data)
 \method{Predict.matrix}{tedmi.smooth}(object, data)
 \method{Predict.matrix}{tesmd1.smooth}(object, data)

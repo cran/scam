@@ -1,18 +1,26 @@
 \name{smooth.construct.mpi.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.mpi.smooth.spec}
+\alias{smooth.construct.mpiBy.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for monotone increasing P-splines in SCAMs
 }
 \description{This is a special method function
   for creating smooths subject to a monotone increasing constraint which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed using monotonic P-splines. This smooth is specified via model terms suach as 
+  It is constructed using monotonic P-splines. This smooth is specified via model terms such as 
   \code{s(x,k,bs="mpi",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
+
+   \code{mpiBy.smooth.spec} works similar to \code{mpi.smooth.spec} but without applying an identifiability constraint ('zero intercept' constraint). \code{mpiBy.smooth.spec} should be used when the smooth term has a numeric \code{by} variable  that takes more than one value. In such cases, the smooth terms are fully identifiable without a 'zero intercept' constraint, so they are left unconstrained. This smooth is specified as 
+  \code{s(x,by=z,bs="mpiBy")}. See an example below.
+
+However  a factor \code{by} variable requires identifiability constraints, so \code{s(x,by=fac,bs="mpi")} is used in this case.
+
 }
 \usage{
 \method{smooth.construct}{mpi.smooth.spec}(object, data, knots)
+\method{smooth.construct}{mpiBy.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,7 +39,7 @@
 If the knots of the spline are not supplied, then they are placed evenly throughout the covariate values. If the knots are supplied, then the number of supplied knots should be \code{k+m+2}, and the range of the middle \code{k-m} knots must include all the covariate values.
 
 }
-\value{ An object of class \code{"mpi.smooth"}. 
+\value{ An object of class \code{"mpi.smooth"}, \code{"mpiBy.smooth"}. 
 }
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
@@ -50,12 +58,12 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \code{\link{smooth.construct.cv.smooth.spec}},
 \code{\link{smooth.construct.cx.smooth.spec}},
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
-\code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micv.smooth.spec}}, 
+\code{\link{smooth.construct.mdcx.smooth.spec}}, 
+\code{\link{smooth.construct.micv.smooth.spec}}, 
 \code{\link{smooth.construct.micx.smooth.spec}}
 
 }
-\examples{
- 
+\examples{ 
 ## Monotone increasing P-splines example 
   ## simulating data...
    require(scam)
@@ -66,14 +74,12 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    y <- rpois(n,exp(f))
    dat <- data.frame(x=x,y=y)
  ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mpi",m=2),family=poisson(link="log"),
-       data=dat,sp=NULL)
-
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="ps",m=2),family=poisson(link="log"),
-         data=dat,sp=NULL)
-
-## plot results ...
+   b <- scam(y~s(x,k=15,bs="mpi"),family=poisson(link="log"),
+       data=dat)
+ ## fit unconstrained model...
+   b1 <- scam(y~s(x,k=15,bs="ps"),family=poisson(link="log"),
+         data=dat)
+ ## plot results ...
    plot(x,y,xlab="x",ylab="y")
    x1 <- sort(x,index=TRUE)
    lines(x1$x,exp(f)[x1$ix])      ## the true function
@@ -83,10 +89,10 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 ## example with supplied knots...
    knots <- list(x=c (-1.5,  -1.2, -.99, -.97, -.7, -.5, -.3, 0, 0.7,  
            0.9,1.1, 1.22,1.5,2.2,2.77,2.93,2.99, 3.2,3.6))
-   b2 <- scam(y~s(x,k=15,bs="mpi",m=2),knots=knots, 
+   b2 <- scam(y~s(x,k=15,bs="mpi"),knots=knots, 
           family=poisson(link="log"), data=dat)
    summary(b2)
-   plot(b2)
+   plot(b2,shade=TRUE)
 
 \dontrun{
 ## example with two terms...
@@ -97,19 +103,75 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    x2 <- runif(n)*4-1;
    f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
    f <- f1+f2
-   y <- f+rnorm(n)*0.1
+   y <- f+rnorm(n)*.7
    dat <- data.frame(x1=x1,x2=x2,y=y)
    knots <- list(x1=c(-4,-3.5,-2.99,-2.7,-2.5,-1.9,-1.1,-.9,-.3,0.3,.8,1.2,1.9,2.3,
-2.7,2.99,3.5,4.1), x2=c(-1.5,-1.2,-1.1, -.89,-.69,-.5,-.3,0,0.7, 
+2.7,2.99,3.5,4.1,4.5), x2=c(-1.5,-1.2,-1.1, -.89,-.69,-.5,-.3,0,0.7, 
 0.9,1.1,1.22,1.5,2.2,2.77,2.99,3.1, 3.2,3.6))
-   b3 <- scam(y~s(x1,k=15,bs="bs",m=2)+s(x2,bs="mpi", k=15,m=2), 
+   b3 <- scam(y~s(x1,k=15)+s(x2,bs="mpi", k=15), 
          knots=knots,data=dat)
-  
+   summary(b3)
+   plot(b3,pages=1,shade=TRUE)
 ## setting knots for f(x2) only...
    knots <- list(x2=c(-1.5,-1.2,-1.1, -.89,-.69,-.5,-.3,
    0,0.7,0.9,1.1,1.22,1.5,2.2,2.77,2.99,3.1, 3.2,3.6))
-   b4 <- scam(y~s(x1,k=15,bs="bs")+s(x2,bs="mpi", k=15),
+   b4 <- scam(y~s(x1,k=15,bs="bs")+s(x2,bs="mpi",k=15),
        knots=knots,data=dat)
+   summary(b4)
+   plot(b4,pages=1,shade=TRUE)
+
+## 'by' factor example... 
+ set.seed(2)
+ n <- 400
+ x <- runif(n, 0, 1)
+ ## all three smooths are increasing...
+ f1 <- log(x *5) 
+ f2 <-  exp(2*x) - 4
+ f3 <-  5* sin(x)
+ e <- rnorm(n, 0, 2)
+ fac <- as.factor(sample(1:3,n,replace=TRUE))
+ fac.1 <- as.numeric(fac==1)
+ fac.2 <- as.numeric(fac==2)
+ fac.3 <- as.numeric(fac==3)
+ y <- f1*fac.1 + f2*fac.2 + f3*fac.3 + e 
+ dat <- data.frame(y=y,x=x,fac=fac,f1=f1,f2=f2,f3=f3)
+ b5 <- scam(y ~ fac+s(x,by=fac,bs="mpi"),data=dat)  
+ plot(b5,pages=1,scale=0,shade=TRUE)
+ summary(b5)
+ vis.scam(b5,theta=50,color="terrain",cond=list(z=1))
+
+ ## comparing with unconstrained fit...
+ b6 <- scam(y ~ fac+s(x,by=fac),data=dat) 
+ x11()
+ plot(b6,pages=1,scale=0,shade=TRUE)
+ summary(b6)
+
+ ## Note that in mgcv::gam() when using factor 'by' variables, 'centering'
+ ## constraints are applied to the smooths, which usually means that the 'by'
+ ## factor variable should be included as a parametric term, as well. 
+ ## The difference with scam() is that here a 'zero intercept' constraint is 
+ ## applied in place of 'centering' (although scam's fitted smooths are centred for plotting).
+ ## compare with a fit of the model without 'fac' parametric term...  
+ b7 <- scam(y ~ s(x,by=fac,bs="mpi"),data=dat) 
+ summary(b7)
+ summary(b5)
+
+
+## numeric 'by' variable example...
+ set.seed(3)
+ n <- 200
+ x <- sort(runif(n,-1,2))
+ z <- runif(n,-2,3)
+ f <- exp(1.3*x)-5
+ y <- f*z + rnorm(n)*2
+ dat <- data.frame(x=x,y=y,z=z)
+ b <- scam(y~s(x,by=z,bs="mpiBy"),data=dat)
+ plot(b,shade=TRUE)
+ summary(b)
+ ## unconstrained fit...
+ b1 <- scam(y~s(x,k=15,by=z),data=dat)
+ plot(b1,shade=TRUE)
+ summary(b1)
  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

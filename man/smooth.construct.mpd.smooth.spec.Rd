@@ -1,6 +1,7 @@
 \name{smooth.construct.mpd.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.mpd.smooth.spec}
+\alias{smooth.construct.mpdBy.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for monotone decreasing P-splines in SCAMs
 }
@@ -11,9 +12,16 @@
 \code{s(x,k,bs="mpd",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 
+  \code{mpdBy.smooth.spec} works similar to \code{mpd.smooth.spec} but without applying an identifiability constraint ('zero intercept' constraint). \code{mpdBy.smooth.spec} should be used when the smooth term has a numeric \code{by} variable  that takes more than one value. In such cases, the smooth terms are fully identifiable without a 'zero intercept' constraint, so they are left unconstrained. This smooth is specified as 
+  \code{s(x,by=z,bs="mpdBy")}. See an example below.
+
+However  a factor \code{by} variable requires identifiability constraints, so \code{s(x,by=fac,bs="mpd")} is used in this case.
+
+
 }
 \usage{
 \method{smooth.construct}{mpd.smooth.spec}(object, data, knots)
+\method{smooth.construct}{mpdBy.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +37,7 @@
 %\details{
 %%  ~~ If necessary, more details than the description above ~~
 %}
-\value{An object of class \code{"mpd.smooth"}. 
+\value{An object of class \code{"mpd.smooth"}, \code{"mpdBy.smooth"}. 
 }
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
@@ -48,13 +56,14 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \code{\link{smooth.construct.cx.smooth.spec}}, 
 \code{\link{smooth.construct.cv.smooth.spec}}, 
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
-\code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micv.smooth.spec}}, 
+\code{\link{smooth.construct.mdcx.smooth.spec}}, 
+\code{\link{smooth.construct.micv.smooth.spec}}, 
 \code{\link{smooth.construct.micx.smooth.spec}}
 
 }
 \examples{
   \dontrun{
-## Monotone decreasing P-splines example 
+## Monotone decreasing SCOP-splines example... 
   ## simulating data...
    require(scam)
    set.seed(3)
@@ -64,19 +73,70 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    y <- rpois(n,exp(f))
    dat <- data.frame(x=x,y=y)
  ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mpd",m=2),family=poisson(link="log"),
-       data=dat,sp=NULL)
-
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="ps",m=2),family=poisson(link="log"),
-         data=dat,sp=NULL)
-
-## plot results ...
-   plot(x,y,xlab="x",ylab="y")
+   b <- scam(y~s(x,k=15,bs="mpd"),family=poisson(link="log"),
+       data=dat)
+ ## unconstrained model fit for comparison...
+   b1 <- scam(y~s(x,k=15,bs="ps"),family=poisson(link="log"),
+         data=dat)
+ ## plot results ...
+   plot(x,y,xlab="x",ylab="y",cex=.5)
    x1 <- sort(x,index=TRUE)
    lines(x1$x,exp(f)[x1$ix])      ## the true function
-   lines(x1$x,b$fitted.values[x1$ix],col=2)  ## monotone fit 
+   lines(x1$x,b$fitted.values[x1$ix],col=2)  ## decreasing fit 
    lines(x1$x,b1$fitted.values[x1$ix],col=3) ## unconstrained fit 
+
+ ## 'by' factor example... 
+ set.seed(3)
+ n <- 400
+ x <- runif(n, 0, 1)
+ ## all three smooths are decreasing...
+ f1 <- -log(x *5) 
+ f2 <-  -exp(2 * x) + 4
+ f3 <-  -5* sin(x)
+ e <- rnorm(n, 0, 2)
+ fac <- as.factor(sample(1:3,n,replace=TRUE))
+ fac.1 <- as.numeric(fac==1)
+ fac.2 <- as.numeric(fac==2)
+ fac.3 <- as.numeric(fac==3)
+ y <- f1*fac.1 + f2*fac.2 + f3*fac.3 + e 
+ dat <- data.frame(y=y,x=x,fac=fac,f1=f1,f2=f2,f3=f3)
+ b2 <- scam(y ~ fac+s(x,by=fac,bs="mpd"),data=dat)  
+ plot(b2,pages=1,scale=0,shade=TRUE)
+ summary(b2)
+ vis.scam(b2,theta=120,color="terrain",cond=list(z=1))
+
+ ## comparing with unconstrained fit...
+ b3 <- scam(y ~ fac+s(x,by=fac),data=dat) 
+ x11()
+ plot(b3,pages=1,scale=0,shade=TRUE)
+ summary(b3)
+
+ ## Note that in mgcv::gam() when using factor 'by' variables, 'centering'
+ ## constraints are applied to the smooths, which usually means that the 'by'
+ ## factor variable should be included as a parametric term, as well. 
+ ## The difference with scam() is that here a 'zero intercept' constraint is 
+ ## applied in place of 'centering' (although scam's fitted smooths are centred for plotting).
+ ## compare with a fit of the model without 'fac' parametric term...  
+ b4 <- scam(y ~ s(x,by=fac,bs="mpd"),data=dat) 
+ summary(b4)
+ summary(b2)
+
+
+## 'by' variable example...
+set.seed(3)
+n <- 100
+x <- sort(runif(n,-1,2))
+z <- runif(n,-2,3)
+f <- exp(-1.3*x)
+y <- f*z + rnorm(n)*0.4
+dat <- data.frame(x=x,y=y,z=z)
+b <- scam(y~s(x,k=15,by=z,bs="mpdBy"),data=dat,optimizer="efs")
+plot(b,shade=TRUE)
+summary(b)
+## unconstrained fit...
+b1 <- scam(y~s(x,k=15,by=z),data=dat)
+plot(b1,shade=TRUE)
+summary(b1)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

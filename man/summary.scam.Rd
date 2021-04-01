@@ -146,14 +146,14 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 x3 <- runif(n)*5;
 f3 <- -log(x3)/5  # monotone decreasing smooth
 f <- f1+f2+f3
-y <- f + rnorm(n)*0.3
+y <- f + rnorm(n)*.3
 dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
 ## fit model ...
 b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2)+s(x3,k=30,bs="mpd",m=2),
      data=dat)
 
 summary(b)
-plot(b,pages=1)  
+plot(b,pages=1,shade=TRUE)  
  }  
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

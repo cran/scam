@@ -161,7 +161,7 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 x3 <- runif(n)*5;
 f3 <- -log(x3)/5  # monotone decreasing smooth
 f <- f1+f2+f3
-y <- 2*x0 + f + rnorm(n)*0.3
+y <- 2*x0 + f + rnorm(n)*.3
 x0 <- factor(x0)
 
 ## fit the model and plot ...
@@ -183,7 +183,7 @@ plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)
        { f[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i]))+2*sin(pi*x2[j])}
    f1 <- as.vector(t(f))
    f2 <- x3*0
-   e <- rnorm(length(f1))*0.1
+   e <- rnorm(length(f1))*.1
    y <- 2*x0 + f1 + f2 + e
    x0 <- factor(x0)
    x11 <-  matrix(0,n,n)
@@ -192,7 +192,7 @@ plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)
    x22 <- rep(x2,n)
    dat <- list(x0=x0,x1=x11,x2=x22,x3=x3,y=y)
 ## fit model  and plot ...
-   b <- scam(y~x0+s(x1,x2,k=c(10,10),bs=c("tesmd1","ps"),m=2)+s(x3),data=dat)
+   b <- scam(y~x0+s(x1,x2,k=c(10,10),bs=c("tesmd1","ps"),m=2)+s(x3),data=dat,optimizer="efs")
    op <- par(mfrow=c(2,2))
    plot(b,all.terms=TRUE)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=19,cex=.3)

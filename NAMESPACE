@@ -23,6 +23,14 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.micv.smooth,
        Predict.matrix.micx.smooth,
        Predict.matrix.mpd.smooth,
+       Predict.matrix.mpdBy.smooth,
+       Predict.matrix.mpiBy.smooth,
+       Predict.matrix.cxBy.smooth,
+       Predict.matrix.cvBy.smooth,
+       Predict.matrix.mdcxBy.smooth,
+       Predict.matrix.mdcvBy.smooth,
+       Predict.matrix.micxBy.smooth,
+       Predict.matrix.micvBy.smooth,
        Predict.matrix.mpi.smooth,
        Predict.matrix.po.smooth,
        Predict.matrix.mifo.smooth,
@@ -49,6 +57,14 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.micv.smooth.spec,
        smooth.construct.micx.smooth.spec,
        smooth.construct.mpd.smooth.spec,
+       smooth.construct.mpdBy.smooth.spec,
+       smooth.construct.mpiBy.smooth.spec,
+       smooth.construct.cxBy.smooth.spec,
+       smooth.construct.cvBy.smooth.spec,
+       smooth.construct.mdcxBy.smooth.spec,
+       smooth.construct.mdcvBy.smooth.spec,
+       smooth.construct.micxBy.smooth.spec,
+       smooth.construct.micvBy.smooth.spec,
        smooth.construct.mpi.smooth.spec,
        smooth.construct.po.smooth.spec,
        smooth.construct.mifo.smooth.spec,
@@ -118,6 +134,14 @@ S3method(smooth.construct,mdcx.smooth.spec)
 S3method(smooth.construct,micv.smooth.spec)
 S3method(smooth.construct, micx.smooth.spec)
 S3method(smooth.construct, mpd.smooth.spec)
+S3method(smooth.construct, mpdBy.smooth.spec)
+S3method(smooth.construct, mpiBy.smooth.spec)
+S3method(smooth.construct, cxBy.smooth.spec)
+S3method(smooth.construct, cvBy.smooth.spec)
+S3method(smooth.construct, mdcxBy.smooth.spec)
+S3method(smooth.construct, mdcvBy.smooth.spec)
+S3method(smooth.construct, micxBy.smooth.spec)
+S3method(smooth.construct, micvBy.smooth.spec)
 S3method(smooth.construct, mpi.smooth.spec)
 S3method(smooth.construct, po.smooth.spec)
 S3method(smooth.construct, mifo.smooth.spec)
@@ -146,6 +170,14 @@ S3method(Predict.matrix,mdcx.smooth)
 S3method(Predict.matrix,micv.smooth)
 S3method(Predict.matrix,micx.smooth)
 S3method(Predict.matrix,mpd.smooth)
+S3method(Predict.matrix,mpdBy.smooth)
+S3method(Predict.matrix,mpiBy.smooth)
+S3method(Predict.matrix,cxBy.smooth)
+S3method(Predict.matrix,cvBy.smooth)
+S3method(Predict.matrix,mdcxBy.smooth)
+S3method(Predict.matrix,mdcvBy.smooth)
+S3method(Predict.matrix,micxBy.smooth)
+S3method(Predict.matrix,micvBy.smooth)
 S3method(Predict.matrix,mpi.smooth)
 S3method(Predict.matrix,po.smooth)
 S3method(Predict.matrix,mifo.smooth)

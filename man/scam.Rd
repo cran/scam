@@ -1,5 +1,5 @@
 \name{scam}
-% \Rdversion{1.2-6}
+% \Rdversion{1.2-11}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
@@ -264,76 +264,63 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 
 \examples{
-##**********************************
-## Gaussian model, 2 terms, 1 monotonic increasing....
-   ## simulating data...
+##=============================
+## Gaussian model, two smooth terms: unconstrained and increasing...
+ ## simulating data...
 require(scam)
-set.seed(0)
+set.seed(4)
 n <- 200
 x1 <- runif(n)*6-3
 f1 <- 3*exp(-x1^2) # unconstrained term
-f1 <- (f1-min(f1))/(max(f1)-min(f1)) # function scaled to have range [0,1]
 x2 <- runif(n)*4-1;
 f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
-f2 <- (f2-min(f2))/(max(f2)-min(f2)) # function scaled to have range [0,1]
-f <- f1+f2
-y <- f+rnorm(n)*0.1
+y <- f1+f2 +rnorm(n)*.5
 dat <- data.frame(x1=x1,x2=x2,y=y)
-  ## fit model, results, and plot...
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2),
-    family=gaussian(link="identity"),data=dat,not.exp=FALSE)
+## fit model, get results, and plot...
+b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi"),data=dat)
 print(b)
 summary(b)
-plot(b,pages=1)
+plot(b,pages=1,shade=TRUE)
 
-
-##************************************
-## Gaussian model, 2 terms, increasing + decreasing convex ....
-   ## simulating data...
-
-set.seed(2)
+##===============================
+## Gaussian model, two smooth terms: increasing and mixed (decreasing and convex)...
+ ## simulating data...
+set.seed(5)
 n <- 200
 x1 <- runif(n)*4-1;
-f1 <- exp(4*x1)/(1+exp(4*x1)) # monotone increasing smooth
+f1 <- exp(4*x1)/(1+exp(4*x1)) # increasing smooth
 x2 <- runif(n)*3-1;
-f2 <- exp(-3*x2)/15  # monotone decreasing and convex smooth
-f <- f1+f2
-y <- f+ rnorm(n)*0.2
+f2 <- exp(-3*x2)/15  # decreasing and convex smooth
+y <- f1+f2 + rnorm(n)*.4
 dat <- data.frame(x1=x1,x2=x2,y=y)
   ## fit model, results, and plot...
-b <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat)
-print(b)
+b <- scam(y~ s(x1,bs="mpi")+s(x2, bs="mdcx"),data=dat)
+b
 summary(b)
-plot(b,pages=1,scale=0)
+plot(b,pages=1,scale=0,shade=TRUE)
 
-##***********************************
+##=================================
 \dontrun{
 ## using the extended Fellner-Schall method for smoothing parameter selection...
-b0 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat, optimizer="efs")
+b0 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="efs")
 summary(b0)
 
 ## using optim() for smoothing parameter selection...
-b1 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat, optimizer="optim")
+b1 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="optim")
 summary(b1)
 
-b2 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat, optimizer="optim",
-    optim.method=c("BFGS","fd"))
+b2 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="optim",
+           optim.method=c("BFGS","fd"))
 summary(b2)
 
 ## using nlm()...
-b3 <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat, optimizer="nlm")
+b3 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="nlm")
 summary(b3)
 }
 
-
-##************************************
+##===================================
 ## Poisson model ....
-   ## simulating data...
+ ## simulating data...
 set.seed(2)
 n <- 200
 x1 <- runif(n)*6-3
@@ -343,35 +330,33 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 f <- f1+f2
 y <- rpois(n,exp(f))
 dat <- data.frame(x1=x1,x2=x2,y=y)
-  ## fit model, results, and plot...
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2),
-      family=poisson(link="log"),data=dat,optimizer="nlm.fd")
-print(b)
+  ## fit model, get results, and plot...
+b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi"),
+      family=poisson(link="log"),data=dat,optimizer="efs")
 summary(b)
-plot(b,pages=1)
+plot(b,pages=1,shade=TRUE)
 scam.check(b)
 
 ## Gamma model...
    ## simulating data...
-set.seed(3)
-n <- 200
+set.seed(6)
+n <- 300
 x1 <- runif(n)*6-3
 f1 <- 1.5*sin(1.5*x1) # unconstrained term
 x2 <- runif(n)*4-1;
-f2 <- 1.5/(1+exp(-10*(x2+0.75)))+1.5/(1+exp(-5*(x2-0.75))) # monotone increasing smooth
+f2 <- 1.5/(1+exp(-10*(x2+.75)))+1.5/(1+exp(-5*(x2-.75))) # increasing smooth
 x3 <- runif(n)*6-3;
 f3 <- 3*exp(-x3^2)  # unconstrained term
 f <- f1+f2+f3
 y <- rgamma(n,shape=1,scale=exp(f))
 dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
-   ## fit model, results, and plot...
-b <- scam(y~s(x1,k=15,bs="ps",m=2)+s(x2,k=30,bs="mpi",m=2)+
-            s(x3,k=15,bs="ps",m=2),family=Gamma(link="log"),
-            data=dat,optimizer="nlm")
-print(b)
+   ## fit model, get results, and plot...
+b <- scam(y~s(x1,bs="ps")+s(x2,k=15,bs="mpi")+s(x3,bs="ps"),
+          family=Gamma(link="log"),data=dat,optimizer="efs")
+b
 summary(b)
 par(mfrow=c(2,2))
-plot(b)
+plot(b,shade=TRUE)
 
 \dontrun{
 ## bivariate example...
@@ -384,15 +369,14 @@ plot(b)
    for (i in 1:n) for (j in 1:n) 
        { f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i]))+2*sin(pi*x2[j])}
    f <- as.vector(t(f1))
-   y <- f+rnorm(length(f))*0.1
+   y <- f+rnorm(length(f))*.2
    x11 <-  matrix(0,n,n)
    x11[,1:n] <- x1
    x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model  and plot ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs=c("tesmd1","ps"),m=2),
-            family=gaussian(link="identity"), data=dat,sp=NULL)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs=c("tesmd1","ps")),data=dat,optimizer="efs")
    summary(b)
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
@@ -404,20 +388,18 @@ plot(b)
    n <- 200
    x1 <- runif(n)*6-3
    f1 <- 3*exp(-x1^2) # unconstrained term
-   f1 <- (f1-min(f1))/(max(f1)-min(f1)) 
    x2 <- runif(n)*4-1;
-   f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
-   f2 <- (f2-min(f2))/(max(f2)-min(f2)) 
+   f2 <- exp(4*x2)/(1+exp(4*x2)) # increasing smooth
    f <- f1+f2
    a <- factor(sample(1:10,200,replace=TRUE))   
-   Xa <- model.matrix(~a-1)    ## random main effects
-   y <- f + Xa\%*\%rnorm(length(levels(a)))*.5 + rnorm(n)*0.1    
+   Xa <- model.matrix(~a-1)    # random main effects
+   y <- f + Xa\%*\%rnorm(length(levels(a)))*.5 + rnorm(n)*.4    
    dat <- data.frame(x1=x1,x2=x2,y=y,a=a)
    ## fit model and plot...
-   b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=25,bs="mpi",m=2)+s(a,bs="re"), data=dat)
+   b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi")+s(a,bs="re"), data=dat)
    summary(b)
    scam.check(b)
-   plot(b,pages=1)
+   plot(b,pages=1,shade=TRUE)
 
 ## example with AR1 errors...
 set.seed(8)
@@ -428,15 +410,16 @@ x2 <- runif(n)*4-1;
 f2 <- exp(4*x2)/(1+exp(4*x2)) # increasing smooth
 f <- f1+f2
 e <- rnorm(n,0,sd=2)
-for (i in 2:n) e[i] <- 0.6*e[i-1] + e[i]
+for (i in 2:n) e[i] <- .6*e[i-1] + e[i]
 y <- f + e
 dat <- data.frame(x1=x1,x2=x2,y=y)  
-b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=25,bs="mpi"),
-            data=dat, AR1.rho=0.6, optimizer="efs")
+b <- scam(y~s(x1,bs="cr")+s(x2,k=25,bs="mpi"),
+            data=dat, AR1.rho=.6, optimizer="efs")
 b
 ## Raw residuals still show correlation...
 acf(residuals(b)) 
 ## But standardized are now fine...
+x11()
 acf(b$std.rsd)
  }
 }

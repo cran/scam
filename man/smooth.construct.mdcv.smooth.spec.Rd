@@ -1,6 +1,7 @@
 \name{smooth.construct.mdcv.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.mdcv.smooth.spec}
+\alias{smooth.construct.mdcvBy.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for monotone decreasing and concave P-splines in SCAMs
 }
@@ -11,9 +12,16 @@
   \code{s(x,k,bs="mdcv",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 
+\code{mdcvBy.smooth.spec} works similar to \code{mdcv.smooth.spec} but without applying an identifiability constraint ('zero intercept' constraint). \code{mdcvBy.smooth.spec} should be used when the smooth term has a numeric \code{by} variable  that takes more than one value. In such cases, the smooth terms are fully identifiable without a 'zero intercept' constraint, so they are left unconstrained. This smooth is specified as 
+  \code{s(x,by=z,bs="mdcvBy")}. See an example below.
+
+However  a factor \code{by} variable requires identifiability constraints, so \code{s(x,by=fac,bs="mdcv")} is used in this case.
+
+
 }
 \usage{
 \method{smooth.construct}{mdcv.smooth.spec}(object, data, knots)
+\method{smooth.construct}{mdcvBy.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,7 +38,7 @@
 %%  ~~ If necessary, more details than the description above ~~
 % }
 
-\value{An object of class \code{"mdcv.smooth"}. 
+\value{An object of class \code{"mdcv.smooth"}, \code{"mdcvBy.smooth"}. 
 }
 
 \references{
@@ -55,25 +63,44 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 }
 \examples{
   \dontrun{
-## Monotone decreasing and concave P-splines example 
+## Monotone decreasing and concave SCOP-splines example 
   ## simulating data...
+   require(scam)
    set.seed(2)
    n <- 100
    x <- sort(runif(n))
    f <- -x^4
-   y <- f+rnorm(n)*0.10
+   y <- f+rnorm(n)*.2
    dat <- data.frame(x=x,y=y)
  ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mdcv",m=2),family=gaussian(link="identity"),data=dat)
+   b <- scam(y~s(x,bs="mdcv"),family=gaussian(),data=dat)
 
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="ps",m=2),family=gaussian(link="identity"),data=dat)
-
-## plot results ...
-   plot(x,y,xlab="x",ylab="y")
+ ## fit unconstrained model ...
+   b1 <- scam(y~s(x,bs="ps"),family=gaussian(),data=dat)
+ ## plot results ...
+   plot(x,y,xlab="x",ylab="y",cex=.5)
    lines(x,f)          ## the true function
    lines(x,b$fitted.values,col=2) ## mixed constrained fit 
    lines(x,b1$fitted.values,col=3) ## unconstrained fit 
+
+  
+ ## numeric 'by' variable example... 
+ set.seed(6)
+ n <- 100
+ x <- sort(runif(n))
+ z <- runif(n,-2,3)
+ f <- -x^4
+ y <- f*z + rnorm(n)*0.4
+ dat <- data.frame(x=x,z=z,y=y)
+ b <- scam(y~s(x,k=15,by=z,bs="mdcvBy"),data=dat)
+ summary(b)
+ par(mfrow=c(1,2))
+ plot(b,shade=TRUE)
+ ## unconstrained fit...
+ b1 <- scam(y~s(x,k=15,by=z),data=dat)
+ plot(b1,shade=TRUE)
+ summary(b1)
+
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

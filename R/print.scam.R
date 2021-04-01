@@ -25,6 +25,7 @@ print.scam <- function (x,...)
     }
     if (!is.null(x$gcv.ubre))
          cat("\n",x$method," score: ", formatC(x$gcv.ubre, digits = 5), "\n", sep = "")
+    if (!is.null(x$rank) && x$rank< length(x$coefficients)) cat("rank: ",x$rank,"/",length(x$coefficients),sep="") 
     cat("\n")
     invisible(x)
 }

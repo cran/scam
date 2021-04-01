@@ -13,7 +13,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, control)
    ## gamma - an ad hoc parametrer of the GCV
    ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
    ## del - increment for finite differences when checking analytical gradients
-   y <- G$y;  X <- G$X
+   y <- drop(G$y);  X <- G$X
    S <- G$S;
    not.exp <- G$not.exp
    q0 <- G$q0; q.f <- G$q.f
@@ -77,7 +77,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, control)
    N_rho[b$iv,] <- b$dbeta.rho[b$iv,]
    alpha.rho <- alpha1*eta.rho
    w.rho <- -a2*b$alpha*eta.rho + b$w1*alpha.rho
-   T_rho <- w.rho / b$abs.w
+   T_rho <- w.rho /b$abs.w
    z2 <- b$dlink.mu*y.mu    # term for the derivative of E
    w1.rho <- matrix(0,n,n.pen)  # define derivatives of the diagonal elements of W1
    T1_rho <- matrix(0,n,n.pen)  # define diagonal elements of T1_j

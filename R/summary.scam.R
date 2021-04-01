@@ -393,76 +393,83 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
 
 
     ## Now the individual parameteric coefficient p-values...
+    ## (copied from mgcv-1.8-34)============
 
     se <- diag(covmat)^0.5
-    residual.df <- length(object$y) - sum(object$edf)
-    if (object$nsdf > 0) {
-        p.coeff <- object$coefficients.t[1:object$nsdf]
-        p.se <- se[1:object$nsdf]
-        p.t <- p.coeff/p.se
-        if (!est.disp) {
-            p.pv <- 2 * pnorm(abs(p.t), lower.tail = FALSE)
-            p.table <- cbind(p.coeff, p.se, p.t, p.pv)
-            dimnames(p.table) <- list(names(p.coeff), c("Estimate", 
-                "Std. Error", "z value", "Pr(>|z|)"))
-        }
-        else {
-            p.pv <- 2 * pt(abs(p.t), df = residual.df, lower.tail = FALSE)
-            p.table <- cbind(p.coeff, p.se, p.t, p.pv)
-            dimnames(p.table) <- list(names(p.coeff), c("Estimate", 
-                "Std. Error", "t value", "Pr(>|t|)"))
-        }
-    }
-    else {
-        p.coeff <- p.t <- p.pv <- array(0, 0)
-    }
+    residual.df<-length(object$y)-sum(object$edf)
+    if (sum(object$nsdf) > 0) { # individual parameters
+      if (length(object$nsdf)>1) { ## several linear predictors (not used in scam!)
+        pstart <- attr(object$nsdf,"pstart")
+        ind <- rep(0,0)
+        for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) ind <- 
+            c(ind,pstart[i]:(pstart[i]+object$nsdf[i]-1))
+      } else { pstart <- 1;ind <- 1:object$nsdf} ## only one lp
+      p.coeff <- object$coefficients[ind]
+      p.se <- se[ind]
+      p.t<-p.coeff/p.se
+      if (!est.disp) {
+        p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
+        p.table <- cbind(p.coeff, p.se, p.t, p.pv)   
+        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))
+      } else {
+        p.pv <- 2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
+        p.table <- cbind(p.coeff, p.se, p.t, p.pv)
+        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
+      }    
+    } else {p.coeff <- p.t <- p.pv <- array(0,0)}
 
     ## Next the p-values for parametric terms, so that factors are treated whole... 
- 
-    term.labels <- attr(object$pterms, "term.labels")
-    nt <- length(term.labels)
-    if (nt > 0) {
-        np <- length(object$assign)
-        Vb <- matrix(covmat[1:np, 1:np],np,np) ## ,drop=FALSE)
-        bp <- array(object$coefficients.t[1:np], np)
-        pTerms.pv <- array(0, nt)
-        attr(pTerms.pv, "names") <- term.labels
-        pTerms.df <- pTerms.chi.sq <- pTerms.pv
-        for (i in 1:nt) {
-            ind <- object$assign == i
-            b <- bp[ind]; V <- Vb[ind, ind]
-            ## pseudo-inverse needed in case of truncation of parametric space
-            if (length(b) == 1) {
-                V <- 1/V
-                pTerms.df[i] <- nb <- 1
-                pTerms.chi.sq[i] <- V * b * b
-            }
-            else {
-                V <- pinv(V, length(b), rank.tol = .Machine$double.eps^0.5)
-                pTerms.df[i] <- nb <- attr(V, "rank")
-                pTerms.chi.sq[i] <- t(b) %*% V %*% b
-            }
-            if (!est.disp) 
-                pTerms.pv[i] <- pchisq(pTerms.chi.sq[i], df = nb, 
-                  lower.tail = FALSE)
-            else pTerms.pv[i] <- pf(pTerms.chi.sq[i]/nb, df1 = nb, 
-                df2 = residual.df, lower.tail = FALSE)
-        }
-        if (!est.disp) {
-            pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)
-            dimnames(pTerms.table) <- list(term.labels, c("df", 
-                "Chi.sq", "p-value"))
-        }
-        else {
-            pTerms.table <- cbind(pTerms.df, pTerms.chi.sq/pTerms.df, 
-                pTerms.pv)
-            dimnames(pTerms.table) <- list(term.labels, c("df", 
-                "F", "p-value"))
-        }
-    }
-    else {
-        pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0, 0)
-    }
+     
+    pterms <- if (is.list(object$pterms)) object$pterms else list(object$pterms)
+   if (!is.list(object$assign)) object$assign <- list(object$assign)
+   npt <- length(unlist(lapply(pterms,attr,"term.labels")))
+   if (npt>0)  pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0,npt)
+   term.labels <- rep("",0)
+   k <- 0 ## total term counter
+   for (j in 1:length(pterms)) {
+     tlj <- attr(pterms[[j]],"term.labels") 
+     nt <- length(tlj)
+     if (j>1 && nt>0) tlj <- paste(tlj,j-1,sep=".")
+     term.labels <- c(term.labels,tlj)
+     if (nt>0) { # individual parametric terms
+       np <- length(object$assign[[j]])
+       ind <- pstart[j] - 1 + 1:np 
+       Vb <- covmat[ind,ind,drop=FALSE]
+       bp <- array(object$coefficients[ind],np)
+    
+       for (i in 1:nt) { 
+         k <- k + 1
+         ind <- object$assign[[j]]==i
+         b <- bp[ind];V <- Vb[ind,ind]
+         ## pseudo-inverse needed in case of truncation of parametric space 
+         if (length(b)==1) { 
+           V <- 1/V 
+           pTerms.df[k] <- nb <- 1      
+           pTerms.chi.sq[k] <- V*b*b
+         } else {
+           V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
+           pTerms.df[k] <- nb <- attr(V,"rank")      
+           pTerms.chi.sq[k] <- t(b)%*%V%*%b
+         }
+         if (!est.disp)
+         pTerms.pv[k] <- pchisq(pTerms.chi.sq[k],df=nb,lower.tail=FALSE)
+         else
+         pTerms.pv[k] <- pf(pTerms.chi.sq[k]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
+       } ## for (i in 1:nt)
+     } ## if (nt>0)
+   }
+
+   if (npt) {
+     attr(pTerms.pv,"names") <- term.labels
+     if (!est.disp) {      
+       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
+        dimnames(pTerms.table) <- list(term.labels, c("df", "Chi.sq", "p-value"))
+     } else {
+       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq/pTerms.df, pTerms.pv)   
+        dimnames(pTerms.table) <- list(term.labels, c("df", "F", "p-value"))
+     }
+   } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}    
+    ## ================================
 
     ## Now deal with the smooth terms....
 
@@ -577,7 +584,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
        pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
        pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
        sp=object$sp,dgcv.ubre=object$dgcv.ubre,termcode=object$termcode,
-       gcv.ubre=object$gcv.ubre,optimizer=object$optimizer)
+       gcv.ubre=object$gcv.ubre,optimizer=object$optimizer,rank=object$rank,np=length(object$coefficients))
 
     class(ret) <- "summary.scam"
     ret
@@ -673,6 +680,8 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
         printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, 
             has.Pvalue = TRUE, na.print = "NA", cs.ind = 1, ...)
     }
+   # cat("\n")
+   if (!is.null(x$rank) && x$rank< x$np) cat("Rank: ",x$rank,"/",x$np,"\n",sep="") 
     cat("\nR-sq.(adj) = ", formatC(x$r.sq, digits = 4, width = 5))
     if (length(x$dev.expl) > 0) 
         cat("   Deviance explained = ", formatC(x$dev.expl * 

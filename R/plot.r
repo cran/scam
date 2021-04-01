@@ -121,7 +121,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       ### addition for univariate shape-constrained smooths ...
       const.dif <- 0  
       if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "po.smooth","mdcv.smooth",
-                      "mdcx.smooth","micv.smooth","micx.smooth", "mifo.smooth", "miso.smooth"))){
+                      "mdcx.smooth","micv.smooth","micx.smooth", "mifo.smooth", "miso.smooth","mpdBy.smooth", "cxBy.smooth","mpiBy.smooth","cvBy.smooth","mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))){
                         q <- ncol(P$X) ## length(p)
                        ## beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p)) 
                         p.ident <- x$p.ident[first:last]
@@ -131,13 +131,15 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                               # beta.c <- c(rep(0,length(x$smooth[[i]]$n.zero)),p)
                                 beta.c <- rep(0,length(p)+length(x$smooth[[i]]$n.zero))
                                 beta.c[-x$smooth[[i]]$n.zero] <- p
-                        #   } else if (inherits(x$smooth[[i]], c("mipoc.smooth"))) {
-                          #      beta.c <- p
+                           } else if (inherits(x$smooth[[i]], c("mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))) {
+                                 beta.c <- p
                            } else beta.c <- c(0,p)
                         fit.c <- P$X%*%beta.c # fitted values for the SCOP-splines identifiability constraints
                         if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth", "miso.smooth"))) 
                                p <- beta.c ## c(0,p)
-                         else { ## get a constant, a difference between two fits obtained by using 'zeroed
+                          else if (inherits(x$smooth[[i]], c("mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))){ ## no changes in p here
+                               p <- p
+                          } else { ## get a constant, a difference between two fits obtained by using 'zeroed
                                 ## intercept' constraint of the SCOP-spline  and the centering constraint;
                                 ## centered-fit= SCOP-fit + const...
                                 ## this vertical shift to be applied to achieve the centered smooth term)
@@ -214,22 +216,23 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       if (se && P$se) { ## get standard errors for fit
       ## shape constrained supplement...
         if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
-                 "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth","mifo.smooth","miso.smooth"))){
+                 "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth","mifo.smooth","miso.smooth",
+                 "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))){
                   if (inherits(x$smooth[[i]], c("miso.smooth","mifo.smooth"))) {
                      Vp <- x$Vp.t[first:last, first:last] 
                      ind <- x$smooth[[i]]$n.zero
                      ## adding rows and columns of 0's...
                      Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
                      Vp.c[-ind,-ind] <- Vp  
-                 #  } else if (inherits(x$smooth[[i]], c("mipoc.smooth"))) {
-                  #    Vp.c <- x$Vp.t[first:last, first:last] 
+                   } else if (inherits(x$smooth[[i]], c("mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))) {
+                      Vp.c <- x$Vp.t[first:last, first:last] 
                    } else {
                      Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
                      Vp.c <- Vp
                      Vp.c[,1] <- rep(0,nrow(Vp))
                      Vp.c[1,] <- rep(0,ncol(Vp)) 
                     }
-                  if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth","miso.smooth"))) 
+                  if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth","miso.smooth","mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))) 
                       se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))      
                     else {
                        XZa <- t(qr.qty(qrA,t(P$X)))[,2:q]

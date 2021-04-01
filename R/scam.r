@@ -274,6 +274,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$deviance <- post$deviance
    object$residuals <- post$residuals
    object$df.residual <- nrow(G$X) - sum(post$edf)
+   object$rank <- post$rank
 
    object$var.summary <- G$var.summary 
    object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
@@ -819,7 +820,7 @@ scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env
            
           QtQRER <- tR.inv%*%(diag(E)*R.inv)
           if (sum(I.minus)>0) {
-             if (is.qr(Q)) { c(betaold)
+             if (is.qr(Q)) { 
             # QtQRER <- QtQRER + 2*tcrossprod(qr.qty(Q,diag(nrow(wX11))[,(1:nobs)[as.logical(I.minus)]]))
              QtQRER <- QtQRER + 2*crossprod(I.minus*qr.Q(Q)[1:nobs,])  
              } else {
@@ -1091,8 +1092,9 @@ scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env
         rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
  
         R.out <- R[,rp]  ## unpivoted R, needed for summary function
+        rank <- Rrank(R)
 
-        if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+        if (rank==ncol(R)) { ## no need to truncate, can just use QR
            R.inv <- backsolve(R,diag(ncol(R)))[rp,] ## inverse of unpivoted R
            tR.inv <- t(R.inv)
         } else { ## need SVD step
@@ -1128,8 +1130,8 @@ scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env
          rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
 
          R.out <- R[,rp]  ## unpivoted R, needed for summary function
-
-         if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+         rank <- Rrank(R)
+         if (rank==ncol(R)) { ## no need to truncate, can just use QR
              P <- backsolve(R,diag(ncol(R)))[rp,]
              K <- qr.Q(Q)[1:nobs,]
          } else { ## need SVD step
@@ -1217,14 +1219,14 @@ scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env
   } ### end if (!EMPTY) 
 
  list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=betaold, gcv=dev*nobs/(nobs-gamma *trA)^2, sp=sp,
-      mu=mu,X=G$X,y=G$y, X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
+      mu=mu,X=G$X,y=drop(G$y), X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
       P=P,K=K, C2diag=C2diag, KtILQ1R= KtILQ1R, KtIQ1R=KtIQ1R, ## XC1=XC1, XC2=XC2,
-      dlink.mu=dlink.mu,Var=Var, abs.w=abs.w,
-      link=link,w=as.numeric(w),w1=w1,d2link.mu=d2link.mu,wX1=wX1,I.plus=I.plus,
+      dlink.mu=dlink.mu,Var=Var, abs.w=drop(abs.w),
+      link=link,w=as.numeric(w),w1=drop(w1),d2link.mu=d2link.mu,wX1=wX1,I.plus=I.plus,
       dvar.mu=dvar.mu,d2var.mu=d2var.mu,deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=as.numeric(alpha),d3link.mu=d3link.mu,eta=eta,iter=iter,
       Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,R=R.out, edf=edf,trA=trA,
-      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
+      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model,rank=rank) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
 } ## end of scam.fit
 
 
@@ -1309,8 +1311,8 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
         rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
  
         R.out <- R[,rp]  ## unpivoted R, needed for summary function
-
-        if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+        rank <- Rrank(R)
+        if (rank==ncol(R)) { ## no need to truncate, can just use QR
            R.inv <- backsolve(R,diag(ncol(R)))[rp,] ## inverse of unpivoted R
            tR.inv <- t(R.inv)
         } else { ## need SVD step
@@ -1346,8 +1348,8 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
          rp[Q$pivot] <- rp ## reverse pivot X=Q%*%R[,rp]
 
          R.out <- R[,rp]  ## unpivoted R, needed for summary function
-
-         if (Rrank(R)==ncol(R)) { ## no need to truncate, can just use QR
+         rank <- Rrank(R)
+         if (rank==ncol(R)) { ## no need to truncate, can just use QR
              P <- backsolve(R,diag(ncol(R)))[rp,]
              K <- qr.Q(Q)[1:nobs,]
          } else { ## need SVD step
@@ -1410,7 +1412,7 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
         aic.model <- aic.model - 2*(n-df)*log(1/sqrt(1-G$AR1.rho^2)) 
    }
     
-   list (null.dev=null.dev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,
+   list (null.dev=null.dev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,rank=rank,
         sig2=sig2,edf=edf,edf1=edf1,trA=trA, deviance=dev,residuals=residuals, aic=aic.model, mu=mu, eta=eta)
 } ## end of scam.fit.post
 

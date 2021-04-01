@@ -1,6 +1,7 @@
 \name{smooth.construct.micv.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.micv.smooth.spec}
+\alias{smooth.construct.micvBy.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for monotone increasing and concave P-splines in SCAMs
 }
@@ -11,9 +12,16 @@
   \code{s(x,k,bs="micv",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 
+\code{micvBy.smooth.spec} works similar to \code{micv.smooth.spec} but without applying an identifiability constraint ('zero intercept' constraint). \code{micvBy.smooth.spec} should be used when the smooth term has a numeric \code{by} variable  that takes more than one value. In such cases, the smooth terms are fully identifiable without a 'zero intercept' constraint, so they are left unconstrained. This smooth is specified as 
+  \code{s(x,by=z,bs="micvBy")}. See an example below.
+
+However  a factor \code{by} variable requires identifiability constraints, so \code{s(x,by=fac,bs="micv")} is used in this case.
+
+
 }
 \usage{
 \method{smooth.construct}{micv.smooth.spec}(object, data, knots)
+\method{smooth.construct}{micvBy.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +37,7 @@
 %\details{
 %%  ~~ If necessary, more details than the description above ~~
 %}
-\value{An object of class \code{"micv.smooth"}. 
+\value{An object of class \code{"micv.smooth"}, \code{"micvBy.smooth"}. 
 }
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
@@ -48,32 +56,48 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \code{\link{smooth.construct.cx.smooth.spec}}, 
 \code{\link{smooth.construct.cv.smooth.spec}}, 
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
-\code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micx.smooth.spec}}, 
+\code{\link{smooth.construct.mdcx.smooth.spec}}, 
+\code{\link{smooth.construct.micx.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}
 
 }
 \examples{
  \dontrun{
-## Monotone increasing and concave P-splines example 
+## Monotone increasing and concave SCOP-splines example 
   ## simulating data...
    set.seed(3)
    n <- 100
    x <- sort(runif(n)*99+1)
-   f1 <- log(x)
-   f <- (f1-min(f1))/(max(f1)-min(f1))
-   y <- f+rnorm(n)*0.10
+   f <- log(x)/2
+   y <- f+rnorm(n)*.3
    dat <- data.frame(x=x,y=y)
- ## fit model ...
-   b <- scam(y~s(x,k=15,bs="micv",m=2), data=dat)
-
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="ps",m=2),data=dat)
-
-## plot results ...
-   plot(x,y,xlab="x",ylab="y")
+   ## fit model ...
+   b <- scam(y~s(x,k=15,bs="micv"), data=dat)
+   summary(b)
+   # fit unconstrained model ...
+   b1 <- scam(y~s(x,k=15,bs="ps"),data=dat)
+   ## plot results ...
+   plot(x,y,xlab="x",ylab="y",cex=.5)
    lines(x,f)           ## the true function
    lines(x,b$fitted.values,col=2)  ## mixed constrained fit 
    lines(x,b1$fitted.values,col=3) ## unconstrained fit 
+
+ ## numeric 'by' variable example... 
+ set.seed(3)
+ n <- 100
+ x <- sort(runif(n)*99+1)
+ f <- log(x)/2
+ z <- runif(n,-2,3)
+ y <- f*z + rnorm(n)*0.3
+ dat <- data.frame(x=x,z=z,y=y)
+ b <- scam(y~s(x,k=15,by=z,bs="micvBy")-1,data=dat)
+ summary(b)
+ par(mfrow=c(1,2))
+ plot(b,shade=TRUE)
+ ## unconstrained fit...
+ b1 <- scam(y~s(x,k=15,by=z)-1,data=dat)
+ plot(b1,shade=TRUE)
+ summary(b1)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

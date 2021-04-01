@@ -29,7 +29,7 @@ rf <- function(x=seq(-1,3,length=100)) {
 ## generates random functions...
   m <- ceiling(runif(1)*5) ## number of components
   f <- x*0;
-  mu <- runif(m,min(x),max(x));sig <- (runif(m)+.5)*(max(x)-min(x))/10
+  mu <- runif(m,min(x),max(x)); sig <- (runif(m)+.5)*(max(x)-min(x))/10
   for (i in 1:m) f <- f+ dnorm(x,mu[i],sig[i])
   f
 }
@@ -47,17 +47,17 @@ plot(x,f ,type="l")
 y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 X <- matrix(x,200,100,byrow=TRUE) 
 
-b <- scam(y~s(X,by=L,k=20,bs="mpd")) 
-par(mfrow=c(1,1))
-plot(b,shade=TRUE);lines(x,f-sum(f)/length(f),col=2); 
+b <- scam(y~s(X,by=L,k=20,bs="mpdBy")) 
+par(mfrow=c(1,2))
+plot(b,shade=TRUE);lines(x,f,col=2); 
 ## compare with gam() of mgcv package...
 g <- gam(y~s(X,by=L,k=20)) 
-x11()
-par(mfrow=c(1,1))
 plot(g,shade=TRUE);lines(x,f,col=2)
 
 
 ## increasing smooth....
+L <- matrix(NA,200,100) 
+for (i in 1:200) L[i,] <- rf()  ## simulate the functional predictors
 x <- seq(-1,3,length=100) ## evaluation points
 f2 <- function(x) { ## the coefficient function
      4*exp(4*x)/(1+exp(4*x))  
@@ -66,14 +66,32 @@ f <- f2(x)
 plot(x,f ,type="l")
 y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 X <- matrix(x,200,100,byrow=TRUE) 
+b <- scam(y~s(X,by=L,k=20,bs="mpiBy")) 
+par(mfrow=c(1,2))
+plot(b,shade=TRUE);lines(x,f,col=2); 
+## compare with unconstrained fit...
+g <- scam(y~s(X,by=L,k=20)) 
+plot(g,shade=TRUE);lines(x,f,col=2)
 
-b <- scam(y~s(X,by=L,k=20,bs="mpi")) 
-par(mfrow=c(1,1))
-plot(b,shade=TRUE);lines(x,f-sum(f)/length(f),col=2); 
 
-g <- gam(y~s(X,by=L,k=20)) 
-x11()
-par(mfrow=c(1,1))
+## convex smooth...
+ ## simulate 200 functions and store in rows of L...
+set.seed(4)
+L <- matrix(NA,200,100) 
+for (i in 1:200) L[i,] <- rf(x=sort(2*runif(100)-1))  ## simulate the functional predictors
+
+x <- sort(runif(100,-1,1)) ## evaluation points
+f2 <- function(x){4*x^2 } ## the coefficient function
+f <- f2(x) 
+plot(x,f ,type="l")
+y <- L\%*\%f + rnorm(200)*30 ## simulated response data
+X <- matrix(x,200,100,byrow=TRUE) 
+
+b <- scam(y~s(X,by=L,k=20,bs="cxBy")) 
+par(mfrow=c(1,2))
+plot(b,shade=TRUE);lines(x,f,col=2); 
+
+g <- scam(y~s(X,by=L,k=20)) 
 plot(g,shade=TRUE);lines(x,f,col=2)
 
  }

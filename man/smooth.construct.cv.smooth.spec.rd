@@ -1,5 +1,6 @@
 \name{smooth.construct.cv.smooth.spec}
 \alias{smooth.construct.cv.smooth.spec}
+\alias{smooth.construct.cvBy.smooth.spec}
 \title{Constructor for concave P-splines in SCAMs
 }
 \description{This is a special method function
@@ -9,9 +10,15 @@
   \code{s(x,k,bs="cv",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
 
+  \code{cvBy.smooth.spec} works similar to \code{cv.smooth.spec} but without applying an identifiability constraint ('zero intercept' constraint). \code{cvBy.smooth.spec} should be used when the smooth term has a numeric \code{by} variable  that takes more than one value. In such cases, the smooth terms are fully identifiable without a 'zero intercept' constraint, so they are left unconstrained. This smooth is specified as 
+  \code{s(x,by=z,bs="cvBy")}. See an example below.
+
+However  a factor \code{by} variable requires identifiability constraints, so \code{s(x,by=fac,bs="cv")} is used in this case.
+
 }
 \usage{
 \method{smooth.construct}{cv.smooth.spec}(object, data, knots)
+\method{smooth.construct}{cvBy.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +34,7 @@
 %\details{
 %%  ~~ If necessary, more details than the description above ~~
 %}
-\value{An object of class \code{"cv.smooth"}. 
+\value{An object of class \code{"cv.smooth"}, \code{"cvBy.smooth"}. 
 }
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
@@ -41,8 +48,10 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 }
 \seealso{
 \code{\link{smooth.construct.cx.smooth.spec}}, 
-\code{\link{smooth.construct.mpi.smooth.spec}}, \code{\link{smooth.construct.mdcv.smooth.spec}}, 
-\code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micx.smooth.spec}}, 
+\code{\link{smooth.construct.mpi.smooth.spec}}, 
+\code{\link{smooth.construct.mdcv.smooth.spec}}, 
+\code{\link{smooth.construct.mdcx.smooth.spec}}, 
+\code{\link{smooth.construct.micx.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}
 
 }
@@ -50,18 +59,18 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  \dontrun{
 ## Concave P-splines example 
   ## simulating data...
+   require(scam)
    set.seed(1)
    n <- 100
    x <- sort(2*runif(n)-1)
    f <- -4*x^2
    y <- f + rnorm(n)*0.45
    dat <- data.frame(x=x,y=y)
-   b <- scam(y~s(x,k=15,bs="cv",m=2),family=gaussian,data=dat,not.exp=FALSE)
-   # UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=gaussian, data=dat,not.exp=FALSE)
-
-## plot results ...
-   plot(x,y,xlab="x",ylab="y")
+   b <- scam(y~s(x,k=15,bs="cv"),family=gaussian,data=dat,not.exp=FALSE)
+   ## fit unconstrained model...
+   b1 <- scam(y~s(x,k=15,bs="cr"),family=gaussian, data=dat,not.exp=FALSE)
+   ## plot results ...
+   plot(x,y,xlab="x",ylab="y",cex=.5)
    lines(x,f)      ## the true function
    lines(x,b$fitted,col=2)  ## constrained fit 
    lines(x,b1$fitted,col=3) ## unconstrained fit 
@@ -69,22 +78,58 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 ## Poisson version...
    y <- rpois(n,15*exp(f))
    dat <- data.frame(x=x,y=y)
- ## fit model ...
-   b <- scam(y~s(x,k=15,bs="cv",m=2),family=poisson(link="log"),data=dat,not.exp=FALSE)
+   ## fit model ...
+   b <- scam(y~s(x,k=15,bs="cv"),family=poisson(link="log"),data=dat,not.exp=FALSE)
 
-# UNCONSTRAINED FIT *****************
-   b1 <- scam(y~s(x,k=15,bs="cr",m=2),family=poisson(link="log"), data=dat,not.exp=FALSE)
-
-## plot results ...
-   plot(x,y,xlab="x",ylab="y")
+   ## fit unconstrained model...
+   b1<-scam(y~s(x,k=15,bs="cr"),family=poisson(link="log"), data=dat,not.exp=FALSE)
+   ## plot results ...
+   plot(x,y,xlab="x",ylab="y",cex=.5)
    lines(x,15*exp(f))      ## the true function
    lines(x,b$fitted,col=2)  ## constrained fit 
    lines(x,b1$fitted,col=3) ## unconstrained fit 
 
 ## plotting on log scale...
-   plot(x,log(15*exp(f)),type="l")      ## the true function
+   plot(x,log(15*exp(f)),type="l",cex=.5)      ## the true function
    lines(x,log(b$fitted),col=2)  ## constrained fit 
    lines(x,log(b1$fitted),col=3) ## unconstrained fit 
+
+## 'by' factor example... 
+  set.seed(9)
+  n <- 400
+  x <- sort(runif(n,-.5,.5))
+  f1 <- -.7*x+cos(x)-3
+  f2 <- -20*x^2 
+  par(mfrow=c(1,2))
+  plot(x,f1,type="l");plot(x,f2,type="l")
+  e <- rnorm(n, 0, 1.5)
+  fac <- as.factor(sample(1:2,n,replace=TRUE))
+  fac.1 <- as.numeric(fac==1)
+  fac.2 <- as.numeric(fac==2)
+  y <- f1*fac.1 + f2*fac.2 + e 
+  dat <- data.frame(y=y,x=x,fac=fac,f1=f1,f2=f2)
+  b2 <- scam(y ~ fac+s(x,by=fac,bs="cv"),data=dat,optimizer="efs")  
+  plot(b2,pages=1,scale=0,shade=TRUE)
+  summary(b2)
+  x11()
+  vis.scam(b2,theta=50,color="terrain",cond=list(z=1))
+
+ ## numeric 'by' variable example... 
+ set.seed(6)
+ n <- 100
+ x <- sort(2*runif(n)-1)
+ z <- runif(n,-2,3)
+ f <- -4*x^2
+ y <- f*z + rnorm(n)*0.6
+ dat <- data.frame(x=x,z=z,y=y)
+ b <- scam(y~s(x,k=15,by=z,bs="cvBy"),data=dat)
+ summary(b)
+ par(mfrow=c(1,2))
+ plot(b,shade=TRUE)
+ ## unconstrained fit...
+ b1 <- scam(y~s(x,k=15,by=z),data=dat)
+ plot(b1,shade=TRUE)
+ summary(b1)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

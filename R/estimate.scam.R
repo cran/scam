@@ -187,7 +187,7 @@ efsudr.scam <- function(G,lsp,gamma,env, control){##maxit=200, devtol.fit=1e-7, 
      nsp <- length(G$S) 
      q <- ncol(G$X)
      n <- nrow(G$X) 
-     y.mu <- b$y-b$mu
+     y.mu <- drop(b$y)-b$mu
      c <- -2*y.mu/(b$Var*b$dlink.mu)
      D.beta <- t(b$X1)%*%c  # derivative of the deviance w.r.t. beta 
      
