@@ -5,7 +5,7 @@
 
 scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
                  weights=NULL, offset=NULL, optimizer="bfgs", optim.method=c("Nelder-Mead","fd"),
-                 scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart, mustart, control=list(),
+                 scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart=NULL, mustart=NULL, control=list(),
                  AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
 {  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
    ## optimizer - numerical optimization method to use to optimize the smoothing parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd", "efs"
@@ -20,7 +20,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    mf <- match.call(expand.dots=FALSE)
    mf$formula <- gp$fake.formula 
    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
-                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
+                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$AR1.start <- mf$start <- mf$etastart <- mf$mustart <-mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
    mf$drop.unused.levels <- drop.unused.levels
    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
    pmf <- mf
@@ -180,13 +180,25 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
              }                
          if (neg) sp <- NULL
      }
-   ## Create new environments with `start' initially empty...
- #  ee <- new.env() ## parent = .GlobalEnv
+
+    
+   ## Create new environments with `start' initially empty (if not supplied)...
+   #  ee <- new.env() ## parent = .GlobalEnv
    env <- new.env() 
-   assign("start",rep(0,0),envir=env)
+  ## assign("start",rep(0,0),envir=env)
    assign("dbeta.start",rep(0,0),envir=env)
    assign("sp.last",rep(0,0),envir=env)
+
+   nvars <- NCOL(G$X) # number of model coefficients
+   if (!is.null(start)) {  ## scam_1.2-12 ...
+      if (length(start) != nvars) 
+            stop(gettextf("Length of start should equal %d and correspond to initial coefs.",nvars)) 
+      else  assign("start",start,envir=env)
+   } else{
+         assign("start",rep(0,0),envir=env)
+     }
    
+
    q.f <- rep(0,n.terms)
    if (n.terms >0) for (i in 1:n.terms) 
                       q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 
@@ -206,7 +218,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object <- list() 
    if (is.null(sp)) { 
        ## get initial estimates of the smoothing parameter...
-         start <- etastart <- mustart <- NULL
+        ## start <- etastart <- mustart <- NULL
          y <- G$y; family <- G$family
          nobs <- NROW(y)
          eval(family$initialize)
@@ -215,6 +227,10 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
               intercept=intercept,offset=G$offset, env=env,
               weights=weights, control=control) 
          rho <- log(def.sp+1e-4) ## get initial log(sp) ...
+
+         if (!is.null(start))  
+                     assign("start",start,envir=env) ## scam_1.2-12
+
          ## minimize GCV/UBRE by optimizer....
          ptm <- proc.time()
          re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
@@ -557,7 +573,7 @@ penalty_pident <- function(object)
 ## Function to fit SCAM based on Full Newton method        ##     
 #############################################################
 
-scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env=env, 
+scam.fit <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env, 
               null.coef=rep(0,ncol(G$X)), control=scam.control()) 
 ##  maxit=200, devtol.fit=1e-8, steptol.fit=1e-8, trace=FALSE, print.warn=FALSE
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
@@ -581,7 +597,7 @@ scam.fit <- function(G,sp, gamma=1, start=NULL, etastart=NULL, mustart=NULL, env
   q <- ncol(X)
   dg <- fix.family.link(family)
   dv <- fix.family.var(family)
-  nvars <- ncol(X)
+  nvars <- NCOL(X)
   EMPTY <- nvars == 0
   variance <- family$variance
   linkinv <- family$linkinv

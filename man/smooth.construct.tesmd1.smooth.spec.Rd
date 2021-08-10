@@ -7,9 +7,9 @@
 \description{This is a special method function
   for creating tensor product bivariate smooths monotone decreasing in the first covariate which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed from a pair of single penalty
-  marginal smooths. 
+  It is constructed from a pair of single penalty marginal smooths. 
   This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd1",m=2)}. 
+  The default basis for the second marginal smooth is P-spline basis. (Currently only P-spline is implemented as the basis for the second marginal.)
   
 }
 \usage{
@@ -36,7 +36,7 @@ this object contains:
 \item{p.ident}{A vector of 0's and 1's for model parameter identification: 
      1's indicate parameters which will be exponentiated, 0's - otherwise.}
 \item{Zc}{A matrix of identifiability constraints.}
-\item{margin.class}{The class of the second unconstrained marginal smooth.}
+\item{margin.bs}{A two letter character string indicating the (penalized) smoothing basis to use for the second unconstrained marginal smooth. (eg "ps" for P-splines).}
 
 }
 \references{

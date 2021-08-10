@@ -1,3 +1,9 @@
+1.2-12
+* smooth.construct: added option for cyclic cubic regression spline ("cc") in the 'tesmi1', tensor product bivariate smooth with increasing constraint in the first covariate. Thanks Eli Asarian for bringing this up.
+
+*scam.fit: bug fixed with starting values of the model coefficients. Thanks Charlie Song for reporting the bug.
+  
+
 1.2-11 
 * gcv.ubre_grad, scam.fit: bug fixed with vector dimensions when working with linear functional terms. Thanks to  
 Paul Rosenfield for reporting the bug.
@@ -7,7 +13,6 @@ Paul Rosenfield for reporting the bug.
 * linear.functional.terms: shape constrained examples corrected, decreasing and increasing terms are now correctly specified using SCOP-splines without identifiability constraints (bs="mpdBy", bs="mpiBy"). An example with convex term is added (bs="cxBy"). Thanks to Paul Rosenfield for pointing out the bug.
 
 * smooth.construct: added shape constrained smoothers: 'mpiBy', 'mpdBy', 'cxBy', 'cvBy', 'micxBy', 'micvBy', 'mdcxBy', 'mdcvBy' to be used with SCOP-splines with non-constant 'by' variable, and with linear functionals terms. In presence of non-constant 'by' variable the terms are fully identifiable, so they are left unconstrained (without imposing 'zero intercept' constraint). Thanks to Paul Rosenfield for pointing out the bug when 'cx' is used with linear functional terms.
-
 
 
 1.2-10 

@@ -86,8 +86,9 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tecxcv.smooth.spec
 )
 
-importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
-           exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank, interpret.gam)
+## importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
+##           exclude.too.far,mroot,fix.family.link,fix.family.var,pcls, Rrank, interpret.gam)
+
 import(mgcv)  ## imports ALL exported variables from mgcv package
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,heat.colors,terrain.colors,topo.colors)
@@ -108,8 +109,6 @@ qbeta,qbinom,qchisq,qnbinom,qgamma,qnorm,qpois,qqline,qqnorm,qqplot,
 reformulate,residuals,
 rbeta,rbinom,rgamma,rnbinom,rnorm,rpois,runif,sd,
 termplot,terms.formula,terms,uniroot,var,vcov,weights)
-
-
 
 
 import(Matrix)

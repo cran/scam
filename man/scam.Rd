@@ -13,10 +13,10 @@
 }
 \usage{
 scam(formula, family = gaussian(), data = list(), gamma = 1, 
-      sp = NULL, weights = NULL, offset = NULL, 
-      optimizer="bfgs", optim.method=c("Nelder-Mead","fd"), 
-      scale = 0, knots=NULL, not.exp=FALSE, start= NULL, etastart,
-      mustart,control=list(),AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE)
+      sp = NULL, weights = NULL, offset = NULL,optimizer="bfgs", 
+      optim.method=c("Nelder-Mead","fd"),scale = 0, knots=NULL,
+      not.exp=FALSE, start= NULL, etastart=NULL,mustart= NULL,
+      control=list(),AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
