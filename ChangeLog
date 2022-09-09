@@ -1,3 +1,9 @@
+1.2-13
+* smooth.construct: added option of cyclic cubic regression spline ("cc") in the 'tesmd1', 'tesmd2', and 'tesmi2' smoothers as an alternative marginal basis along the otherwise unconstrained marginal smooth.
+
+* plot.scam: bug fixed with plot methods for the smooths of the package mgcv, such as, Markov random fields bs="mrf", factor smooth interactions "fs", Gaussian process smooths bs="gp", splines on the sphere bs="sos", Duchon splines bs="ds". Thanks Alessia Eletti for reporting the bug. 
+
+
 1.2-12
 * smooth.construct: added option for cyclic cubic regression spline ("cc") in the 'tesmi1', tensor product bivariate smooth with increasing constraint in the first covariate. Thanks Eli Asarian for bringing this up.
 

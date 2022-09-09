@@ -394,9 +394,11 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
 } ## end plot.scam
 
 
-#############################################
-## below is needed and copied from plots.r of mgcv...
-##########################
+#######################################################################################
+## below is copied from plots.r of the package mgcv (c) Simon Wood 2000-2017...
+## the routines are plot method functions for smooths of the mgcv, which are needed 
+## if the scam model includes those ...
+#######################################################################################
 
 plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,
@@ -708,5 +710,421 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
   } ## end of plot production
 }
 
+
+repole <- function(lo,la,lop,lap) {
+## painfully plodding function to get new lo, la relative to pole at
+## lap,lop...
+  ## x,y,z location of pole...
+  yp <- sin(lap)
+  xp <- cos(lap)*sin(lop)
+  zp <- cos(lap)*cos(lop)
+  
+  ## x,y,z location of meridian point for pole - i.e. point lat pi/2
+  ## from pole on pole's lon.
+
+  ym <- sin(lap-pi/2)
+  xm <- cos(lap-pi/2)*sin(lop)
+  zm <- cos(lap-pi/2)*cos(lop)
+
+  ## x,y,z locations of points in la, lo
+
+  y <- sin(la)
+  x <- cos(la)*sin(lo)
+  z <- cos(la)*cos(lo)
+
+  ## get angle between points and new equatorial plane (i.e. plane orthogonal to pole)
+  d <- sqrt((x-xp)^2+(y-yp)^2+(z-zp)^2) ## distance from points to to pole 
+  phi <- pi/2-2*asin(d/2)
+
+  ## location of images of la,lo on (new) equatorial plane
+  ## sin(phi) gives distance to plane, -(xp, yp, zp) is 
+  ## direction... 
+  x <- x - xp*sin(phi)
+  y <- y - yp*sin(phi)
+  z <- z - zp*sin(phi)
+
+  ## get distances to meridian point
+  d <- sqrt((x-xm)^2+(y-ym)^2+(z-zm)^2)
+  ## angles to meridian plane (i.e. plane containing origin, meridian point and pole)...
+  theta <- (1+cos(phi)^2-d^2)/(2*cos(phi))
+  theta[theta < -1] <- -1; theta[theta > 1] <- 1
+  theta <- acos(theta)
+  
+  ## now decide which side of meridian plane...
+
+  ## get points at extremes of hemispheres on either side
+  ## of meridian plane.... 
+  y1 <- 0
+  x1 <- sin(lop+pi/2)
+  z1 <- cos(lop+pi/2)
+
+  y0 <- 0
+  x0 <- sin(lop-pi/2)
+  z0 <- cos(lop-pi/2)
+
+  d1 <- sqrt((x-x1)^2+(y-y1)^2+(z-z1)^2)
+  d0 <- sqrt((x-x0)^2+(y-y0)^2+(z-z0)^2)
+
+  ii <- d0 < d1 ## index -ve lon hemisphere 
+  theta[ii] <- -theta[ii]
+  
+  list(lo=theta,la=phi)
+} ## end of repole
+
+lolaxy <- function(lo,la,theta,phi) {
+## takes locations lo,la, relative to a pole at lo=theta, la=phi. 
+## theta, phi are expressed relative to plotting co-ordinate system 
+## with pole at top. Convert to x,y in plotting co-ordinates.
+## all in radians!
+  er <- repole(-lo,la,-pi,phi)
+  er$lo <- er$lo - theta
+  y <- sin(er$la)
+  x <- cos(er$la)*sin(er$lo)
+  z <- cos(er$la)*cos(er$lo)
+  ind <- z<0
+  list(x=x[ind],y=y[ind])
+} ## end of lolaxy
+
+plot.sos.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
+                     partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
+                     pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
+                     ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
+                     shift=0,trans=I,by.resids=FALSE,scheme=0,hcolors=heat.colors(100),
+                     contour.col=4,...) {
+## plot method function for sos.smooth terms
+  if (scheme>1) return(plot.mgcv.smooth(x,P=P,data=data,label=label,se1.mult=se1.mult,se2.mult=se2.mult,
+                     partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
+                     pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
+                     ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
+                     shift=shift,trans=trans,by.resids=by.resids,scheme=scheme-2,
+                     hcolors=hcolors,contour.col=contour.col,...))
+  ## convert location of pole in plotting grid to radians
+  phi <- phi*pi/180
+  theta <- theta*pi/180
+  
+  ## re-map to sensible values...
+  theta <- theta%%(2*pi)
+  if (theta>pi) theta <- theta - 2*pi
+ 
+  phi <- phi%%(2*pi)
+  if (phi > pi) phi <- phi - 2*pi
+  if (phi > pi/2) phi <- pi - phi
+  if (phi < -pi/2 ) phi <- -(phi+pi)  
+
+  if (is.null(P)) { ## get plotting information...
+    if (!x$plot.me) return(NULL) ## shouldn't or can't plot
+    ## get basic plot data 
+    raw <- data[x$term]
+    if (rug) { ## need to project data onto plotting grid...
+      raw <- lolaxy(lo=raw[[2]]*pi/180,la=raw[[1]]*pi/180,theta,phi)
+    }
+
+    m <- round(n2*1.5)
+    ym <- xm <- seq(-1,1,length=m)
+    gr <- expand.grid(x=xm,y=ym)
+    r <- z <- gr$x^2+gr$y^2
+    z[z>1] <- NA
+    z <- sqrt(1-z)
+
+    ## generate la, lo in plotting grid co-ordinates...
+    ind <- !is.na(z) 
+    r <- r[ind]
+    la <- asin(gr$y[ind])
+    lo <- cos(la)
+    lo <- asin(gr$x[ind]/lo)
+
+    um <- repole(lo,la,theta,phi)
+ 
+    dat <- data.frame(la=um$la*180/pi,lo=um$lo*180/pi)
+    names(dat) <- x$term
+    if (x$by!="NA") dat[[x$by]] <- la*0+1    
+
+    X <- PredictMat(x,dat)   # prediction matrix for this term
+
+    ## fix lo for smooth contouring
+    lo <- dat[[2]]
+    ii <- lo <= -177
+    lo[ii] <- lo[ii] <- 360 + lo[ii]
+    ii <- lo < -165 & lo > -177 
+    ii <- ii | (abs(dat[[1]])>80) 
+    lo[ii] <- NA
+
+    return(list(X=X,scale=FALSE,se=FALSE,raw=raw,xlab="",ylab="",main="",
+                ind=ind,xm=xm,ym=ym,lo=lo,la=dat[[1]]))
+  } else { ## do plot
+    op <- par(pty="s",mar=c(0,0,0,0))
+    m <- length(P$xm); zz <- rep(NA,m*m)
+    if (scheme == 0) {
+      col <- 1# "lightgrey 
+      zz[P$ind] <- trans(P$fit+shift)
+      image(P$xm,P$ym,matrix(zz,m,m),col=hcolors,axes=FALSE,xlab="",ylab="",...)
+      if (rug) { 
+        if (is.null(list(...)[["pch"]])) points(P$raw$x,P$raw$y,pch=".",...) else
+        points(P$raw$x,P$raw$y,...)
+      }
+      zz[P$ind] <- P$la
+      contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,levels=c(-8:8*10),col=col,...)
+      zz[P$ind] <- P$lo
+      contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,levels=c(-8:9*20),col=col,...)
+      zz[P$ind] <- P$fit
+      contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,col=contour.col,...)
+    } else if (scheme == 1) {
+      col <- 1 
+      zz[P$ind] <- trans(P$fit+shift)
+      contour(P$xm,P$ym,matrix(zz,m,m),col=1,axes=FALSE,xlab="",ylab="",...) 
+      if (rug) { 
+        if (is.null(list(...)[["pch"]])) points(P$raw$x,P$raw$y,pch=".",...) else
+        points(P$raw$x,P$raw$y,...)
+      }
+      zz[P$ind] <- P$la
+      contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,levels=c(-8:8*10),col=col,lty=2,...)
+      zz[P$ind] <- P$lo
+      contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,levels=c(-8:9*20),col=col,lty=2,...)
+      theta <- seq(-pi/2,pi/2,length=200)
+      x <- sin(theta);y <- cos(theta)
+      x <- c(x,x[200:1]);y <- c(y,-y[200:1])
+      lines(x,y)
+    } 
+    par(op)
+  }
+} ## end plot.sos.smooth
+
+poly2 <- function(x,col) {
+## let x be a 2 col matrix defining some polygons. 
+## Different closed loop sections are separated by
+## NA rows. This routine assumes that loops nested within 
+## other loops are holes (further nesting gives and island 
+## in hole, etc). Holes are left unfilled.
+## The first polygon should not be a hole.
+  ind <- (1:nrow(x))[is.na(rowSums(x))] ## where are the splits?
+  if (length(ind)==0|| ind[1]==nrow(x)) polygon(x,col=col,border="black") else {
+    base <- x[1,]
+    xf <- x
+    xf[ind,1] <- base[1]
+    xf[ind,2] <- base[2]
+    if (!is.na(col)) polygon(xf,col=col,border=NA,fillOddEven=TRUE)
+    polygon(x,border="black")
+  }
+} ## poly2
+
+polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) { 
+## pc is a list of polygons defining area boundaries
+## pc[[i]] is the 2 col matrix of vertex co-ords for polygons defining 
+## boundary of area i
+## z gives the value associated with the area
+  
+  ## first find the axes ranges...
+
+  for (i in 1:length(pc)) {
+    yr <- range(pc[[i]][,2],na.rm=TRUE)
+    xr <- range(pc[[i]][,1],na.rm=TRUE)
+
+    if (i==1) {
+      ylim <- yr
+      xlim <- xr
+    } else {
+      if (yr[1]<ylim[1]) ylim[1] <- yr[1]
+      if (yr[2]>ylim[2]) ylim[2] <- yr[2]
+      if (xr[1]<xlim[1]) xlim[1] <- xr[1]
+      if (xr[2]>xlim[2]) xlim[2] <- xr[2]
+    }
+  } ## end of axes range loop
+
+  mar <- par("mar");
+  oldpar <- par(mar=c(2,mar[2],2,1)) 
+
+  if (is.null(z)) { ## no z value, no shading, no scale, just outlines...
+     plot(0,0,ylim=ylim,xlim=xlim,xaxt="n",yaxt="n",type="n",bty="n",ylab=lab,xlab="",...)
+     for (i in 1:length(pc)) { 
+       poly2(pc[[i]],col=NA)
+     }
+  } else {
+    
+    nz <- names(z)
+    npc <- names(pc)
+    if (!is.null(nz)&&!is.null(npc)) { ## may have to re-order z into pc order.
+      if (all.equal(sort(nz),sort(npc))!=TRUE) stop("names of z and pc must match")
+      z <- z[npc]
+    } 
+
+    xmin <- xlim[1]
+    xlim[1] <- xlim[1] - .1 * (xlim[2]-xlim[1]) ## allow space for scale
+
+    n.col <- 100
+    if (scheme=="heat") scheme <- heat.colors(n.col+1) else 
+    scheme <- gray(0:n.col/n.col)
+   
+    zlim <- range(pretty(z))
+
+    ## Now want a grey or color scale up the lhs of plot
+    ## first scale the y range into the z range for plotting 
+
+    for (i in 1:length(pc)) pc[[i]][,2] <- zlim[1] + 
+         (zlim[2]-zlim[1])*(pc[[i]][,2]-ylim[1])/(ylim[2]-ylim[1])
+  
+    ylim <- zlim
+    plot(0,0,ylim=ylim,xlim=xlim,type="n",xaxt="n",bty="n",xlab="",ylab=lab,...)
+    for (i in 1:length(pc)) {
+      coli <- round((z[i] - zlim[1])/(zlim[2]-zlim[1])*n.col)+1    
+      poly2(pc[[i]],col=scheme[coli])
+    }
+  
+    ## now plot the scale bar...
+
+    xmin <- min(c(axTicks(1),xlim[1]))
+    dx <- (xlim[2]-xlim[1])*.05
+    x0 <- xmin-2*dx
+    x1 <- xmin+dx
+
+    dy <- (ylim[2]-ylim[1])/n.col 
+    poly <- matrix(c(x0,x0,x1,x1,ylim[1],ylim[1]+dy,ylim[1]+dy,ylim[1]),4,2)
+    for (i in 1:n.col) {
+      polygon(poly,col=scheme[i],border=NA)
+      poly[,2] <- poly[,2] + dy
+    }
+    poly <- matrix(c(x0,x0,x1,x1,ylim[1],ylim[2],ylim[2],ylim[1]),4,2)
+    polygon(poly,border="black")
+  }
+  par(oldpar)
+} ## polys.plot
+
+plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
+                     partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
+                     pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
+                     ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
+                     shift=0,trans=I,by.resids=FALSE,scheme=0,...) {
+## plot method function for mrf.smooth terms, depends heavily on polys.plot, above
+  if (is.null(P)) { ## get plotting information...
+    if (!x$plot.me||is.null(x$xt$polys)) return(NULL) ## shouldn't or can't plot
+    ## get basic plot data 
+    raw <- data[x$term][[1]]
+    dat <- data.frame(x=factor(names(x$xt$polys),levels=levels(x$knots)))
+    names(dat) <- x$term
+    x$by <- "NA"
+    X <- PredictMat(x,dat)   # prediction matrix for this term
+    if (is.null(xlab)) xlabel<- "" else xlabel <- xlab
+    if (is.null(ylab)) ylabel <- "" else ylabel <- ylab
+    return(list(X=X,scale=FALSE,se=FALSE,raw=raw,xlab=xlabel,ylab=ylabel,
+             main=label))
+    } else { ## do plot
+      if (scheme==0) scheme <- "heat" else scheme <- "grey"
+      polys.plot(x$xt$polys,trans(P$fit+shift),scheme=scheme,lab=P$main,...)
+    }
+
+} ## end plot.mrf.smooth
+
+plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
+                     partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
+                     pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
+                     ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
+                     shift=0,trans=I,by.resids=FALSE,scheme=0,...) {
+## plot method for simple smooth factor interactions...
+  if (is.null(P)) { ## get plotting info
+    if (x$dim!=1) return(NULL) ## no method for base smooth dim > 1
+    raw <- data[x$base$term][[1]]
+    xx <- seq(min(raw),max(raw),length=n) # generate x sequence for prediction
+    nf <- length(x$flev)
+    fac <- rep(x$flev,rep(n,nf))
+    dat <- data.frame(fac,xx,stringsAsFactors=TRUE)
+    names(dat) <- c(x$fterm,x$base$term)  
+    if (x$by!="NA") {        # deal with any by variables
+      dat[[x$by]] <- rep(1,n)
+    }
+    X <- PredictMat(x,dat)
+    if (is.null(xlab)) xlabel <- x$base$term else xlabel <- xlab
+    if (is.null(ylab)) ylabel <- label else ylabel <- ylab
+    return(list(X=X,scale=TRUE,se=FALSE,raw=raw,xlab=xlabel,ylab=ylabel,
+             main="",x=xx,n=n,nf=nf))
+  } else { ## produce the plot
+    ind <- 1:P$n
+    if(is.null(ylim)) ylim <- trans(range(P$fit)+shift) 
+    plot(P$x[ind],trans(P$fit[ind]+shift),ylim=ylim,xlab=P$xlab,ylab=P$ylab,type="l",...)
+    if (P$nf>1) for (i in 2:P$nf) {
+      ind <- ind + P$n
+      if (scheme==0) lines(P$x,trans(P$fit[ind]+shift),lty=i,col=i) else 
+      lines(P$x,trans(P$fit[ind]+shift),lty=i)
+    }
+  }
+} ## end plot.fs.interaction
+
+
+md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
+## multi-dimensional term plotter, called from plot.mgcv.smooth for
+## 3 and 4 dimensional terms. 
+## *f is the plot data. See `basic plot data for 3 or 4 d terms'
+##   in plot.mgcv.smooth for details of the packing conventions
+##   (f = X %*% coefs).
+## *nr and nc the number of rows and columns of plot panels
+## *m each panel is m by m
+## *vname contains the variable names
+## *lo and hi are the arrays of axis limits
+## *hcolors is the color palette for the image plot.
+## *scheme indicates b/w or color
+## *main is a title.
+  concol <- if (scheme==1) "white" else "black" 
+  nv <- length(vname) 
+  ## insert NA breaks to separate the panels within a plot...
+  f1 <- matrix(NA,nr*m+nr-1,nc*m)
+  ii <- rep(1:m,nr) + rep(0:(nr-1)*(m+1),each=m)
+  f1[ii,] <- f
+  f <- matrix(NA,nr*m+nr-1,nc*m+nc-1)
+  ii <- rep(1:m,nc) + rep(0:(nc-1)*(m+1),each=m)
+  f[,ii] <- f1
+  xx <- seq(0,1,length=ncol(f))
+  yy <- seq(0,1,length=nrow(f))
+  image(xx,yy,t(f),axes=FALSE,xlab="",ylab="",col=hcolors)
+  contour(xx,yy,t(f),add=TRUE,col=concol)
+  dl <- list(...)
+  c1 <- if (is.null(dl[["cex"]])) 1 else dl[["cex"]] 
+  c2 <- if (is.null(dl[["cex.axis"]])) .6 else dl[["cex.axis"]]
+  c3 <- if (is.null(dl[["cex.lab"]])) .9 else dl[["cex.lab"]]
+  if (nv==4) { 
+    x3 <- seq(lo[3],hi[3],length=nr)
+    x4 <- seq(lo[4],hi[4],length=nc)
+    mtext(vname[4],1,1.7,cex=c1*c3) ## x label
+    mtext(vname[3],2,1.7,cex=c1*c3) ## y label
+    at=(1:nc-.5)/nc
+    lab <- format(x4,digits=2)
+    for (i in 1:nc) mtext(lab[i],1,at=at[i],line=.5,cex=c1*c3)
+    at=(1:nr-.5)/nr
+    lab <- format(x4,digits=2)
+    for (i in 1:nr) mtext(lab[i],2,at=at[i],line=.5,cex=c1*c3)
+    ## now the 2d panel axes...
+    xr <- axisTicks(c(lo[2],hi[2]),log=FALSE,nint=4)
+    x0 <- ((nc-1)*(m+1)+1)/(nc*m+nc-1)
+    xt <- (xr-lo[2])/(hi[2]-lo[2])*(1-x0)+x0
+    axis(3,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    xr <- axisTicks(c(lo[1],hi[1]),log=FALSE,nint=4)
+    x0 <- ((nr-1)*(m+1)+1)/(nr*m+nr-1)
+    xt <- (xr-lo[1])/(hi[1]-lo[1])*(1-x0)+x0
+    axis(4,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    at <- (2*nc-3)/(2*nc) 
+    mtext(vname[2],3,at=at,line=.5,cex=c1*c2)
+    at <- (2*nr-3)/(2*nr) 
+    mtext(vname[1],4,at=at,line=.5,cex=c1*c2)
+    mtext(main,3,at=0,adj=0,line=1,cex=c1*c3)
+  } else {
+    x3 <- seq(lo[3],hi[3],length=nr*nc)
+    ## get pretty ticks
+    xr <- axisTicks(c(lo[2],hi[2]),log=FALSE,nint=4)
+    x0 <- (m-1)/(nc*m+nc-1)
+    xt <- (xr-lo[2])/(hi[2]-lo[2])*x0
+    axis(1,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    mtext(vname[2],1,at=x0/2,line=2,cex=c1*c2)
+    xr <- axisTicks(c(lo[1],hi[1]),log=FALSE,nint=4)
+    x0 <- (m-1)/(nr*m+nr-1)
+    xt <- (xr-lo[1])/(hi[1]-lo[1])*x0
+    axis(2,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    mtext(vname[1],2,at=x0/2,line=2,cex=c1*c2)
+    lab <- c("",format(x3[-1],digits=2))
+    at=(1:nc-.5)/nc
+    for (i in 2:nc) mtext(lab[i],1,at=at[i],line=.5,cex=c1*c3)
+    mtext(parse(text=paste(vname[3],"%->% \" \"")),1,at=mean(at[2:nc]),line=2,cex=c1*c3)
+    ii <- ((nr-1)*nr+1):(nc*nr)
+    for (i in 1:nc) mtext(lab[ii[i]],3,at=at[i],line=.5,cex=c1*c3)
+    mtext(parse(text=paste(vname[3],"%->% \" \"")),3,at=mean(at),line=2,cex=c1*c3)
+    mtext(main,2,at=1/nr+0.5*(nr-1)/nr,line=1,cex=c1*c3)
+  }
+} ## md.plot
 
 

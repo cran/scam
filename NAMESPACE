@@ -91,12 +91,11 @@ export(scam, bfgs_gcv.ubre,
 
 import(mgcv)  ## imports ALL exported variables from mgcv package
 
-importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,heat.colors,terrain.colors,topo.colors)
+importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,
+           heat.colors,terrain.colors,topo.colors,axisTicks)
 importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
            mtext, par, persp,plot,points,
            polygon,rect,strheight,strwidth,text,title)
-
-importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)
 
 importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
 binomial,coef,contrasts,"contrasts<-",cooks.distance,cor,cov,

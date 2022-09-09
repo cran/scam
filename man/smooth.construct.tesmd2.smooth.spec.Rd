@@ -8,7 +8,7 @@
   for creating tensor product bivariate smooths monotone decreasing in the second covariate which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
   It is constructed from a pair of single penalty
-  marginal smooths. This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd2",m=c(2,2))}. The default basis for the first marginal smooth is P-spline basis. (Currently only P-spline is implemented as the basis for the first marginal.)
+  marginal smooths. This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd2",m=c(2,2))}. The default basis for the first marginal smooth is P-spline. Note: currently only cyclic cubic regression spline (\code{"cc"}) is implemented in addition to P-spline. 
 }
 \usage{
 \method{smooth.construct}{tesmd2.smooth.spec}(object, data, knots)
@@ -33,7 +33,7 @@ this object contains:
 \item{p.ident}{A vector of 0's and 1's for model parameter identification: 
      1's indicate parameters which will be exponentiated, 0's - otherwise.}
 \item{Zc}{A matrix of identifiability constraints.}
-\item{margin.bs}{A two letter character string indicating the (penalized) smoothing basis to use for the first unconstrained marginal smooth. (eg "ps" for P-splines).}
+\item{margin.bs}{A two letter character string indicating the (penalized) smoothing basis to use for the first unconstrained marginal smooth. (eg \code{"ps"} for P-splines).}
 
 
 }
@@ -54,29 +54,51 @@ Natalya Pya <nat.pya@gmail.com>
  \dontrun{
 ## tensor product `tesmd2' example 
   ## simulating data...
+   require(scam)
    set.seed(2)
    n <- 30
-   x1 <- sort(runif(n)*4-1)
-   x2 <- sort(runif(n))
-   f1 <- matrix(0,n,n)
+   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1)
+   f <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- exp(4*x1[i])/(1+exp(4*x1[i])) - 2*exp(x2[j]-0.5)}
-   f <- as.vector(t(f1))
-   y <- f+rnorm(length(f))*0.1
+        f[i,j] <- 2*sin(pi*x1[i])-exp(4*x2[j])/(1+exp(4*x2[j]))
+   f <- as.vector(t(f))
+   y <- f+rnorm(length(f))*.2
    x11 <-  matrix(0,n,n)
    x11[,1:n] <- x1
    x11 <- as.vector(t(x11))
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tesmd2",m=2),data=dat,sp=NULL)
+   b <- scam(y~s(x1,x2,bs="tesmd2",k=10),data=dat)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
-   plot(b,pers=TRUE,theta = 90, phi = 60)
+   plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
-   vis.scam(b,theta = 90, phi = 60)
+   vis.scam(b,theta = 40, phi = 20)
+
+## example with cyclic cubic regression spline along the 1st covariate...
+   set.seed(4)
+   n <- 30
+   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1) 
+   f <- matrix(0,n,n)
+   for (i in 1:n) for (j in 1:n) 
+        f[i,j] <- sin(2*pi*x1[i])-exp(4*x2[j])/(1+exp(4*x2[j]))
+   f <- as.vector(t(f))
+   y <- f+rnorm(length(f))*.2
+   x11 <-  matrix(0,n,n)
+   x11[,1:n] <- x1
+   x11 <- as.vector(t(x11))
+   x22 <- rep(x2,n)
+   dat <- list(x1=x11,x2=x22,y=y)
+## fit model ...
+   b1 <- scam(y~s(x1,x2,bs="tesmd2",xt="cc",k=10), data=dat)
+## plot results ...
+   par(mfrow=c(2,2))
+   plot(b1,se=TRUE)
+   plot(b1,pers=TRUE,theta = 30, phi = 40)
+   plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   vis.scam(b1,theta=40,phi=20)
  }
 }
 \keyword{models} \keyword{regression}%-- one or more ..

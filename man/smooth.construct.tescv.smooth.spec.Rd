@@ -33,7 +33,7 @@ elements of a smooth class documented under \code{smooth.construct} of the \code
 \item{p.ident}{A vector of 0's and 1's for model parameter identification: 
      1's indicate parameters which will be exponentiated, 0's - otherwise.}
 \item{Zc}{A matrix of identifiability constraints.}
-\item{margin.class}{The class of the first unconstrained marginal smooth.}
+%\item{margin.bs}{ }
 
 }
 \references{
