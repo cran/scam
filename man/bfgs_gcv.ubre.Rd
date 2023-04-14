@@ -11,7 +11,7 @@ Backtracking is included to satisfy the sufficient decrease condition.
 The function is not normally called directly, but rather service routines for \code{\link{scam}}.
 }
 \usage{
-bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
+bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
             n.pen=length(rho), typx=rep(1,n.pen), typf=1, control) 
 
 %- maybe also 'usage' for other objects documented here.
@@ -27,7 +27,7 @@ bfgs_gcv.ubre(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
 
   \item{G}{A list of items needed to fit a SCAM.}
 
-  \item{gamma}{An ad hoc parametrer of the GCV/UBRE score.}
+ % \item{gamma}{An ad hoc parametrer of the GCV/UBRE score.}
 
   \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
 

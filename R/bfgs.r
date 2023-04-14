@@ -7,13 +7,13 @@
 ## function to get the gcv/ubre value and their gradient    ##
 ##############################################################
 
-gcv.ubre_grad <- function(rho, G, gamma,env, control)
+gcv.ubre_grad <- function(rho, G, env, control)
  { ## G - object from scam setup via gam(..., fit=FALSE) 
    ## rho - logarithm of the smoothing parameters
    ## gamma - an ad hoc parametrer of the GCV
    ## check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked
    ## del - increment for finite differences when checking analytical gradients
-   y <- drop(G$y);  X <- G$X
+   y <- drop(G$y);  X <- G$X; gamma <- G$gamma
    S <- G$S;
    not.exp <- G$not.exp
    q0 <- G$q0; q.f <- G$q.f
@@ -24,7 +24,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, control)
    if (length(rho)!=n.pen) stop (paste("length of rho and # penalties has to be the same"))
    sp <- exp(rho)
    ## fit the model with the given values of the smoothing parameters...
-   b <- scam.fit(G=G,sp=sp, env=env,gamma=gamma, control=control) 
+   b <- scam.fit(G=G,sp=sp, env=env, control=control) 
    n <- nobs <- nrow(G$X)
    q <- ncol(G$X)
    if (G$AR1.rho!=0) {
@@ -137,7 +137,7 @@ gcv.ubre_grad <- function(rho, G, gamma,env, control)
          #if (n.pen>0) 
            for (j in 1:n.pen){
                sp1 <- sp; sp1[j] <- sp[j]*exp(control$bfgs$del)
-               b1 <- scam.fit(G=G,sp=sp1, env=env,gamma=gamma, control=control) 
+               b1 <- scam.fit(G=G,sp=sp1, env=env,control=control) 
                ## calculating the derivatives of beta estimates by finite differences...
                dbeta.check[,j] <- (b1$beta - b$beta)/control$bfgs$del
                ## calculating the derivatives of the trA by finite differences...
@@ -162,10 +162,10 @@ gcv.ubre_grad <- function(rho, G, gamma,env, control)
 ## BFGS for gcv/ubre miminization..                ##
 #####################################################
 
-bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
+bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
               n.pen=length(rho), typx=rep(1,n.pen), typf=1, control)
              ## steptol.bfgs= 1e-7, gradtol.bfgs = 1e-06, maxNstep = 5, maxHalf = 30, check.analytical, del, devtol.fit, steptol.fit)  
-{  ## fn - GCV/UBRE Function which returs the GCV/UBRE value and its derivative wrt log(sp)
+{  ## fn - GCV/UBRE Function which returns the GCV/UBRE value and its derivative wrt log(sp)
    ## rho - log of the initial values of the smoothing parameters
    ## ini.fd - if TRUE, a finite difference to the Hessian is used to find the initial inverse Hessian
    ## typx - vector whose component is a positive scalar specifying the typical magnitude of sp
@@ -186,7 +186,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    rho1 <- rho
    old.rho <- rho
    not.exp <- G$not.exp
-   b <- fn(rho,G,gamma=gamma, env, control=control) 
+   b <- fn(rho,G, env, control=control) 
    old.score <- score <- b$gcv.ubre
 
    max.step <- 200
@@ -203,7 +203,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          #if (n.pen>0) 
                     for (j in 1:n.pen){ 
                         rho2 <- rho; rho2[j] <- rho[j] + feps
-                        b2 <- fn(rho2,G,gamma=gamma,env, control=control) 
+                        b2 <- fn(rho2,G,env, control=control) 
                         B[,j] <- (b2$dgcv.ubre - grad)/feps  
                         rm(b2) 
                       }
@@ -275,7 +275,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
          curv.condition <- TRUE
          repeat 
              {  rho1 <- rho + alpha*Nstep 
-                b <- fn(rho=rho1,G,gamma=gamma,env, control=control) 
+                b <- fn(rho=rho1,G,env, control=control) 
                 score1 <- b$gcv.ubre
                 if (score1 <= score+c1*alpha*initslope) {## check the first Wolfe condition (sufficient decrease)...
                        grad1 <- b$dgcv.ubre ## Wolfe 1 met
@@ -289,7 +289,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                            old.score1 <- score1
                                            alpha <- min(2*alpha, alpha.max)
                                            rho1 <- rho + alpha*Nstep
-                                           b <- fn(rho=rho1,G,gamma=gamma, env, control=control) 
+                                           b <- fn(rho=rho1,G, env, control=control) 
                                            score1 <- b$gcv.ubre
                                            if (score1 <= score+c1*alpha*initslope)
                                               {   grad1 <- b$dgcv.ubre
@@ -320,7 +320,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                                   alpha.incr <- .2*alpha.diff
                                             alpha <- alpha.lo+alpha.incr
                                             rho1 <- rho + alpha*Nstep
-                                            b <- fn(rho=rho1,G,gamma=gamma, env, control=control) 
+                                            b <- fn(rho=rho1,G, env, control=control) 
                                             score1 <- b$gcv.ubre
                                             if (score1 > score+c1*alpha*initslope)
                                                {  alpha.diff <- alpha.incr
@@ -344,7 +344,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                                          {   curv.condition <- FALSE
                                              score1 <- sc.lo
                                              rho1 <- rho + alpha.lo*Nstep
-                                             b <- fn(rho=rho1,G,gamma=gamma,env, control=control)
+                                             b <- fn(rho=rho1,G,env, control=control)
                                           } 
                                   } ## end of "if ((alpha < 1) || (alpha>1 && ..."
                            }  ## end of "if (newslope < c2*initslope) ...", if Wolfe 2 not met
@@ -357,7 +357,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
                 else if (alpha < alpha.min) {## no satisfactory rho+ can be found suff-ly distinct from previous rho
                         retcode <- 1
                         rho1 <- rho
-                        b <- fn(rho=rho1,G,gamma=gamma,env, control=control)
+                        b <- fn(rho=rho1,G,env, control=control)
                      }
                 else   ## backtracking to satisfy the sufficient decrease condition...
                     {   ii <- ii+1
@@ -471,7 +471,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, gamma=1, env,
    else if (termcode == 2)
          ct <- "Successive iterates within tolerance, current iterate is probably solution"
    else if (termcode == 3)
-         ct <- "Last step failed to locate a lower point than old.rho"
+         ct <- "Last step failed to locate a lower point than 'rho'"
    else if (termcode == 4)
          ct <- "Iteration limit reached"
    else if (termcode ==5)

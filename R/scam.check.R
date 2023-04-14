@@ -13,7 +13,7 @@ scam.check <- function(b,rl.col=3,pch=".",...)
     
     ## now summarize convergence information 
     cat("\nMethod:", b$method, "  Optimizer:", b$optimizer)
-    if (b$optimizer == "optim"){ 
+    if (b$optimizer[1] == "optim"){ 
         cat("\nOptim Method:", b$optim.method[1])
         if (is.na(b$optim.method[2]))
               cat("\n Finite-difference approximation of the GCV/UBRE gradient was used.")

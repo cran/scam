@@ -148,7 +148,7 @@ b <- scam(y~s(x,k=15,bs="mpd"),family=poisson(link="log"),data=dat)
 newd <- data.frame(x=c(2.3,2.7,3.2))
 fe <- predict(b,newd,type="link",se=TRUE)
 ylim<- c(min(y,exp(fe$fit)),max(y,exp(fe$fit)))
-plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylim=ylim)
+plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylim=ylim,ylab="y",xlab="x")
 lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
 
 ## Gaussian model ....
@@ -162,13 +162,13 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
  b <- scam(y~ s(x,k=25,bs="mpi"),family=gaussian,data=dat)
  newd <- data.frame(x=c(3.2,3.3,3.6))
  fe <- predict(b,newd)
- plot(c(x,newd[[1]]),c(y,NA,NA,NA))
+ plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylab="y",xlab="x")
  lines(c(x,newd[[1]]),c(b$fitted,fe),col=3)
 
 ### passing observed data + new data...
    newd <- data.frame(x=c(x,3.2,3.3,3.6))
    fe <- predict(b,newd,se=TRUE)
-   plot(newd[[1]],c(y,NA,NA,NA))
+   plot(newd[[1]],c(y,NA,NA,NA),ylab="y",xlab="x")
    lines(newd[[1]],fe$fit,col=2)
    lines(newd[[1]],fe$fit+2*fe$se.fit,col=3)
    lines(newd[[1]],fe$fit-2*fe$se.fit,col=4)
@@ -177,7 +177,7 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
    newd <- data.frame(x=seq(-1.2,3.5,length.out=100))
    fe <- predict(b,newd,se=TRUE)
    ylim<- c(min(y,fe$se.fit),max(y,fe$se.fit))
-   plot(newd[[1]],fe$fit,type="l",ylim=ylim)
+   plot(newd[[1]],fe$fit,type="l",ylim=ylim,ylab="y",xlab="x")
    lines(newd[[1]],fe$fit+2*fe$se.fit,lty=2)
    lines(newd[[1]],fe$fit-2*fe$se.fit,lty=2)
  
@@ -186,9 +186,9 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
    set.seed(2)
    n <- 30
    x1 <- sort(runif(n));  x2 <- sort(runif(n)*4-1)
-   f1 <- matrix(0,n,n)
+   f <- matrix(0,n,n)
    for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- 2*sin(pi*x1[i]) +exp(4*x2[j])/(1+exp(4*x2[j]))}
+        f[i,j] <- 2*sin(pi*x1[i]) +exp(4*x2[j])/(1+exp(4*x2[j]))
    f <- as.vector(t(f));  
    y <- f+rnorm(length(f))*0.1
    x11 <-  matrix(0,n,n); x11[,1:n] <- x1;  x11 <- as.vector(t(x11))

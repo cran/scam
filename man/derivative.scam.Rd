@@ -49,7 +49,7 @@ f2 <- exp(-1.3*x2)
 f <- f1+ f2 
 y <- f+ rnorm(n)*0.2
 ## fit model, results, and plot...
-b <- scam(y~ s(x1,k=20,bs="mpi")+s(x2,k=15,bs="mpd"),family=gaussian)
+b <- scam(y~ s(x1,k=20,bs="mpi")+s(x2,k=15,bs="mpd"))
 
 d1 <- derivative.scam(b,smooth.number=1,deriv=1)
 

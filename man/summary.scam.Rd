@@ -137,6 +137,7 @@ Natalya Pya <nat.pya@gmail.com> based on \code{mgcv} by Simon Wood
 \examples{
  \dontrun{
 ## simulating data...
+require(scam)
 n <- 200
 set.seed(1)
 x1 <- runif(n)*6-3

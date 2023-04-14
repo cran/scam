@@ -11,7 +11,7 @@ log smoothing parameters. Routine \code{\link{bfgs_gcv.ubre}} estimates the smoo
 The function is not normally called directly, but rather service routines for \code{\link{scam}}. 
 }
 \usage{
-scam.fit(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env, 
+scam.fit(G,sp, etastart=NULL, mustart=NULL, env=env, 
               null.coef=rep(0,ncol(G$X)), control=scam.control())
 }
 %- maybe also 'usage' for other objects documented here.
@@ -20,8 +20,7 @@ scam.fit(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
 
   \item{sp}{The vector of smoothing parameters.}
 
-  \item{gamma}{This constant allows to inflate the model degrees of
-          freedom in the GCV or UBRE/AIC score.}  
+ % \item{gamma}{This constant allows to inflate the model degrees of freedom in the GCV or UBRE/AIC score.}  
 
  % \item{start}{Initial values for the model coefficients.}
 

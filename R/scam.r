@@ -4,15 +4,41 @@
 #############################################################
 
 scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL, 
-                 weights=NULL, offset=NULL, optimizer="bfgs", optim.method=c("Nelder-Mead","fd"),
+                 weights=NULL, offset=NULL, optimizer=c("bfgs","newton"), optim.method=c("Nelder-Mead","fd"),
                  scale=0, knots=NULL, not.exp=FALSE, start=NULL, etastart=NULL, mustart=NULL, control=list(),
                  AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
-{  ## scale - scale parameter of the exponential deistribution as in gam(mgcv)
-   ## optimizer - numerical optimization method to use to optimize the smoothing parameter estimation criterion: "bfgs", "optim", "nlm", "nlm.fd", "efs"
-   ## optim.method - if optimizer=="optim" then the first argument of optim.method     specifies the method, and the second can be either "fd" for finite-difference approximation of the gradient or "grad" - to use analytical gradient of gcv/ubre
-   ## not.exp - if TRUE then notExp() function will be used in place of exp in positivity ensuring beta parameters re-parameterization
-   
-   control <- do.call("scam.control",control)
+## Function to fit a SCAM to some data, withe the model stated in the formula
+## Basic steps:
+## 1) using 'interpret.gam()' of mgcv, formula is split up into parametric and 
+##    non-parametric parts, and a fake formula constructed to be used to pick up 
+##    data for model frame. pterms "terms" object(s) created for parametric 
+##    components, model frame created along with terms object.
+## 2. 'gam.setup()' of mgcv called to do most of basis construction and other
+##    elements of model setup.
+## 3. 'estimate.scam()' is called to estimate the model if smoothing parameter should be
+##    selected, otherwise 'scam.fit' is called. Numerical optimization method to use 
+##    to optimize the smoothing parameter estimation criterion is specified in 'optimizer' 
+##    input argument as one of "bfgs" (currenlt default), "optim", "nlm", "nlm.fd", "efs"
+## 4. 'scam.fit.post()' does post-fitting steps: compute null deviance and covariance 
+##     matrices after the scam fit.
+## 5. Finished 'scam' object assembled.
+
+## 'scale': scale parameter of the exponential distribution as in gam(mgcv)
+## 'optimizer': An array specifying the numerical optimization methods 
+##       to optimize the smoothing parameter estimation criterion (specified in the first 
+##       element  of 'optimizer') and to use to estimate the model coefficients
+##        (specified in the second element of 'optimizer').
+##        For the model coeff estimation, there are two alternatives:
+##       'newton' (default) and 'bfgs' methods.
+##       For the sp selection the available methods are "bfgs" (default), "optim", "nlm", 
+##       "nlm.fd", "efs". Note that 'bfgs' method for the coefficient estimation works only with 'efs'.
+## 'optim.method': if optimizer[1]=="optim", then the first argument of optim.method specifies 
+##             the method, and the second can be either "fd" for finite-difference approximation 
+##             of the gradient or "grad" - to use analytical gradient of gcv/ubre
+## 'not.exp': if TRUE then notExp() function will be used in place of exp in positivity 
+##            ensuring beta parameters re-parameterization
+
+{  control <- do.call("scam.control",control)
    ## Setting from mgcv(gam).......
    ## create model frame..... 
    gp <- interpret.gam(formula) # interpret the formula 
@@ -30,7 +56,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    ## summarize the *raw* input variables
    ## note can't use get_all_vars here -- buggy with matrices
-   vars <- all.vars1(gp$fake.formula[-2]) ## drop response here
+   vars <- allvars1(gp$fake.formula[-2]) ## drop response here
    inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
 
    ## allow a bit of extra flexibility in what `data' is allowed to be (as model.frame actually does)
@@ -212,18 +238,61 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    G$sig2 <- sig2
    G$scale.known <- scale.known
    G$not.exp <- not.exp
+   G$gamma <- gamma
 
   ### if (!control$keepData) rm(data) ## save space
 
    object <- list() 
-   if (is.null(sp)) { 
+  # if (is.null(sp)) { 
+  #     ## get initial estimates of the smoothing parameter...
+  #      ## start <- etastart <- mustart <- NULL
+  #       y <- G$y; family <- G$family
+  #       nobs <- NROW(y)
+  #       eval(family$initialize)
+  #       G$y <- y  ## needed to set factor response values as numeric
+  #       def.sp <- initial.sp.scam(G,optimizer=optimizer, Q,q.f=q.f,n.terms=n.terms,family=family,
+  #            intercept=intercept,offset=G$offset, env=env,
+  #            weights=weights, control=control) 
+  #       rho <- log(def.sp+1e-4) ## get initial log(sp) ...
+
+  #       if (!is.null(start))  
+  #                   assign("start",start,envir=env) ## scam_1.2-12
+
+  #       ## minimize GCV/UBRE by optimizer....
+  #       ptm <- proc.time()
+  #       re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
+  #             rho=rho, env=env,control=control)  
+  #       CPU.time <- proc.time()-ptm
+  #       best <- re
+  #       object$gcv.ubre <- re$gcv.ubre
+  #       object$dgcv.ubre <- re$dgcv.ubre
+  #       best$p.ident <- Q$p.ident
+  #       best$S <- Q$S
+  #       object$optimizer <- re$optimizer
+  #       object$edf1 <- re$edf1
+  #       object$termcode <- re$termcode
+  #       if (optimizer[1] == "bfgs")
+  #          {   object$check.grad <- re$check.grad
+  #              object$dgcv.ubre.check <- re$dgcv.ubre.check
+  #          }
+  # } else {   ## no GCV minimization if sp is given...
+  #        object$optimizer <- optimizer
+  #       if (is.na(optimizer[2])) 
+  #              optimizer[2] <- object$optimizer[2] <- "newton"
+  #       best <- if (optimizer[2] == "newton")  
+  #                  scam.fit(G=G, sp=sp,env=env, control=control) ## gamma=gamma
+  #               else scam.fit1(G=G, sp=sp,env=env, control=control) ## BFGS optimization   #       
+  #       object$optimizer[1] <- "NA"           
+  # }
+
+   if (is.null(sp)) {  ## scam_1.2-14 ...
        ## get initial estimates of the smoothing parameter...
         ## start <- etastart <- mustart <- NULL
          y <- G$y; family <- G$family
          nobs <- NROW(y)
          eval(family$initialize)
          G$y <- y  ## needed to set factor response values as numeric
-         def.sp <- initial.sp.scam(G, Q,q.f=q.f,n.terms=n.terms,family=family,
+         def.sp <- initial.sp.scam(G,optimizer=optimizer, Q,q.f=q.f,n.terms=n.terms,family=family,
               intercept=intercept,offset=G$offset, env=env,
               weights=weights, control=control) 
          rho <- log(def.sp+1e-4) ## get initial log(sp) ...
@@ -231,28 +300,28 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          if (!is.null(start))  
                      assign("start",start,envir=env) ## scam_1.2-12
 
-         ## minimize GCV/UBRE by optimizer....
-         ptm <- proc.time()
-         re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
-               rho=rho, gamma=gamma, env=env,control=control)  
-         CPU.time <- proc.time()-ptm
-         best <- re
-         object$gcv.ubre <- re$gcv.ubre
-         object$dgcv.ubre <- re$dgcv.ubre
-     #    object$aic <- re$aic
-         best$p.ident <- Q$p.ident
-         best$S <- Q$S
-         object$optimizer <- optimizer
-         object$edf1 <- re$edf1
-         object$termcode <- re$termcode
-         if (optimizer == "bfgs")
+    } else {   ## no sp estimation to do
+              rho <- rep(0,0) 
+              G$sp <- sp   
+            }
+
+    ptm <- proc.time()
+    re <- estimate.scam(G=G,optimizer=optimizer,optim.method=optim.method,
+                 rho=rho, env=env,control=control)  
+    CPU.time <- proc.time()-ptm
+    best <- re
+    object$gcv.ubre <- re$gcv.ubre
+    object$dgcv.ubre <- re$dgcv.ubre
+    best$p.ident <- Q$p.ident
+    best$S <- Q$S
+    object$optimizer <- re$optimizer
+    object$edf1 <- re$edf1
+    object$termcode <- re$termcode
+    if (optimizer[1] == "bfgs")
             {   object$check.grad <- re$check.grad
                 object$dgcv.ubre.check <- re$dgcv.ubre.check
             }
-   } else {   ## no GCV minimization if sp is given...
-            best <- scam.fit(G=G, sp=sp,gamma=gamma,env=env, control=control) 
-            object$optimizer <- "NA"           
-      }
+ 
    ## post-fitting values...
    best$n.smooth <- object$n.smooth <- n.terms
    best$formula <- object$formula <- formula
@@ -262,23 +331,22 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    object$R <- best$R
    if (is.null(object$R)){
-         rr <- scam.fit(G=G, sp=best$sp, gamma=gamma,env=env, control=control) 
-         object$R <- rr$R } ## not sure if it's needed?
+      if (object$optimizer[2] == "newton"){ 
+         rr <- scam.fit(G=G, sp=best$sp, env=env, control=control) ## gamma=gamma
+         object$R <- rr$R  ## not sure if it's needed?
+      }
+   }
   
-  # object$df.residual <- nrow(best$X) - sum(best$edf)
-
    object$sp <- best$sp
    names(object$sp) <- names(G$sp)
    if (sum(is.na(names(object$sp)))!=0){  ## create names for sp if NA's from G
       if (n.terms >0) for (i in 1:n.terms) names(object$sp)[i] <- object$smooth[[i]]$label
    }
-  # object$deviance <- best$deviance
-  # object$residuals <- best$residuals
-#   object$X <- best$X
-
-   object$conv <- best$conv # whether or not the inner full Newton method converged
-   post <- scam.fit.post(G, object=best) ##,sig2=sig2,offset = G$offset,
-                 ##  intercept=G$intercept, weights=weights, scale.known=scale.known,not.exp=not.exp) 
+  
+   object$conv <- best$conv # whether or not the inner full Newton(or bfgs) method converged
+   if (object$optimizer[2] == "newton")
+        post <- scam.fit.post(G=G, object=best) 
+   else post <- scam.fit.post1(G=G, object=best) ## for inner bfgs method
 
    object$edf <- best$edf  # post$edf 
    object$edf1 <- post$edf1
@@ -335,6 +403,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$min.edf <- G$min.edf ## Minimum possible degrees of freedom for whole model
    object$gamma <- gamma
    object$iter <- best$iter  # number of iterations of the Full Newton
+   object$pdev.hist <- best$pdev.hist
    if (is.null(sp)) 
          object$CPU.time <- CPU.time
    else 
@@ -343,7 +412,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 
    ## get the optimizer info (smoothing parameter selection).....
   if (is.null(sp))
-     {   if (optimizer == "bfgs")
+     {   if (optimizer[1] == "bfgs")
             {   ## get the bfgs info in case of sp selection... 
                 object$bfgs.info <- list()
                 object$bfgs.info$conv <- re$conv.bfgs  
@@ -351,23 +420,27 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                 object$bfgs.info$grad <- re$dgcv.ubre
                 object$bfgs.info$score.hist <- re$score.hist
             }
-         else if (optimizer == "nlm.fd" || optimizer == "nlm")
+         else if (optimizer[1] == "nlm.fd" || optimizer[1] == "nlm")
                  {   object$nlm.info <- list()
-                     object$nlm.info$conv <- re$conv 
-                     object$nlm.info$iter <- re$iterations 
+                     object$nlm.info$conv <- re$outer.info$conv 
+                     object$nlm.info$iter <- re$outer.info$iterations 
                      object$nlm.info$grad <- re$dgcv.ubre
                  }
-         else if (optimizer=="optim")
+         else if (optimizer[1]=="optim")
                  {   object$optim.info <- list()
-                     object$optim.info$conv <- re$conv 
-                     object$optim.info$iter <- re$iterations 
+                     object$optim.info$conv <- re$outer.info$conv 
+                     object$optim.info$iter <- re$outer.info$iterations 
                      object$optim.method <- re$optim.method  
                  }
-         else if (optimizer=="efs")
+         else if (optimizer[1]=="efs")
                  {   object$efs.info <- list()
-                     object$efs.info$conv <- re$conv 
-                     object$efs.info$iter <- re$iterations 
-                     object$efs.info$score.hist <- re$score.hist
+                     object$efs.info$conv <- re$outer.info$conv 
+                     object$efs.info$iter <- re$outer.info$iter
+                     object$efs.info$score.hist <- re$outer.info$score.hist
+                     ## convergence info of the bfgs for pen.deviance minimization wrt model coeff-s...
+                     if (is.null(object$conv)) object$conv <- re$inner.info$conv
+                     if (is.null(object$iter)) object$iter <- re$inner.info$iter  
+                     if (is.null(object$pdev.hist)) object$pdev.hist <- re$inner.info$pdev.hist      
                  }        
       }
    if (scale.known)
@@ -473,14 +546,25 @@ scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=
 ## function to get initial estimates of smoothing parameters...##
 #################################################################
 
-initial.sp.scam <- function(G,Q,q.f,n.terms,family,intercept,offset, env= env,
+initial.sp.scam <- function(G,optimizer,Q,q.f,n.terms,family,intercept,offset, env= env,
                       weights, control=control) 
 {  ## function to get initial estimates of smoothing parameters
    control$devtol.fit <- 1e-4
    control$steptol.fit <- 1e-4
+   ## set 'newton' method for coeff estimation if not specified 
+   ## (it can happen if 'optimizer' was supplied with one element, specifying 
+   ## the sp optimization method to use as, e.g., 'optimizer="efs")
+   if (is.na(optimizer[2]))
+       optimizer[2] <- "newton"
+
    ## step 1: set sp=rep(0.5,p) and estimate hessian... 
-   b <- scam.fit(G=G,sp=rep(0.05,length(G$off)), env=env, control=control) 
-   H <- crossprod(b$wX1) - b$E
+   if (optimizer[2] == "bfgs") {
+      b <- scam.fit1(G=G,sp=rep(0.05,length(G$off)), env=env, control=control) 
+      H <- crossprod(b$wX1)
+   } else {     
+      b <- scam.fit(G=G,sp=rep(0.05,length(G$off)), env=env, control=control) 
+      H <- crossprod(b$wX1) - b$E
+   }
    ## step 2:...
    n.p <- length(Q$S) ## number of penalty matrices
    def.sp <- array(0,n.p) ## initialize the initial sp values
@@ -573,8 +657,8 @@ penalty_pident <- function(object)
 ## Function to fit SCAM based on Full Newton method        ##     
 #############################################################
 
-scam.fit <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env, 
-              null.coef=rep(0,ncol(G$X)), control=scam.control()) 
+scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env, 
+              null.coef=rep(0,ncol(G$X)), control=scam.control()) ## gamma=1
 ##  maxit=200, devtol.fit=1e-8, steptol.fit=1e-8, trace=FALSE, print.warn=FALSE
    ## G - list of items from gam(...,fit=FALSE) needed to fit a scam
    ## sp- vector of smoothing parameters
@@ -586,7 +670,7 @@ scam.fit <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
       ##* steptol.fit - a scalar giving the tolerance at which the scaled distance between two successive iterates is considered close enough to zero to terminate the algorithm 
       ##* trace turns on or off some de-bugging information.
       ##* print.warn =FALSE - when set to 'FALSE' turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if mu or eta are out of bounds. 
-{ y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp;
+{ y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp; gamma <- G$gamma
   AR1.rho <- G$AR1.rho
   attr(X,"dimnames") <- NULL
   q0 <- G$q0; q.f <- G$q.f
@@ -1082,11 +1166,10 @@ scam.fit <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
    #  mu <- linkinv(eta)   ## fitted values
    #  dev <- sum(dev.resids(y,mu,weights))
 
-     if (!not.exp) {
-             Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
+     if (!not.exp) { Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
      } else {
              Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
-       }
+     }
 
      X1 <- t(Cdiag*t(X)) 
      g.deriv <- 1/ mu.eta(eta)        # diag(G)
@@ -1242,16 +1325,13 @@ scam.fit <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
       dvar.mu=dvar.mu,d2var.mu=d2var.mu,deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=as.numeric(alpha),d3link.mu=d3link.mu,eta=eta,iter=iter,
       Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,R=R.out, edf=edf,trA=trA,
-      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model,rank=rank) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
+      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model,rank=rank,pdev.hist=pdev.plot) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
 } ## end of scam.fit
-
-
 
 
 #######################################################################
 ## function to get null deviance and covariance matrices after fit   ##
 #######################################################################
-
 
 scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.known, not.exp)
 {  ## Function to compute null deviance and covariance matrices after a scam fit.
@@ -1416,8 +1496,8 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
    Vb.t <- t(df.p*t(df.p*Vb))
    Ve.t <- t(df.p*t(df.p*Ve))
    
-   eta <- as.numeric(G$X%*%object$beta.t + offset)
-   mu <- linkinv(eta)     # fitted values
+   ## eta <- as.numeric(G$X%*%object$beta.t + offset)
+   ## mu <- linkinv(eta)     # fitted values
    residuals <- rep.int(NA, nobs)
    g.deriv <- 1/object$family$mu.eta(eta) # diag(G)
    residuals <- (G$y-mu)*g.deriv # the working residuals for the fitted model
@@ -2062,7 +2142,7 @@ clone.smooth.spec <- function(specb,spec) {
 } ## clone.smooth.spec
 
 
-all.vars1 <- function(form) {
+allvars1 <- function(form) {
 ## version of all.vars that doesn't split up terms like x$y into x and y
   vars <- all.vars(form)
   vn <- all.names(form)
@@ -2088,7 +2168,7 @@ all.vars1 <- function(form) {
     }
   } else vn1 <- vn
   vn1
-} ## all.vars1
+} ## allvars1
 
 
 variable.summary <- function(pf,dl,n) {

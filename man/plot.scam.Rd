@@ -151,6 +151,7 @@ Natalya Pya <nat.pya@gmail.com> based on the \code{plot.gam} of the \code{mgcv} 
 
 \examples{
 ## simulating data...
+require(scam)
 n <- 200
 set.seed(1)
 x0 <- rep(1:4,50)
@@ -168,6 +169,9 @@ x0 <- factor(x0)
 b <- scam(y~x0+s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"))
 plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)    
 
+## same with EFS and BFGS methods for smoothing parameter and models coefficients estimations...
+b <- scam(y~x0+s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"),optimizer=c("efs","bfgs"))
+plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)    
 
 \dontrun{
  ## example with 2-d plots...

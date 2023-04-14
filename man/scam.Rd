@@ -13,7 +13,7 @@
 }
 \usage{
 scam(formula, family = gaussian(), data = list(), gamma = 1, 
-      sp = NULL, weights = NULL, offset = NULL,optimizer="bfgs", 
+      sp = NULL, weights = NULL, offset = NULL,optimizer=c("bfgs","newton"), 
       optim.method=c("Nelder-Mead","fd"),scale = 0, knots=NULL,
       not.exp=FALSE, start= NULL, etastart=NULL,mustart= NULL,
       control=list(),AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE)
@@ -49,9 +49,17 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
   \item{offset}{Used to supply a model offset for use in fitting. Note that this offset will always be completely ignored when predicting, unlike an offset 
                 included in \code{formula}. This conforms to the behaviour of \code{lm}, \code{glm} and \code{gam}.}
 
-  \item{optimizer}{The numerical optimization method to use to optimize the smoothing 
-                   parameter estimation criterion. "bfgs" for the built in to \code{scam} package routine \code{\link{bfgs_gcv.ubre}},
-                   "optim", "nlm", "nlm.fd" (based on finite-difference approximation of the derivatives). "efs" for the extended Fellner Schall method of Wood and Fasiolo (2017) (rather than minimizing REML as in \code{gam(mgcv)} this minimizes the GCV criterion).}
+  \item{optimizer}{An array specifying the numerical optimization methods 
+      to optimize the smoothing parameter estimation criterion (specified in the first 
+       element  of \code{optimizer}) and to use to estimate the model coefficients
+        (specified in the second element of \code{optimizer}). For the model coefficients
+       estimation there are two alternatives: "newton" (default) and "bfgs" methods.
+            For the smoothing parameter selection the available methods are "bfgs" (default)
+       for the built in to \code{scam} package routine \code{\link{bfgs_gcv.ubre}}, "optim", "nlm", 
+           "nlm.fd" (based on finite-difference approximation of the derivatives), "efs". 
+     "efs" for the extended Fellner Schall method of Wood and Fasiolo (2017) 
+      (rather than minimizing REML as in \code{gam(mgcv)} this minimizes the GCV/UBRE criterion)
+     Note that 'bfgs' method for the coefficient estimation works only with 'efs'.}
 
    \item{optim.method}{In case of \code{optimizer="optim"} this specifies the numerical method to be used in \code{optim}
                       in the first element, the second element of \code{optim.method} indicates whether the finite difference
@@ -103,7 +111,7 @@ Residual auto-correlation with a simple AR1 correlation structure can be dealt w
 \item{assign}{Array whose elements indicate which model term (listed in
            \code{pterms}) each parameter relates to: applies only to non-smooth terms.}
 
-\item{bfgs.info}{If \code{optimizer="bfgs"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
+\item{bfgs.info}{If \code{optimizer[1]="bfgs"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
               \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of the BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
               convergence; \code{score.hist}, the succesive values of the score up until convergence.} 
 
@@ -130,7 +138,7 @@ Residual auto-correlation with a simple AR1 correlation structure can be dealt w
        means that many of these are less than 1.}
 \item{edf1}{alternative estimate of edf.}
 
-\item{efs.info}{If \code{optimizer="efs"}, a list of convergence diagnostics relating to the extended Fellner Schall method fot smoothing parameter selection. The items are: 
+\item{efs.info}{If \code{optimizer[1]="efs"}, a list of convergence diagnostics relating to the extended Fellner Schall method fot smoothing parameter selection. The items are: 
               \code{conv}, indicates why the efs algorithm of the smoothness selection terminated; \code{iter}, number of iterations of the efs taken to get convergence; \code{score.hist}, the succesive values of the score up until convergence. }
 
 \item{family}{family object specifying distribution and link used.}
@@ -155,7 +163,7 @@ expected value for  each datum.}
 
 \item{model}{model frame containing all variables needed in original model fit.}
 
-\item{nlm.info}{If \code{optimizer="nlm"} or \code{optimizer="nlm.fd"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
+\item{nlm.info}{If \code{optimizer[1]="nlm"} or \code{optimizer[1]="nlm.fd"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
               \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
               BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
               convergence.} 
@@ -169,7 +177,7 @@ expected value for  each datum.}
 
 \item{offset}{model offset.}
 
-\item{optim.info}{If \code{optimizer="optim"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
+\item{optim.info}{If \code{optimizer[1]="optim"}, a list of convergence diagnostics relating to the BFGS method of smoothing parameter selection. The items are: 
               \code{conv}, indicates why the BFGS algorithm of the smoothness selection terminated; \code{iter}, number of iterations of
               BFGS taken to get convergence; \code{optim.method}, the numerical optimization method used.} 
 
@@ -278,7 +286,7 @@ y <- f1+f2 +rnorm(n)*.5
 dat <- data.frame(x1=x1,x2=x2,y=y)
 ## fit model, get results, and plot...
 b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi"),data=dat)
-print(b)
+b
 summary(b)
 plot(b,pages=1,shade=TRUE)
 
@@ -295,7 +303,6 @@ y <- f1+f2 + rnorm(n)*.4
 dat <- data.frame(x1=x1,x2=x2,y=y)
   ## fit model, results, and plot...
 b <- scam(y~ s(x1,bs="mpi")+s(x2, bs="mdcx"),data=dat)
-b
 summary(b)
 plot(b,pages=1,scale=0,shade=TRUE)
 
@@ -303,6 +310,11 @@ plot(b,pages=1,scale=0,shade=TRUE)
 \dontrun{
 ## using the extended Fellner-Schall method for smoothing parameter selection...
 b0 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="efs")
+summary(b0)
+
+## using the extended Fellner-Schall method for smoothing parameter selection, 
+## and BFGS for model coefficient estimation...
+b0 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer=c("efs","bfgs"))
 summary(b0)
 
 ## using optim() for smoothing parameter selection...
@@ -332,10 +344,11 @@ y <- rpois(n,exp(f))
 dat <- data.frame(x1=x1,x2=x2,y=y)
   ## fit model, get results, and plot...
 b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi"),
-      family=poisson(link="log"),data=dat,optimizer="efs")
+      family=poisson(link="log"),data=dat,optimizer=c("efs","bfgs"))
 summary(b)
 plot(b,pages=1,shade=TRUE)
 scam.check(b)
+
 
 ## Gamma model...
    ## simulating data...
@@ -352,7 +365,7 @@ y <- rgamma(n,shape=1,scale=exp(f))
 dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
    ## fit model, get results, and plot...
 b <- scam(y~s(x1,bs="ps")+s(x2,k=15,bs="mpi")+s(x3,bs="ps"),
-          family=Gamma(link="log"),data=dat,optimizer="efs")
+          family=Gamma(link="log"),data=dat,optimizer=c("efs","bfgs"))
 b
 summary(b)
 par(mfrow=c(2,2))

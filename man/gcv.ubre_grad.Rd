@@ -13,7 +13,7 @@ with respect to the log smoothing parameter using the method of Wood (2009).
 The function is not normally called directly, but rather service routines for \code{\link{bfgs_gcv.ubre}}.
 }
 \usage{
-gcv.ubre_grad(rho, G, gamma,env, control)
+gcv.ubre_grad(rho, G, env, control)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,7 +22,7 @@ gcv.ubre_grad(rho, G, gamma,env, control)
 
   \item{G}{a list of items needed to fit a SCAM.}
 
-  \item{gamma}{A constant multiplier to inflate the model degrees of freedom in the GCV or UBRE/AIC score.}
+%  \item{gamma}{A constant multiplier to inflate the model degrees of freedom in the GCV or UBRE/AIC score.}
 
   \item{env}{Get the enviroment for the model coefficients, their derivatives and the smoothing parameter.}
   

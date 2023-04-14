@@ -242,6 +242,7 @@ reTest.scam <- function(b,m) {
 
 
 ########## mgcv::: testStat
+## below is not the updated version of testStat(), not the one of the mgcv version 1.8-40
 
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## Routine for forming fractionally trunctated
@@ -524,9 +525,9 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
            if (object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
              res <- reTest.scam(object,i)
            } else { ## Inverted Nychka interval statistics
-             df[i] <- min(ncol(Xt),edf1[i])
+             ## df[i] <- min(ncol(Xt),edf1[i])
              if (est.disp) rdf <- residual.df else rdf <- -1
-             res <- testStat(p,Xt,V,df[i],type=0,res.df = rdf) ## was type=p.type
+             res <- testStat(p,Xt,V,min(ncol(Xt),edf1[i]),type=0,res.df = rdf) ## was type=p.type
            }
            df[i] <- res$rank
            chi.sq[i] <- res$stat
@@ -691,7 +692,7 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
             sep = "")
     cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
         flag = "-"), "  n = ", x$n, "\n", sep = "")
-    if (x$optimizer == "bfgs" && x$m>0){
+    if ((x$optimizer[1] == "bfgs") && x$m>0){
                if (x$termcode!= 1) {
                    dgcv.ubre <- max(abs(x$dgcv.ubre)*max(abs(log(x$sp)),1)/max(abs(x$gcv.ubre),1))
                   cat("\nBFGS termination condition:\n", dgcv.ubre,"\n",sep = "")

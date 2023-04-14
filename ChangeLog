@@ -1,3 +1,18 @@
+
+1.2-14
+*** scam.fit1, scam.fit.post1: a new method is implemented to fit SCAM using a quasi-Newton method, the BFGS method (as an alternative to the Newton method) to minimize penalized deviance wrt model coefficients. This requires only first order derivatives of the log likelihood. The calculation of the edf and tr(A) is done once after fit, using analytical Hessian (taking 2nd order deriv of the log likelihood). The smoothing parameter is selected by efsudr.scam2() which requires the first derivatives of the deviance and tr(A) w.r.t. log(sp). Analytical (rather than approximate) expression of the Hessian is used here.
+
+** efsudr.scam2: i) added extended Fellner-Schall method for regular families, with PIRLS/full-Newton method used for the coefficient estimation, performed by scam.fit(). Here only the first and the second order derivatives of the log likelihood are used when calculating the derivatives of the edf. The dependence of H on lambda is neglected.
+               ii) added extended Fellner-Schall method for regular families, with a quasi-Newton/BFGS method 
+performed by scam.fit1() for the coefficient estimation. The dependence of H on lambda is neglected. 
+
+* efsudr.scam: extended Fellner-Schall method now works for smoothing parameter selection by minimizing UBRE when scale parameter is known (as it is in the inner optimization). Also gcv expression in the efs update now includes the 'gamma' parameter. In this implementation the third order derivatives of the log likelihood are used when calculating the derivatives of the edf.
+
+* small coding fixes with 'gamma' parameter as input argument of the fitting function; bug fixed in simulation example in predict.scam.Rd file. 
+
+* estimate.scam: bug fixed with the call when the smoothing parameter is specified, which occurs with the newly introduced optimization method. Thanks to Pierre Masselot. Also small coding fixes when the sp is supplied: now the model fit is done within estimate.gam() function. 
+
+
 1.2-13
 * smooth.construct: added option of cyclic cubic regression spline ("cc") in the 'tesmd1', 'tesmd2', and 'tesmi2' smoothers as an alternative marginal basis along the otherwise unconstrained marginal smooth.
 
