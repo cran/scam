@@ -24,7 +24,8 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
  This is exactly like the formula for a GAM (see \code{formula.gam} of the \code{mgcv} library) except that monotone smooth terms,
  can be added in the expression of the form \cr
  \code{s(x1,k=12,bs="mpi",by=z),}\cr  where \code{bs} indicates the basis to use for the constrained smooth: 
- the built in options for the monotonic smooths are described in \code{\link{shape.constrained.smooth.terms}}, 
+ the built in options for the monotonic smooths are described in \code{\link{shape.constrained.smooth.terms}}.
+ Note that the \code{pc} (point constraint) argument to smooth constructors is not meaningful for shape constrained smooths, and is ignored with a warning.
 } 
 
   \item{family}{A family object specifying the distribution and link to use in
@@ -100,7 +101,7 @@ where the independent response variables \eqn{Y_i}{Y_i} follow Poisson distribut
 \eqn{f_1}{f_1}, \eqn{m_2}{m_2}, and \eqn{f_3}{f_3} are smooth functions of the corresponding covariates, and \eqn{m_2}{m_2} 
 is subject to monotone increasing constraint.  
 
-All available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
+All available shape constrained smooths are described in \code{\link{shape.constrained.smooth.terms}}.
 
 Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero.
 }
