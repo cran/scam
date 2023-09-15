@@ -1,6 +1,7 @@
 Package: scam
-Version: 1.2-14
-Author: Natalya Pya <nat.pya@gmail.com>
+Version: 1.2-15
+Author: Natalya Pya [aut]
+  Nathan Cornwell [ctb]
 Maintainer: Natalya Pya <nat.pya@gmail.com>
 Title: Shape Constrained Additive Models
 Date: 2023-04-13

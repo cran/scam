@@ -9,7 +9,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
                  AR1.rho=0, AR.start=NULL,drop.unused.levels=TRUE) ##,devtol.fit=1e-8, steptol.fit=1e-8, check.analytical=FALSE, del=1e-4)
 ## Function to fit a SCAM to some data, withe the model stated in the formula
 ## Basic steps:
-## 1) using 'interpret.gam()' of mgcv, formula is split up into parametric and 
+## 1) using 'interpret.scam()', heavily based on
+##    mgcv::interpret_gam(), formula is split up into parametric and 
 ##    non-parametric parts, and a fake formula constructed to be used to pick up 
 ##    data for model frame. pterms "terms" object(s) created for parametric 
 ##    components, model frame created along with terms object.
@@ -41,7 +42,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 {  control <- do.call("scam.control",control)
    ## Setting from mgcv(gam).......
    ## create model frame..... 
-   gp <- interpret.gam(formula) # interpret the formula 
+   gp <- interpret.scam(formula) # interpret the formula 
    cl <- match.call() # call needed in gam object for update to work
    mf <- match.call(expand.dots=FALSE)
    mf$formula <- gp$fake.formula 
@@ -625,12 +626,12 @@ penalty_pident <- function(object)
      
       }
    if (n.terms>0) for (i in 1:n.terms){
-                    if (cons.terms[i]==1) 
+                    if (cons.terms[i]==1)
                        # if (inherits(object$smooth[[i]], c("mipc.smooth")))
-                        #    p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                        #    p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <-
                          #             object$smooth[[i]]$p.ident[2:length(object$smooth[[i]]$p.ident)]
-                       # else 
-                            p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                       # else
+                            p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <-
                                                                        object$smooth[[i]]$p.ident
                    }
    ## getting the list of penalty matrices in terms of the full model vector of coefficients...
@@ -2340,6 +2341,197 @@ AR.resid <- function(rsd,rho=0,AR.start=NULL) {
   }
   rwMatrix(ar.stop,ar.row,ar.weight,rsd)
 } ## AR.resid
+
+interpret.scam0 <- function(gf,textra=NULL,extra.special=NULL)
+   # based on mgcv::interpret.gam0
+{ p.env <- environment(gf) # environment of formula
+tf <- terms.formula(gf,specials=c("s","te","ti","t2",extra.special)) # specials attribute indicates which terms are smooth
+
+terms <- attr(tf,"term.labels") # labels of the model terms 
+nt <- length(terms) # how many terms?
+
+if (attr(tf,"response") > 0) {  # start the replacement formulae
+   response <- as.character(attr(tf,"variables")[2])
+} else { 
+   response <- NULL
+}
+sp <- attr(tf,"specials")$s     # array of indices of smooth terms 
+tp <- attr(tf,"specials")$te    # indices of tensor product terms
+tip <- attr(tf,"specials")$ti   # indices of tensor product pure interaction terms
+t2p <- attr(tf,"specials")$t2   # indices of type 2 tensor product terms
+zp <- if (is.null(extra.special)) NULL else attr(tf,"specials")[[extra.special]]
+off <- attr(tf,"offset") # location of offset in formula
+
+## have to translate sp, tp, tip, t2p (zp) so that they relate to terms,
+## rather than elements of the formula...
+vtab <- attr(tf,"factors") # cross tabulation of vars to terms
+if (length(sp)>0) for (i in 1:length(sp)) {
+   ind <- (1:nt)[as.logical(vtab[sp[i],])]
+   sp[i] <- ind # the term that smooth relates to
+}
+if (length(tp)>0) for (i in 1:length(tp)) {
+   ind <- (1:nt)[as.logical(vtab[tp[i],])]
+   tp[i] <- ind # the term that smooth relates to
+} 
+if (length(tip)>0) for (i in 1:length(tip)) {
+   ind <- (1:nt)[as.logical(vtab[tip[i],])]
+   tip[i] <- ind # the term that smooth relates to
+} 
+if (length(t2p)>0) for (i in 1:length(t2p)) {
+   ind <- (1:nt)[as.logical(vtab[t2p[i],])]
+   t2p[i] <- ind # the term that smooth relates to
+}
+if (length(zp)>0) for (i in 1:length(zp)) {
+   ind <- (1:nt)[as.logical(vtab[zp[i],])]
+   zp[i] <- ind # the term that smooth relates to
+} ## re-referencing is complete
+
+k <- kt <- kti <- kt2 <- ks <- kz <- kp <- 1 # counters for terms in the 2 formulae
+len.sp <- length(sp)
+len.tp <- length(tp)
+len.tip <- length(tip)
+len.t2p <- length(t2p)
+len.zp <- length(zp)
+ns <- len.sp + len.tp + len.tip + len.t2p + len.zp# number of smooths
+pav <- av <- rep("",0)
+smooth.spec <- list()
+#mgcvat <- "package:mgcv" %in% search() ## is mgcv in search path?
+mgcvns <- loadNamespace('mgcv')
+if (nt) for (i in 1:nt) { # work through all terms
+   if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||(kz<=len.zp&&zp[kz]==i)||
+                 (kti<=len.tip&&tip[kti]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) { # it's a smooth
+      ## have to evaluate in the environment of the formula or you can't find variables 
+      ## supplied as smooth arguments, e.g. k <- 5;gam(y~s(x,k=k)), fails,
+      ## but if you don't specify namespace of mgcv then stuff like 
+      ## loadNamespace('mgcv'); k <- 10; mgcv::interpret.gam(y~s(x,k=k)) fails (can't find s)
+      ## eval(parse(text=terms[i]),envir=p.env,enclos=loadNamespace('mgcv')) fails??
+      ## following may supply namespace of mgcv explicitly if not on search path...
+      ## If 's' etc are masked then we can fail even if mgcv on search path, hence paste
+      ## of explicit mgcv reference into first attempt...
+      
+      st <- try(eval(parse(text=paste("mgcv::",terms[i],sep="")),envir=p.env),silent=TRUE)
+      if (inherits(st,"try-error")) st <- 
+            eval(parse(text=terms[i]),enclos=p.env,envir=mgcvns)
+      # remove any pc supplied with warning
+      if('point.con' %in% names(st)){
+         warning(
+            paste('ignoring point constraint on', st$term),
+            call. = F
+         )
+         st$point.con <- NULL
+      }
+      
+      if (!is.null(textra)) { ## modify the labels on smooths with textra
+         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
+         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
+                           substr(st$label,start=pos,stop=nchar(st$label)),sep="")
+      }
+      smooth.spec[[k]] <- smooth.info(st) ## smooth.info supplies any extra specification info for class
+      if (ks<=len.sp&&sp[ks]==i) ks <- ks + 1 else # counts s() terms
+         if (kt<=len.tp&&tp[kt]==i) kt <- kt + 1 else # counts te() terms
+            if (kti<=len.tip&&tip[kti]==i) kti <- kti + 1 else # counts ti() terms
+               if (kt2<=len.t2p&&t2p[kt2]==i) kt2 <- kt2 + 1 # counts t2() terms
+      else kz <- kz + 1
+      k <- k + 1      # counts smooth terms 
+   } else {          # parametric
+      av[kp] <- terms[i] ## element kp on rhs of parametric
+      kp <- kp+1    # counts parametric terms
+   }
+}    
+if (!is.null(off)) { ## deal with offset 
+   av[kp] <- as.character(attr(tf,"variables")[1+off])
+   kp <- kp+1          
+}
+
+pf <- paste(response,"~",paste(av,collapse=" + "))
+if (attr(tf,"intercept")==0) {
+   pf <- paste(pf,"-1",sep="")
+   if (kp>1) pfok <- 1 else pfok <- 0
+} else { 
+   pfok <- 1;if (kp==1) { 
+      pf <- paste(pf,"1"); 
+   }
+}
+
+fake.formula <- pf
+
+if (length(smooth.spec)>0) 
+   for (i in 1:length(smooth.spec)) {
+      nt <- length(smooth.spec[[i]]$term)
+      ff1 <- paste(smooth.spec[[i]]$term[1:nt],collapse="+")
+      fake.formula <- paste(fake.formula,"+",ff1)
+      if (smooth.spec[[i]]$by!="NA") {
+         fake.formula <- paste(fake.formula,"+",smooth.spec[[i]]$by)
+         av <- c(av,smooth.spec[[i]]$term,smooth.spec[[i]]$by)
+      } else av <- c(av,smooth.spec[[i]]$term)
+   }
+fake.formula <- as.formula(fake.formula,p.env)
+if (length(av)) {
+   pred.formula <- as.formula(paste("~",paste(av,collapse="+")))
+   pav <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
+   pred.formula <- reformulate(pav,env=p.env) 
+} else  pred.formula <- ~1
+ret <- list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,
+            fake.formula=fake.formula,response=response,fake.names=av,
+            pred.names=pav,pred.formula=pred.formula)
+#environment(ret$fake.formula)  <- environment(ret$pred.formula) <- p.env	    
+class(ret) <- "split.gam.formula"
+ret
+} ## interpret.gam0
+
+interpret.scam <- function(gf,extra.special=NULL) {
+   ## copied from mgcv::interpret.gam to bring interpret.scam0 into
+   ## namespace
+   if (is.list(gf)) {
+      d <- length(gf)
+      p.env <- environment(gf[[1]])
+      ## make sure all formulae have a response, to avoid
+      ## problems with parametric sub formulae of the form ~1
+      #if (length(gf[[1]])<3) stop("first formula must specify a response")
+      resp <- gf[[1]][2]
+      
+      ret <- list()
+      pav <- av <- rep("",0)
+      nlp <- 0 ## count number of linear predictors (may be different from number of formulae)
+      for (i in 1:d) {
+         textra <- if (i==1) NULL else paste(".",i-1,sep="") ## modify smooth labels to identify to predictor  
+         
+         lpi <- getNumericResponse(gf[[i]]) ## get linear predictors to which this applies, if explicit
+         if (length(lpi)==1) warning("single linear predictor indices are ignored")
+         if (length(lpi)>0) gf[[i]][[2]] <- NULL else { ## delete l.p. labels from formula response 
+            nlp <- nlp + 1;lpi <- nlp ## this is base formula for l.p. number nlp       
+         }
+         ret[[i]] <- interpret.gam0(gf[[i]],textra,extra.special=extra.special)
+         ret[[i]]$lpi <- lpi ## record of the linear predictors to which this applies
+         
+         ## make sure all parametric formulae have a response, to avoid
+         ## problems with parametric sub formulae of the form ~1
+         respi <- rep("",0) ## no extra response terms
+         if (length(ret[[i]]$pf)==2) { 
+            ret[[i]]$pf[3] <- ret[[i]]$pf[2];ret[[i]]$pf[2] <- resp
+            respi <- rep("",0)
+         } else if (i>1) respi <- ret[[i]]$response ## extra response terms
+         av <- c(av,ret[[i]]$fake.names,respi) ## accumulate all required variable names 
+         pav <- c(pav,ret[[i]]$pred.names) ## predictors only 
+      } 
+      av <- unique(av) ## strip out duplicate variable names
+      pav <- unique(pav)
+      if (length(av)>0) {
+         ## work around - reformulate with response = "log(x)" will treat log(x) as a name,
+         ## not the call it should be... 
+         fff <- formula(paste(ret[[1]]$response,"~ ."))
+         ret$fake.formula <- reformulate(av,response=ret[[1]]$response,env=p.env) 
+         ret$fake.formula[[2]] <- fff[[2]] ## fix messed up response
+      } else ret$fake.formula <- ret[[1]]$fake.formula ## create fake formula containing all variables
+      ret$pred.formula <- if (length(pav)>0) reformulate(pav) else ~1 ## predictor only formula
+      environment(ret$pred.formula) <- p.env
+      ret$response <- ret[[1]]$response 
+      ret$nlp <- nlp ## number of linear predictors
+      for (i in 1:d) if (max(ret[[i]]$lpi)>nlp||min(ret[[i]]$lpi)<1) stop("linear predictor labels out of range")
+      class(ret) <- "split.gam.formula"
+      return(ret)
+   } else interpret.scam0(gf,extra.special=extra.special)  
+} ## interpret.gam
 
 ###############################################################
 ## loading functions, copied from mgcv() package of Simon Wood
