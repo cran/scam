@@ -37,6 +37,7 @@ marginal.matrices.tesmi2.ps(x, z, xk, zk, m, q1, q2)
 }
 
 \details{The function is not called directly, but is rather used internally by the constructor
+
 \code{\link{smooth.construct.tesmi2.smooth.spec}} and 
 \code{\link{smooth.construct.tesmd2.smooth.spec}} . 
 
@@ -61,6 +62,7 @@ Natalya Pya <nat.pya@gmail.com>
 \seealso{
 \code{\link{smooth.construct.tesmi1.smooth.spec}}, 
 \code{\link{smooth.construct.tesmi2.smooth.spec}}, 
+
 \code{\link{marginal.matrices.tesmi1.ps}},
 \code{\link{smooth.construct.tesmd1.smooth.spec}}, 
 

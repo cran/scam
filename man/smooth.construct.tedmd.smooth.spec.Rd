@@ -9,7 +9,10 @@
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
   It is constructed from a pair of single penalty marginal smooths which are represented using the B-spline basis functions.  
   This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tedmd",m=c(2,2))}, 
-  where \code{q1} and \code{q2} denote the basis dimensions for the marginal smooths.}
+  where \code{q1} and \code{q2} denote the basis dimensions for the marginal smooths.
+
+  From \code{scam} version 1.2-15, the sum-to-zero contraint is now applied to all bivariate SCOP-splines after imposing the scop-constraints (including scop identifiability constraint). This simply shifts the smooth vertically, leaving the shape of the smooths unchanged.
+ }
 
 \usage{
 \method{smooth.construct}{tedmd.smooth.spec}(object, data, knots)
@@ -72,8 +75,8 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tedmd",m=2),
-            family=gaussian(link="identity"), data=dat)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="tedmd"), data=dat)
+   summary(b)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)

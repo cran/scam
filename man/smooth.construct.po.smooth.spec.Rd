@@ -2,7 +2,7 @@
 %\Rdversion{1.0}
 \alias{smooth.construct.po.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{Constructor for monotone increasing P-splines in SCAMs
+\title{Constructor for SCOP-splines with positivity constraint
 }
 \description{This is a special method function
   for creating univariate smooths subject to a positivity constraint which is built by 
@@ -47,9 +47,12 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \seealso{
 \code{\link{smooth.construct.mpd.smooth.spec}},
 \code{\link{smooth.construct.cv.smooth.spec}},
+
 \code{\link{smooth.construct.cx.smooth.spec}},
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
+
 \code{\link{smooth.construct.mdcx.smooth.spec}}, \code{\link{smooth.construct.micv.smooth.spec}}, 
+
 \code{\link{smooth.construct.micx.smooth.spec}}
 
 }
@@ -78,7 +81,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   x1 <- seq(-3,3,length.out=n)
   f1 <- 3*exp(-x1^2) ## positively constrained smooth
   x2 <- runif(n)*3-1;
-  f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth 
+  f2 <- exp(4*x2)/(1+exp(4*x2)) ## increasing smooth 
   f <- f1+f2
   y <- f+rnorm(n)*0.3
   dat <- data.frame(x1=x1,x2=x2,y=y)

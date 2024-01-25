@@ -54,10 +54,13 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \seealso{
 \code{\link{smooth.construct.mpi.smooth.spec}},
 \code{\link{smooth.construct.cx.smooth.spec}}, 
+
 \code{\link{smooth.construct.cv.smooth.spec}}, 
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
+
 \code{\link{smooth.construct.mdcx.smooth.spec}}, 
 \code{\link{smooth.construct.micv.smooth.spec}}, 
+
 \code{\link{smooth.construct.micx.smooth.spec}}
 
 }
@@ -103,7 +106,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  b2 <- scam(y ~ fac+s(x,by=fac,bs="mpd"),data=dat)  
  plot(b2,pages=1,scale=0,shade=TRUE)
  summary(b2)
- vis.scam(b2,theta=120,color="terrain",cond=list(z=1))
+ vis.scam(b2,theta=120,color="terrain")
 
  ## comparing with unconstrained fit...
  b3 <- scam(y ~ fac+s(x,by=fac),data=dat) 
@@ -111,18 +114,12 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  plot(b3,pages=1,scale=0,shade=TRUE)
  summary(b3)
 
- ## Note that in mgcv::gam() when using factor 'by' variables, 'centering'
+ ## Note that since in scam() as in mgcv::gam() when using factor 'by' variables, 'centering'
  ## constraints are applied to the smooths, which usually means that the 'by'
  ## factor variable should be included as a parametric term, as well. 
- ## The difference with scam() is that here a 'zero intercept' constraint is 
- ## applied in place of 'centering' (although scam's fitted smooths are centred for plotting).
- ## compare with a fit of the model without 'fac' parametric term...  
- b4 <- scam(y ~ s(x,by=fac,bs="mpd"),data=dat) 
- summary(b4)
- summary(b2)
 
 
-## 'by' variable example...
+## numeric 'by' variable example...
 set.seed(3)
 n <- 100
 x <- sort(runif(n,-1,2))

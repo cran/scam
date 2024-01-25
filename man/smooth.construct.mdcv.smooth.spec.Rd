@@ -54,10 +54,13 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \seealso{
 \code{\link{smooth.construct.mpi.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}, 
+
 \code{\link{smooth.construct.cx.smooth.spec}}, 
 \code{\link{smooth.construct.cv.smooth.spec}}, 
+
 \code{\link{smooth.construct.mdcx.smooth.spec}}, 
 \code{\link{smooth.construct.micx.smooth.spec}}, 
+
 \code{\link{smooth.construct.micv.smooth.spec}}
 
 }

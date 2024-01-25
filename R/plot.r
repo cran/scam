@@ -1,5 +1,6 @@
-
-## PLOT FUNCTION based on plot.gam(mgcv)....
+## (c) Natalya Pya (2012-2023). Provided under GPL 2.
+## based on (c) Simon N Wood plot.gam(mgcv)
+## routines to produce plots for each smooth term of scam....
 
 
 plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
@@ -7,7 +8,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
                 shift=0,trans=I,seWithMean=FALSE,unconditional=FALSE,by.resids=FALSE,scheme=0,...)
 
-# Create an appropriate plot for each smooth term of a gam.....
+# Create an appropriate plot for each smooth term of a scam.....
 # x is a scam object
 # rug determines whether a rug plot should be added to each plot
 # se determines whether twice standard error bars are to be added
@@ -120,7 +121,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       ## get fitted values ....
       ### addition for univariate shape-constrained smooths ...
       const.dif <- 0  
-      if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "po.smooth","mdcv.smooth",
+      if (inherits(x$smooth[[i]], c("mpi.smooth","mpic.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "po.smooth","mdcv.smooth",
                       "mdcx.smooth","micv.smooth","micx.smooth", "mifo.smooth", "miso.smooth","mpdBy.smooth", "cxBy.smooth","mpiBy.smooth","cvBy.smooth","mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))){
                         q <- ncol(P$X) ## length(p)
                        ## beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p)) 
@@ -160,7 +161,9 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                                }
                 }
         ### addition for double and single monotonicity...
-        if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth", "tesmi2.smooth","tesmd1.smooth",
+        if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth",
+                      "tismi.smooth", "tismd.smooth",  
+                      "tesmi2.smooth","tesmd1.smooth",
                       "tesmd2.smooth","temicx.smooth", "temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth",
                       "tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                    { p.ident <- x$p.ident[first:last]
@@ -177,7 +180,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      R <- qr.R(qrX)
                      qrA <- qr(t(A))
                      q <- ncol(P$X)
-                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "temicx.smooth", "temicv.smooth",
+                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth","tedmdc.smooth", "temicx.smooth", "temicv.smooth",
                          "tedecx.smooth", "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                      { # get `beta.a' for double monotonicity...
                          R <- R[-1,]
@@ -215,7 +218,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se && P$se) { ## get standard errors for fit
       ## shape constrained supplement...
-        if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
+        if (inherits(x$smooth[[i]], c("mpi.smooth","mpic.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
                  "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth","mifo.smooth","miso.smooth",
                  "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))){
                   if (inherits(x$smooth[[i]], c("miso.smooth","mifo.smooth"))) {
@@ -224,28 +227,33 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      ## adding rows and columns of 0's...
                      Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
                      Vp.c[-ind,-ind] <- Vp  
-                   } else if (inherits(x$smooth[[i]], c("mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))) {
-                      Vp.c <- x$Vp.t[first:last, first:last] 
+                   } else if (inherits(x$smooth[[i]], c("mpdBy.smooth",  "cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth"))) {
+                      Vp.c <- x$Vp.t[first:last, first:last]                 
                    } else {
                      Vp <- x$Vp.t[c(1,first:last),c(1,first:last)] 
                      Vp.c <- Vp
                      Vp.c[,1] <- rep(0,nrow(Vp))
                      Vp.c[1,] <- rep(0,ncol(Vp)) 
                     }
-                  if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth","miso.smooth","mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))) 
-                      se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))      
-                    else {
+                  if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth","miso.smooth","mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth"))) {
+                      se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))                       
+                    } else {
                        XZa <- t(qr.qty(qrA,t(P$X)))[,2:q]
                        Ga <- XZa%*%RZaR                                         
                        se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))    
-                     }                  
-        } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",  "tesmi1.smooth", "tesmi2.smooth",
+                     }      
+       #  } else if (inherits(x$smooth[[i]], c("tismi.smooth"))) {
+       #                XZc <- P$X%*%x$smooth[[i]]$Zc
+        #               se.fit <- sqrt(pmax(0,rowSums((XZc%*%x$Vp.t[first:last,first:last,drop=FALSE] )*XZc)))              
+        } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",
+                  "tesmi1.smooth","tesmi2.smooth","tismi.smooth", "tismd.smooth",
                   "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth", "tedecx.smooth",
-                  "tedecv.smooth","tescx.smooth","tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
+          "tedecv.smooth","tescx.smooth","tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
                       XZa <- t(qr.qty(qrA,t(P$X)))[,2:ncol(P$X)]
                       Ga <- XZa%*%RZaR%*%x$smooth[[i]]$Zc
-                      Vp <- x$Vp.t[first:last,first:last] 
-                      se.fit <- rowSums((Ga%*%Vp)*Ga)^.5
+                     # Vp <- x$Vp.t[first:last,first:last] 
+                     # se.fit <- rowSums((Ga%*%Vp)*Ga)^.5
+                      se.fit <- sqrt(pmax(0,rowSums((Ga%*%x$Vp.t[first:last,first:last,drop=FALSE] )*Ga)))
         ## } else if (inherits(x$smooth[[i]], c("mipoc.smooth"))) { ## shape constrained with a point constraint...
            #           se.fit <- sqrt(pmax(0,rowSums((P$X%*%x$Vp.t[first:last,first:last,drop=FALSE])*P$X))) 
         } else {   ## end scam supplement      
@@ -262,9 +270,10 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
         if (!is.null(P$exclude)) P$se.fit[P$exclude] <- NA
         } 
       } ## standard errors for fit completed
+
       if (partial.resids) { 
              P$p.resid <- fv.terms[,length(order)+i] + w.resid 
-             if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
+             if (inherits(x$smooth[[i]], c("mpi.smooth","mpic.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
                                            "mdcx.smooth", "micv.smooth", "micx.smooth")))
                   P$p.resid <- P$p.resid + const.dif ## to shift the resid/fitted smooth, to get a centering smooth, as
                                                  ## centered.fit= SCOP.fit + const(const.dif)           

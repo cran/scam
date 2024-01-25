@@ -34,6 +34,8 @@
 \alias{Predict.matrix.micvBy.smooth}
 \alias{Predict.matrix.mdcxBy.smooth}
 \alias{Predict.matrix.mdcvBy.smooth}
+\alias{Predict.matrix.tismi.smooth}
+\alias{Predict.matrix.tismd.smooth}
 
 \title{Predict matrix method functions for SCAMs
 }
@@ -75,6 +77,8 @@
 \method{Predict.matrix}{tecvcv.smooth}(object, data)
 \method{Predict.matrix}{tecxcv.smooth}(object, data)
 \method{Predict.matrix}{tecxcx.smooth}(object, data)
+\method{Predict.matrix}{tismi.smooth}(object, data)
+\method{Predict.matrix}{tismd.smooth}(object, data)
 }
 
 \arguments{

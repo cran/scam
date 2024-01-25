@@ -1,10 +1,10 @@
-#########################################################################
-### Shape constrained smooth construct for bivariate terms......       ##
-#########################################################################
-
+## (c) Natalya Pya (2012-2023). Provided under GPL 2.
+## Shape constrained smooth construct for bivariate terms.
+## (2023) with sum-to-zero contraint applied to the final tensor product model matrices, XSig, after scop constraints...
 
 ####################################################################################### 
-### Tensor product P-spline construction with double monotone decreasing constraint  ##
+### Tensor product P-spline construction with double monotone decreasing constraint,
+### with sum-to-zero contraint applied to the final tensor product model matrix XSig...
 #######################################################################################
 
 smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
@@ -60,21 +60,21 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
       {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
       }
   # get a matrix Sigma -----------------------
- ## IS <- matrix(0,q2,q2)   # Define submatrix of Sigma
- ## for (j in 1:q2)  IS[j,1:j] <- -1
   IS <- matrix(-1,q2,q2)  ## Define submatrix of Sigma
   IS[upper.tri(IS)] <- 0
- ## IS1 <- matrix(0,q1,q1)   # Define submatrix of Sigma
- ## for (j in 1:q1)  IS1[j,1:j] <- 1
   IS1 <- matrix(1,q1,q1)  ## Define submatrix of Sigma
   IS1[upper.tri(IS1)] <- 0
 
   Sig <- IS1%x%IS # Knonecker product to get Sigma
   Sig[,1] <- rep(1,ncol(Sig))
  
-  # apply identifiability constraint and get model matrix
+  # apply scop identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -98,13 +98,12 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   object$S[[2]] <- crossprod(object$P[[2]]) ## t(object$P[[2]])%*%object$P[[2]]
   object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 3 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
 
-  ## store "tedmd" specific stuff ...
-  object$knots <- list()
+  ## store "tedmd" list()
   object$knots[[1]] <- xk
   object$knots[[2]] <- zk
   object$m <- m
@@ -114,8 +113,8 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   object
 }
 
-####################################################################
 
+######################################################
 
 Predict.matrix.tedmd.smooth <- function(object, data)
 { ## prediction method function for the `tedmd' smooth class
@@ -272,8 +271,12 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
- 
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
+  
   # create the penalty matrix
   S <- list()
   I2<- diag(q2)
@@ -296,7 +299,7 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
   object$p.ident <- rep(TRUE,q1*q2-1)   ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 3 ##  m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -438,8 +441,8 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   # get the overall model matrix...
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-    }
+      X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+   
   # get a matrix Sigma -----------------------
  # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
  # IS[1:q1,1]<-1
@@ -459,7 +462,11 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   D[1:q2,1:(q2-1)] <- D1
   X <- X%*%D 
 
-  object$X <- X # the finished model matrix with identifiability constraint
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
+
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ##  t(D)%*%S[[1]]%*%D
   object$S[[2]] <- crossprod(D,S[[2]])%*%D ## t(D)%*%S[[2]]%*%D
@@ -467,7 +474,7 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
 
@@ -641,7 +648,10 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
   X <- X%*%D 
 
-  object$X <- X # the finished model matrix with identifiability constraint
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   object$S <- list()
@@ -651,7 +661,7 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
 
@@ -752,17 +762,15 @@ Predict.matrix.tesmd2.smooth<-function(object,data)
 
 ############################################################################ 
 ## Tensor product P-spline construction with single monotone increasing   ##
-## constraint wrt the first covariate                                     ##
+## constraint wrt the first covariate;                                    ##
+## and with sum-to-zero constraint applied...
 ############################################################################
 
 smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
-## construction of the single monotone increasing surface, increasing wrt 1st covariate 
+## construction of the single monotone increasing surface, increasing wrt 1st covariate;
+## with sum-to-zero (centering) constraint applied to the final tensor product model matrix XSig, after scop-constraints...
 { 
- # require(splines)
- # if (!is.null(object$xt)) bs2 <- object$xt ## basis for the marginal smooth along second direction
-  #  else bs2 <- "ps"
-
- if (!is.null(object$xt)){
+  if (!is.null(object$xt)){
      if (!(object$xt %in% c("ps", "cc")) )
           stop("only 'ps' and 'cc' marginal basis are supported")
       else  bs2 <- object$xt ## basis for the marginal smooth along second direction
@@ -843,31 +851,31 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   X1 <- bm$X1
   X2 <- bm$X2
   S <- bm$S      
-  
-  # get the overall model matrix...
-  X <- matrix(0,n,q1*q2)  # model matrix
-  for (i in 1:n)
-    {  X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
   # get a matrix Sigma -----------------------
- # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
- # IS[1:q1,1]<-1
- # for (j in 2:q1)  IS[j,2:j] <- 1
   IS <- matrix(1,q1,q1)  ## coef summation matrix
   IS[upper.tri(IS)] <-0
   I <- diag(q2)
-  Sig <- IS%x%I
+ ## Sig <- IS%x%I  
+  X1 <- X1%*%IS
 
-  # get model matrix
-  X <- X%*%Sig
+  # get the overall model matrix...
+  X <- matrix(0,n,q1*q2)  # model matrix
+  for (i in 1:n)
+      X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
+ 
+ ## X <- X%*%Sig
   # apply identifiability constraint 
+  #(the sum of the first q2 non-exponentiated coefficients is set to be zero)
   D <- diag(q1*q2)
   D <- D[,-q2]
   D1 <- t(diff(diag(q2)))
   D[1:q2,1:(q2-1)] <- D1
   X <- X%*%D 
 
-  object$X <- X # the finished model matrix with identifiability constraint
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ## t(D)%*%S[[1]]%*%D
@@ -876,7 +884,7 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
 
@@ -892,6 +900,35 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
   class(object)<-"tesmi1.smooth"  # Give object a class
   object
+}
+
+marginal.matrices.tesmi1.ps <- function(x,z,xk,zk,m,q1,q2)
+## function to get marginal model matrices and penalties in the overall 
+## model coefficients in case of P-splines basis for the 2nd unconstrained marginal smooth
+{
+  # get marginal model matrix for the first monotonic smooth... 
+  X1 <- splineDesign(xk,x,ord=m[1]+2)
+  # get marginal model matrix for the second unconstrained smooth...
+  X2 <- splineDesign(zk,z,ord=m[2]+2)
+   # create the penalty matrix...
+  S <- list()
+  # get the penalty matrix for the first monotone smooth...
+  I2<- diag(q2)
+  P <- diff(diag(q1-1),difference=1) 
+  Pm1 <- matrix(0,q1-1,q1) # marginal sqrt penalty
+  Pm1[2:(q1-1),2:q1] <- P
+  S[[1]]<- Pm1%x%I2
+  S[[1]] <- crossprod(S[[1]])  ## t(S[[1]])%*%S[[1]]
+
+  # get penalty for the 2nd smooth
+  I2 <- diff(diag(q2),difference=1) 
+  I21<- diff(diag(q2),difference=2)
+  I1 <- diag(q1)
+  S[[2]] <-matrix(0,q2-2+(q1-1)*(q2-1), q1*q2)
+  S[[2]][1:(q2-2),] <- t(I1[1,])%x%I21
+  S[[2]][(q2-1):nrow(S[[2]]),] <- I1[2:q1,]%x%I2
+  S[[2]] <- crossprod(S[[2]])  ## t(S[[2]])%*%S[[2]]
+ list(X1=X1, X2=X2, S=S)
 }
 
 
@@ -1068,12 +1105,9 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
   n <- length(data[[object$term[1]]])
   X <- matrix(0,n,q1*q2)  # model matrix
   for (i in 1:n)
-    {  X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
-  }
+       X[i,] <- bm$X1[i,] %x% bm$X2[i,] # Kronecker product of two rows of marginal model matrices
+  
   # get a matrix Sigma -----------------------
- # IS <- matrix(0,q1,q1)   # Define marginal matrix of Sigma
- # IS[1:q1,1]<-1
- # for (j in 2:q1)  IS[j,2:j] <- 1
   IS <- matrix(1,q1,q1)  ## coef summation matrix
   IS[upper.tri(IS)] <-0
   I <- diag(q2)
@@ -1083,7 +1117,6 @@ Predict.matrix.tesmi1.smooth<-function(object,data)
   X <- X%*%Sig
   X  # return the prediction matrix
 }
-
 
 ## function used for predict method to get marginal model submatrices for tesmi1.cc
 ## with linear extrapolation along x1 if needed                                          
@@ -1244,7 +1277,10 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
   X <- X%*%D 
 
-  object$X <- X # the finished model matrix with identifiability constraint
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   object$S <- list()
@@ -1254,7 +1290,7 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[ind]<-FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
 
@@ -1519,7 +1555,11 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -1544,7 +1584,7 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
 
   object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##   # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -1683,7 +1723,11 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -1708,7 +1752,7 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
 
   object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -1757,12 +1801,6 @@ Predict.matrix.temicv.smooth <- function(object, data)
   X <- X %*%Sig
   X # return the prediction matrix
 }
-
-
-
-
-
-## BELOW TO CORRECT ...
 
 
 
@@ -1850,7 +1888,11 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+  
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -1875,7 +1917,7 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
 
   object$p.ident <- rep(TRUE,q1*q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -2006,7 +2048,11 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -2031,7 +2077,7 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
 
   object$p.ident <- rep(TRUE,q1*q2-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -2076,9 +2122,6 @@ Predict.matrix.tedecx.smooth <- function(object, data)
   X <- X %*%Sig
   X # return the prediction matrix
 }
-
-
-
 
 
 ################################################################
@@ -2218,6 +2261,9 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
   D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
   X <- X%*%D 
 
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
@@ -2228,7 +2274,7 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ## dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
 
@@ -2374,7 +2420,10 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
   D[((q1-1)*q2+1),((q1-1)*q2+1-q2)] <- 1
   X <- X%*%D 
 
-  object$X <- X # the finished model matrix with identifiability constraint
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   object$S <- list()
@@ -2384,7 +2433,7 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q1*q2-1)  
   object$p.ident[ind] <- FALSE ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- D   # identifiability constraint matrix
   
@@ -2513,8 +2562,12 @@ smooth.construct.tecvcv.smooth.spec<- function(object, data, knots)
   Sig <- IS1 %x% IS2 
   
   # apply identifiability constraint and get model matrix
-  X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+  X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)] 
+ 
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -2539,7 +2592,7 @@ smooth.construct.tecvcv.smooth.spec<- function(object, data, knots)
 
   object$p.ident <- rep(TRUE,q1*q2-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -2671,7 +2724,11 @@ smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -2695,7 +2752,7 @@ smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
   object$p.ident <- rep(TRUE,q1*q2-1)    ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)
@@ -2829,7 +2886,11 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   
   # apply identifiability constraint and get model matrix
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
-  object$X <- X # the finished model matrix with identifiability constraint
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix with identifiability constraint
  
   # create the penalty matrix
   S <- list()
@@ -2853,7 +2914,7 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   object$S[[2]] <- crossprod(object$P[[2]])  ## t(object$P[[2]])%*%object$P[[2]]
   object$p.ident <- rep(TRUE,q1*q2-1)   ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$Zc <- diag(q1*q2-1) # identfiability constraint matrix
   object$Zc <- rbind(rep(0,ncol(object$Zc)),object$Zc)

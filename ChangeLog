@@ -1,3 +1,21 @@
+1.2-15
+
+* scam, scam.fit.post: bug fixed when an AR1 error model used for the residuals for Gaussian-identity link models, some fitting results were wrongly extracted, standardized residuals are now correctly returned.
+
+*scam.check: a new style of producing QQ-plots of the the model residuals has been added in a similar way as in gam.check of mgcv package of Simon N Wood. qq.scam() routine, a clone of qq.gam(mgcv), has been supplemented to do so.
+
+* smooth.construct: i) bivariate shape constrained smooths: sum-to-zero contraint is now applied to the final tensor product model matrices after imposing the scop constraints (including scop identifiability constraint);
+                    ii) univariate dicreasing/increasing, convex/concave, mixed constraints: sum-to-zero contraint is now applied after imposing the scop constraints as well;
+              iii) added two new smooth constructors, 'tismi' and 'tismd', which are tensor product interaction with increasing/decreasing  constraint along the first covariate and unconstrained along the second covariate.
+
+* penalty_pident, gam.setup: these now take into account 'smooth$del.index' from gam.side(mgcv) to deal with identifiability issue when two or more smooths have the same covariate. Using 'del.index' corresponding rows, columns are removed from Zc matrix and p.ident vector.
+
+* summary.scam.Rd: corrected the name of the output value for the table of the parametric model terms
+
+* shape.constrained.smooth.terms.Rd: updated to include all implemented SCOP-splines.
+
+* smooth.construct: bug with null space dimension fixed for univariate and bivariate smooths, caused an error message with summary.scam for models with bivariate smooths
+
 
 1.2-14
 *** scam.fit1, scam.fit.post1: a new method is implemented to fit SCAM using a quasi-Newton method, the BFGS method (as an alternative to the Newton method) to minimize penalized deviance wrt model coefficients. This requires only first order derivatives of the log likelihood. The calculation of the edf and tr(A) is done once after fit, using analytical Hessian (taking 2nd order deriv of the log likelihood). The smoothing parameter is selected by efsudr.scam2() which requires the first derivatives of the deviance and tr(A) w.r.t. log(sp). Analytical (rather than approximate) expression of the Hessian is used here.
@@ -10,7 +28,7 @@ performed by scam.fit1() for the coefficient estimation. The dependence of H on 
 
 * small coding fixes with 'gamma' parameter as input argument of the fitting function; bug fixed in simulation example in predict.scam.Rd file. 
 
-* estimate.scam: bug fixed with the call when the smoothing parameter is specified, which occurs with the newly introduced optimization method. Thanks to Pierre Masselot. Also small coding fixes when the sp is supplied: now the model fit is done within estimate.gam() function. 
+* estimate.scam, scam: bug fixed with the call when the smoothing parameter is specified, which occurs with the newly introduced optimization method. Thanks to Pierre Masselot. Also small coding fixes when the sp is supplied: now the model fit is done within estimate.gam() function.
 
 
 1.2-13

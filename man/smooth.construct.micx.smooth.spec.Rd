@@ -54,10 +54,13 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \seealso{
 \code{\link{smooth.construct.mpi.smooth.spec}},
 \code{\link{smooth.construct.cx.smooth.spec}}, 
+
 \code{\link{smooth.construct.cv.smooth.spec}}, 
  \code{\link{smooth.construct.mdcv.smooth.spec}}, 
+
 \code{\link{smooth.construct.mdcx.smooth.spec}}, 
 \code{\link{smooth.construct.micv.smooth.spec}}, 
+
 \code{\link{smooth.construct.mpd.smooth.spec}}
 
 }
@@ -72,11 +75,9 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    y <- rpois(n,exp(f))
    dat <- data.frame(x=x,y=y)
    ## fit model ...
-   b <- scam(y~s(x,bs="micx"),family=poisson(link="log"),
-       data=dat)
+   b <- scam(y~s(x,bs="micx"),family=poisson,data=dat)
    ## fit unconstrained model ...
-   b1 <- scam(y~s(x,bs="cr"),family=poisson(link="log"),
-         data=dat)
+   b1 <- scam(y~s(x,bs="cr"),family=poisson,data=dat)
    ## plot results ...
    plot(x,y,xlab="x",ylab="y",cex=.5)
    x1 <- sort(x,index=TRUE)

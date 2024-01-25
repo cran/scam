@@ -49,8 +49,10 @@ Natalya Pya <nat.pya@gmail.com>
 \seealso{
  \code{\link{smooth.construct.temicv.smooth.spec}}
   \code{\link{smooth.construct.temicx.smooth.spec}}
+
   \code{\link{smooth.construct.tedecv.smooth.spec}}
   \code{\link{smooth.construct.tedecx.smooth.spec}}
+
   \code{\link{smooth.construct.tescv.smooth.spec}}
 }
 \examples{

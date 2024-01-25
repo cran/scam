@@ -70,7 +70,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="temicv",m=2), data=dat)
+   b <- scam(y~s(x1,x2,k=c(10,10),bs="temicv"), data=dat)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)

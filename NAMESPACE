@@ -50,6 +50,9 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.tecvcv.smooth,
        Predict.matrix.tecxcx.smooth,
        Predict.matrix.tecxcv.smooth,
+       Predict.matrix.tismi.smooth,
+       Predict.matrix.tismd.smooth,
+       qq.scam,
        smooth.construct.cv.smooth.spec,
        smooth.construct.cx.smooth.spec,
        smooth.construct.mdcv.smooth.spec,
@@ -83,7 +86,9 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tescv.smooth.spec,
        smooth.construct.tecvcv.smooth.spec,
        smooth.construct.tecxcx.smooth.spec,
-       smooth.construct.tecxcv.smooth.spec
+       smooth.construct.tecxcv.smooth.spec,
+       smooth.construct.tismi.smooth.spec,
+       smooth.construct.tismd.smooth.spec
 )
 
 ## importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
@@ -101,14 +106,13 @@ importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
 binomial,coef,contrasts,"contrasts<-",cooks.distance,cor,cov,
 delete.response,dbeta,dgamma,dnorm,dpois,fitted,formula,gaussian,glm,
 influence,logLik,lm,mad,
-make.link,median,model.frame,model.offset,model.matrix,nlm,
-na.pass,napredict,na.omit,naresid,optim,pchisq,pnorm,pt,pf,
+make.link,median,model.frame,model.offset,model.matrix,model.response,
+na.action,nlm,na.pass,napredict,na.omit,naresid,optim,pchisq,pnorm,pt,pf,
 power,predict,printCoefmat,quantile,
-qbeta,qbinom,qchisq,qnbinom,qgamma,qnorm,qpois,qqline,qqnorm,qqplot,
-reformulate,residuals,
+qbeta,qbinom,qcauchy,qchisq,qnbinom,qgamma,qnorm,qpois,qqline,qqnorm,qqplot,
+rchisq,reformulate,residuals,
 rbeta,rbinom,rgamma,rnbinom,rnorm,rpois,runif,sd,
 termplot,terms.formula,terms,uniroot,var,vcov,weights)
-
 
 import(Matrix)
 importFrom(methods,cbind2)
@@ -159,7 +163,8 @@ S3method(smooth.construct, tescv.smooth.spec)
 S3method(smooth.construct, tecvcv.smooth.spec)
 S3method(smooth.construct, tecxcx.smooth.spec)
 S3method(smooth.construct, tecxcv.smooth.spec)
-
+S3method(smooth.construct, tismi.smooth.spec)
+S3method(smooth.construct, tismd.smooth.spec)
 
 S3method(Predict.matrix,cv.smooth)
 S3method(Predict.matrix,cx.smooth)
@@ -195,7 +200,8 @@ S3method(Predict.matrix,tescv.smooth)
 S3method(Predict.matrix,tecvcv.smooth)
 S3method(Predict.matrix,tecxcx.smooth)
 S3method(Predict.matrix,tecxcv.smooth)
-
+S3method(Predict.matrix,tismi.smooth)
+S3method(Predict.matrix,tismd.smooth)
 
 
 

@@ -53,8 +53,10 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \seealso{
 \code{\link{smooth.construct.cv.smooth.spec}},
 \code{\link{smooth.construct.mpi.smooth.spec}}, 
+
 \code{\link{smooth.construct.mdcv.smooth.spec}}, 
 \code{\link{smooth.construct.mdcx.smooth.spec}},
+
  \code{\link{smooth.construct.micv.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}
 
@@ -112,7 +114,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   plot(b2,pages=1,scale=0)
   summary(b2)
   x11()
-  vis.scam(b2,theta=50,color="terrain",cond=list(z=1))
+  vis.scam(b2,theta=50,color="terrain")
 
  ## numeric 'by' variable example... 
  set.seed(6)

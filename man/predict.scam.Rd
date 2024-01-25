@@ -136,7 +136,6 @@ pred <- predict(b,newd)
 pred
 predict(b,newd,type="terms",se=TRUE)
 
-
 ## linear extrapolation with predict.scam()...
 set.seed(3)
 n <- 100

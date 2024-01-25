@@ -48,15 +48,17 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \seealso{
 \code{\link{smooth.construct.tedmd.smooth.spec}}
 \code{\link{smooth.construct.tedecv.smooth.spec}}
+
 \code{\link{smooth.construct.tedecx.smooth.spec}}
 \code{\link{smooth.construct.tecvcv.smooth.spec}}
+
 \code{\link{smooth.construct.tecxcv.smooth.spec}}
 }
 \examples{
  \dontrun{
 ## tensor product `tecxcx' example 
   ## simulating data...
-   set.seed(1)
+   set.seed(2)
    n <- 30
    x1 <- sort(2*runif(n)-1)
    x2 <- sort(2*runif(n)-1)
@@ -72,6 +74,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
    b <- scam(y~s(x1,x2,k=c(10,10),bs="tecxcx"), data=dat)
+   summary(b)
 ## plot results ...
    par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)

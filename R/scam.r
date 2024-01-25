@@ -1,3 +1,7 @@
+## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## routines for fitting scam()...
+## based on setup routines (c) Simon N Wood
+
 
 #############################################################
 ## the wrapper overall function to fit scam...             ##
@@ -46,7 +50,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    mf <- match.call(expand.dots=FALSE)
    mf$formula <- gp$fake.formula 
    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
-                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$AR1.start <- mf$start <- mf$etastart <- mf$mustart <-mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
+                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$optim.method <- mf$not.exp <- mf$in.out <- mf$AR1.rho <- mf$AR.start <- mf$start <- mf$etastart <- mf$mustart <-mf$devtol.fit <- mf$steptol.fit <- mf$del <- mf$...<-NULL
    mf$drop.unused.levels <- drop.unused.levels
    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
    pmf <- mf
@@ -96,7 +100,9 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    if (family$family[1]=="gaussian" && family$link=="identity") am <- TRUE
    else am <- FALSE
 
-   if (AR1.rho!=0&&!is.null(mf$"(AR.start)")) if (!is.logical(mf$"(AR.start)")) stop("AR.start must be logical")
+  ## if (AR1.rho!=0&&!is.null(mf$"(AR.start)")) if (!is.logical(mf$"(AR.start)")) stop("AR.start must be logical")
+   ## scam_1.2-15...
+    if (AR1.rho!=0&&!is.null(AR.start)) if (!is.logical(AR.start)) stop("AR.start must be logical")
    if (AR1.rho!=0 && !am) stop("residual autocorrelation, AR1, is currently available only for the Gaussian identity link model.")
     
    if (!control$keepData) rm(data) ## save space
@@ -410,6 +416,11 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          object$CPU.time <- NULL
    object$AR1.rho <- AR1.rho
 
+  ## scam_1.2-15...
+   object$AR.start <- AR.start
+   object$std.rsd <- post$std.rsd 
+    
+
    ## get the optimizer info (smoothing parameter selection).....
   if (is.null(sp))
      {   if (optimizer[1] == "bfgs")
@@ -466,16 +477,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    names(object$residuals) <- ynames
    class(object) <- c("scam","glm","lm")  
    rm(G)
-   dev <- object$deviance
-   if (AR1.rho!=0){
-      object$std.rsd <- AR.resid(object$residuals,AR1.rho,object$model$"(AR.start)") ##standardised residuals for AR1 model (approximately uncorrelated under correct model)
-      dev <- sum(object$std.rsd^2)
-      object$deviance <- sum(object$residuals^2) ## ss of the working residuals of the fitted model
-   }
-   object$aic <- object$family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
-   object$aic <- object$aic -
-                2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-AR1.rho^2)) + ## correction for AR
-                2*sum(object$edf)
+
    object
 }  ## end scam
 
@@ -601,10 +603,11 @@ penalty_pident <- function(object)
    n.terms <- length(object$smooth)  # number of terms in the model
    q <- ncol(object$X)          # total number of parameters
    cons.terms <- rep(0,n.terms) # define whether each term is constrained or not
-   if (n.terms>0) for (i in 1:n.terms){
-                     if (!is.null(object$smooth[[i]]$p.ident))
-                     cons.terms[i] <- 1  
-                  }
+   if (n.terms>0) 
+        for (i in 1:n.terms){
+                if (!is.null(object$smooth[[i]]$p.ident))
+                   cons.terms[i] <- 1  
+                }
    p.ident <- rep(FALSE,q) # initialize vector of parameter identifications
                       # with `TRUE' - for a parameter to be exponentiated, `FALSE' - otherwise
    off.terms <- rep(0,n.terms) # starting points for each term
@@ -624,26 +627,31 @@ penalty_pident <- function(object)
               }
      
       }
-   if (n.terms>0) for (i in 1:n.terms){
-                    if (cons.terms[i]==1) 
-                       # if (inherits(object$smooth[[i]], c("mipc.smooth")))
-                        #    p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
-                         #             object$smooth[[i]]$p.ident[2:length(object$smooth[[i]]$p.ident)]
-                       # else 
-                            p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
-                                                                       object$smooth[[i]]$p.ident
-                   }
+   if (n.terms>0) 
+         for (i in 1:n.terms){
+              if (cons.terms[i]==1){
+                  # if (inherits(object$smooth[[i]], c("mipc.smooth")))
+                  #    p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- 
+                  #             object$smooth[[i]]$p.ident[2:length(object$smooth[[i]]$p.ident)]
+                  # else 
+                  ind <- attr(object$smooth[[i]],"del.index") ## to remove unidentifiable model coefficients, scam_1.2-15
+                  if (!is.null(ind)) 
+                         object$smooth[[i]]$p.ident <- object$smooth[[i]]$p.ident[-ind]
+                  p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- object$smooth[[i]]$p.ident
+              }
+          } 
    ## getting the list of penalty matrices in terms of the full model vector of coefficients...
    S <- list()
    j <- 1
-   if (n.terms>0) for(i in 1:n.terms){
-                      for (kk in 1:length(object$smooth[[i]]$S)){
-                            S[[j]] <- matrix(0,q,q) # initialize penalty matrix
-                            S[[j]][off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1),
+   if (n.terms>0) 
+        for(i in 1:n.terms){
+              for (kk in 1:length(object$smooth[[i]]$S)){
+                     S[[j]] <- matrix(0,q,q) # initialize penalty matrix
+                     S[[j]][off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1),
                    off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1)] <- object$smooth[[i]]$S[[kk]]
                             j <- j+1       
-                      }
-                   }
+               }
+         }
    object$S <- S 
    object$p.ident <- p.ident
    object
@@ -698,8 +706,8 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
         row <- c(1,rep(1:nobs,rep(2,nobs))[-c(1,2*nobs)])
         weight.r <- c(1,rep(c(sd,ld),nobs-1))
         end <- c(1,1:(nobs-1)*2+1) 
-        if (!is.null(G$mf$"(AR.start)")) { ## need to correct the start of new AR sections...
-                 ii <- which(G$mf$"(AR.start)"==TRUE)
+        if (!is.null(G$AR.start)) { ## need to correct the start of new AR sections...
+                 ii <- which(G$AR.start ==TRUE)
                  if (length(ii)>0) {
                     if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
                     weight.r[ii*2-2] <- 0 ## zero sub diagonal
@@ -1308,9 +1316,13 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
                   }
      # end of calculating the parameters derivatives
      aic.model <- aic(y, n, mu, weights, dev) +  2 * sum(edf)
+ 
+     ## scam_1.2-15...
      if (AR1.rho!=0) { ## correct aic for AR1 transform
-        df <- 1 ## if (getARs) sum(b$model$"(AR.start)") else 1
-        aic.model <- aic.model - 2*(n-df)*log(ld) 
+        std.rsd <- AR.resid(residuals,AR1.rho,G$AR.start) ##standardised residuals for AR1 model (approximately uncorrelated under correct model)
+       dev.st <- sum(std.rsd^2)
+       df <- if (is.null(G$AR.start)) 1 else sum(G$AR.start)
+       aic.model <- aic(y, n, mu, weights, dev.st) +2*sum(edf) -2*(n-df)*log(ld)       
      }
      assign("start",beta,envir=env)
      assign("dbeta.start",dbeta.rho,envir=env)
@@ -1325,7 +1337,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
       dvar.mu=dvar.mu,d2var.mu=d2var.mu,deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=as.numeric(alpha),d3link.mu=d3link.mu,eta=eta,iter=iter,
       Dp.gnorm=Dp.gnorm, Dp.g=Dp.g,d=d, conv=conv, illcond=illcond,R=R.out, edf=edf,trA=trA,
-      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model,rank=rank,pdev.hist=pdev.plot) ##step=step, AR1.rho=AR1.rho,AR.start=mf$"(AR.start)")
+      residuals=residuals,z=z,dbeta.rho=dbeta.rho, aic=aic.model,rank=rank,pdev.hist=pdev.plot) ##step=step, AR1.rho=AR1.rho,AR.start=G$AR.start)
 } ## end of scam.fit
 
 
@@ -1343,38 +1355,20 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
    weights <- G$weights; scale.known <- G$scale.known; not.exp <- G$not.exp
    n <- nobs <- NROW(y) # number of observations
    q <- ncol(X)
-   if (G$AR1.rho!=0) {
-        ld <- 1/sqrt(1-G$AR1.rho^2) ## leading diagonal of root inverse correlation
-        sd <- -G$AR1.rho*ld         ## sub diagonal
-        row <- c(1,rep(1:nobs,rep(2,nobs))[-c(1,2*nobs)])
-        weight.r <- c(1,rep(c(sd,ld),nobs-1))
-        end <- c(1,1:(nobs-1)*2+1) 
-        if (!is.null(G$AR.start)) { ## need to correct the start of new AR sections...
-                 ii <- which(G$AR.start==TRUE)
-                 if (length(ii)>0) {
-                    if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
-                    weight.r[ii*2-2] <- 0 ## zero sub diagonal
-                    weight.r[ii*2-1] <- 1 ## set leading diagonal to 1
-                 }
-        }
-        ## apply transform...
-        X <- rwMatrix(end,row,weight.r,X)
-        y <- rwMatrix(end,row,weight.r,y)    
-      }   
-  
+ 
    linkinv <- object$family$linkinv
    dev.resids <- object$family$dev.resids
    dg <- fix.family.link(object$family)
    dv <- fix.family.var(object$family)
 
+   ## scam_1.2-15 (removed AR1 transform for y and X as output must be on original untransformed scale)... 
    eta <- as.numeric(X%*%object$beta.t + offset) # linear predictor
    mu <- linkinv(eta)          # fitted values
    dev <- sum(dev.resids(y,mu,weights)) # deviance of the final model
-   
-   wtdmu <- if (intercept) sum(weights * G$y)/sum(weights) 
+  
+   wtdmu <- if (intercept) sum(weights * y)/sum(weights)  
               else linkinv(offset)
-
-   null.dev <- sum(dev.resids(G$y, wtdmu, weights))
+   null.dev <- sum(dev.resids(y, wtdmu, weights))  
  
    n.ok <- nobs - sum(weights == 0)
    nulldf <- n.ok - as.integer(intercept)
@@ -1501,15 +1495,22 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
    residuals <- rep.int(NA, nobs)
    g.deriv <- 1/object$family$mu.eta(eta) # diag(G)
    residuals <- (G$y-mu)*g.deriv # the working residuals for the fitted model
-      
    aic.model <- object$family$aic(y, n, mu, weights, dev) +  2 * sum(edf)
-   if (G$AR1.rho!=0) { ## correct aic for AR1 transform
-        df <- 1 ## if (getARs) sum(G$AR.start) else 1
-        aic.model <- aic.model - 2*(n-df)*log(1/sqrt(1-G$AR1.rho^2)) 
+
+   ## scam_1.2-15...
+    std.rsd <- NULL
+    if (G$AR1.rho!=0){
+      std.rsd <- AR.resid(residuals,G$AR1.rho,G$AR.start) ##standardised residuals for AR1 model (approximately uncorrelated under correct model)
+      dev.st <- sum(std.rsd^2)
+     ## dev <- sum(residuals^2) ## ss of the working residuals of the fitted model
+      df <- if (is.null(G$AR.start)) 1 else sum(G$AR.start)
+      aic.model <- object$family$aic(y, n, mu, weights, dev.st) +  2 * sum(edf) -
+          2*(n-df)*log(1/sqrt(1-G$AR1.rho^2))
    }
-    
-   list (null.dev=null.dev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,rank=rank,
-        sig2=sig2,edf=edf,edf1=edf1,trA=trA, deviance=dev,residuals=residuals, aic=aic.model, mu=mu, eta=eta)
+
+   list (null.dev=null.dev, df.null=nulldf,Vb=Vb,Vb.t=Vb.t,Ve=Ve,Ve.t=Ve.t,rank=rank, sig2=sig2,edf=edf,
+        edf1=edf1,trA=trA, deviance=dev,residuals=residuals, aic=aic.model, mu=mu, eta=eta,
+       std.rsd=std.rsd) ## scam_1.2-15
 } ## end of scam.fit.post
 
 
@@ -1607,9 +1608,12 @@ formula.scam <- function(x, ...)
 }
 
 
+
 ###############################################################################################
 ## below are functions from mgcv package, copied as they are not exported by 'namespace:mgcv' 
 ## Copyright (c) Simon N. Wood 2008-2019 simon.wood@r-project.org
+
+## gam.setup() has extra SCAM lines to update smooth$Zc matrix using 'del.index' to deal with identifiability: when two or more smooths have the same covariate... (c) natalya pya (2024) 
 
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
@@ -1750,6 +1754,7 @@ gam.setup <- function(formula,pterms,
   first.para<-G$nsdf+1
   sm <- list()
   newm <- 0
+
   if (m>0) for (i in 1:m) {
     # idea here is that terms are set up in accordance with information given in split$smooth.spec
     # appropriate basis constructor is called depending on the class of the smooth
@@ -1780,10 +1785,10 @@ gam.setup <- function(formula,pterms,
   if (m>0) { 
     sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
     if (!apply.by) for (i in 1:length(sm)) { ## restore any by-free model matrices
-      if (!is.null(sm[[i]]$X0)) { ## there is a by-free matrix to restore 
-        ind <- attr(sm[[i]],"del.index") ## columns, if any to delete
-        sm[[i]]$X <- if (is.null(ind)) sm[[i]]$X0 else sm[[i]]$X0[,-ind,drop=FALSE] 
-      }
+       if (!is.null(sm[[i]]$X0)) { ## there is a by-free matrix to restore 
+         ind <- attr(sm[[i]],"del.index") ## columns, if any to delete
+         sm[[i]]$X <- if (is.null(ind)) sm[[i]]$X0 else sm[[i]]$X0[,-ind,drop=FALSE] 
+       }     
     }
   }
 
@@ -2065,7 +2070,17 @@ gam.setup <- function(formula,pterms,
       rm(C)
     }
   } ## absorb.cons == FALSE
- 
+
+  ## SCAM stuff added here, scam_1.2-15...
+  if (m>0) for (i in 1:m) {
+      if (!is.null(G$smooth[[i]]$Zc)) {
+           ind <- attr(G$smooth[[i]],"del.index")
+           G$smooth[[i]]$Zc <-  if (!is.null(ind)) G$smooth[[i]]$Zc[-ind,-ind,drop=FALSE] ##need to check if removing "del.index" rows is correct 
+                                else G$smooth[[i]]$Zc         
+       }
+  }
+  ## end of scam stuff 
+
   G$y <- data[[split$response]]
          
   ##data[[deparse(split$full.formula[[2]],backtick=TRUE)]]
@@ -2098,9 +2113,7 @@ gam.setup <- function(formula,pterms,
 
   ## Deal with non-linear parameterizations...
  
-
   G$pP <- PP ## return paraPen object, if present
-
   G
 } ## gam.setup
 

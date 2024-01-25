@@ -83,7 +83,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
                  Values not set assume default values.}
 
   \item{AR1.rho}{The AR1 correlation parameter. An AR1 error model can be used for the residuals of Gaussian-identity link models. Standardized residuals (approximately uncorrelated under correct model) returned in
-\code{std.rsd} if non zero. }
+\code{std.rsd} if non-zero. }
 
   \item{AR.start}{logical variable of same length as data, \code{TRUE} at first observation of an independent section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} (default) then there are no breaks in AR1 correlaion.}
 
@@ -102,7 +102,8 @@ is subject to monotone increasing constraint.
 
 All available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
 
-Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero.
+Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero. Use \code{acf(model$std.rsd)} for computing and plotting estimates of the autocorrelation function to check correlation.
+
 }
 \value{The function returns an object of class \code{"scam"} with the following elements (this agrees with \code{gamObject}):
 
@@ -250,10 +251,10 @@ Wood, S.N. (2011) Fast stable restricted maximum likelihood
 and marginal likelihood estimation of semiparametric generalized linear 
 models. Journal of the Royal Statistical Society (B) 73(1):3-36
 
-Wood S.N. (2006a) \emph{Generalized Additive Models: An Introduction with R}. Chapman
-and Hall/CRC Press.
+Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
+and Hall/CRC Press
 
-Wood, S.N. (2006b) On confidence intervals for generalized additive models based on penalized regression splines. Australian and New Zealand Journal of Statistics. 48(4): 445-464.
+Wood, S.N. (2006) On confidence intervals for generalized additive models based on penalized regression splines. Australian and New Zealand Journal of Statistics. 48(4): 445-464.
 
 Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing
 parameter optimization with application to Tweedie location, scale and shape models.

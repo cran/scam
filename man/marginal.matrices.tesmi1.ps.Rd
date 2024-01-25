@@ -63,8 +63,10 @@ Natalya Pya <nat.pya@gmail.com>
 \seealso{
 \code{\link{smooth.construct.tesmi1.smooth.spec}}, 
 \code{\link{smooth.construct.tesmi2.smooth.spec}}, 
+
 \code{\link{marginal.matrices.tesmi2.ps}},
 \code{\link{smooth.construct.tesmd1.smooth.spec}}, 
+
 \code{\link{smooth.construct.tesmd2.smooth.spec}}
 }
 \keyword{models} \keyword{regression} %-- one or more ..

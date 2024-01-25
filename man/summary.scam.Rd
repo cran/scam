@@ -108,7 +108,7 @@ by scale parameter.}
 
 \item{s.table}{significance table for smooths}
 
-\item{p.Terms}{significance table for parametric model terms}
+\item{pTerms.table}{significance table for parametric model terms}
 \item{BFGS termination condition}{the value of the maximum component of the scaled GCV/UBRE gradient used as stopping 
      condition. This value is printed if 
        the termination code of the BFGS optimization process is not `1' (not full convergence)

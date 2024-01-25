@@ -1,3 +1,7 @@
+## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## routines for univariate SCOP-spline construction 
+## with sum-to-zero identifiability constraints (2023)
+
 
 
 #####################################################
@@ -29,41 +33,24 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
   if (!is.null(object$point.con[[1]])) ## a point constraint is supplied?
     stop(paste("'mpi' smooth does not work with a point constraint; use 'miso' for a start-at-zero constraint, or 'mifo' for a finish-at-zero constraint"))
 
-  ##################################################
-  ## setting column centering constraint... 
-  #  get model matrix-------------
-#  X1 <- splineDesign(xk,x,ord=m+2)
-  # get matrix Sigma for monotone smooth...
-#  Sig <- matrix(0,q,q)   
-     # elements of matrix Sigma for increasing smooth
-#  for (i in 1:q)  Sig[i,1:i]<-1
-#  X <- (X1%*%Sig)[,-q] # model matrix for the monotone term
-#  cmx <- colMeans(X)
-#  X <- sweep(X,2,cmx) ## subtract cmx from columns 
-#  object$X <- X # the finished model matrix
-#  object$P <- list()
-#  object$S <- list()
-#  object$Sigma <- Sig
-
-#  if (!object$fixed) # create the penalty matrix
-#  { P <- diff(diag(q-1),difference=1)
-#    P[1,] <-0
-#    P[,1] <- 0
-#    object$P[[1]] <- P
-#    object$S[[1]] <- crossprod(P)
-#  }
-#  b <- c(0,rep(1,q-2)) # define vector of 0's & 1's for model parameters identification
-                  # with `1' - for a parameter to be exponentiated, `0' - otherwise
-#######################################################################
-## indentifiability constraint by dropping the first columns of X and Sigma and setting beta_1=0
+  #######################################################################
+  ## indentifiability constraint by first dropping the first columns of XSigma (setting beta_1=0)
+  ## and then applying sum-to-zero (centering) constraint...
   #  get model matrix-------------
   X1 <- splineDesign(xk,x,ord=m+2)
-  # get matrix Sigma and remove the first column for the monotone smooth (column and row for Sig)
-##  Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
+  # get matrix Sigma and remove the first column for the model matrix XSig
+ ##  Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
   Sig <- matrix(1,q,q)  ## coef summation matrix
   Sig[upper.tri(Sig)] <-0
-  X <- X1[,-1]%*%Sig[-1,-1] # drop intercept term, model submatrix for the monotone term
+  X <- X1%*%Sig
+  X <- X[,-1]
+  
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$P <- list()
   object$S <- list()
   object$Sigma <- Sig[-1,-1]
@@ -76,7 +63,7 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##  ##m+1  # dim. of unpenalized space, 2 as the basis of a straight line is two-dimensional
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
@@ -120,13 +107,14 @@ Predict.matrix.mpi.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
 
 ####################################################################################################
 ### Adding monotone increasing SCOP-spline construction without applying identifiability constraints
-### to be used with 'by' variable...
+### to be used with numeric 'by' variable...
 ####################################################################################################
 ## when 'by' variable takes more than one value, the smooth terms are identifiable without a
 ## 'zero intercept' constraint, so they are left unconstrained.  
@@ -176,7 +164,7 @@ smooth.construct.mpiBy.smooth.spec<- function(object, data, knots)
   object$p.ident <- c(FALSE,rep(TRUE,q-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
@@ -277,7 +265,7 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
   object$p.ident <- rep(TRUE,q-length(ind)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$n.zero <- ind
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
@@ -327,14 +315,11 @@ Predict.matrix.miso.smooth<-function(object,data)
 }
 
 
-
-
 ##############################################################################################
 ### Adding Monotone increasing SCOP-spline construction with an 'finish at zero' constraint,
 ### a SCOP-spline additionally constrained to be zero at the end, at the right-end point of 
 ### the covariate range...
 #############################################################################################
-
 
 smooth.construct.mifo.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing smooth with a 'finish-at-zero' constraint;
@@ -385,7 +370,7 @@ smooth.construct.mifo.smooth.spec<- function(object, data, knots)
   object$p.ident <- c(FALSE,rep(TRUE,q-length(ind)-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
   object$n.zero <- ind
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
@@ -468,9 +453,14 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   Sig <- matrix(-1,q,q)  ## coef summation matrix
   Sig[upper.tri(Sig)] <-0
   Sig[,1] <- -Sig[,1] ## monotone decrease case
-
   X <- X1[,-1]%*%Sig[-1,-1] # drop intercept term
-  object$X<-X # the finished model matrix
+  
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx  
+
   object$Sigma <- Sig[-1,-1]
   object$P <- list()
   object$S <- list()
@@ -482,7 +472,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -529,13 +519,14 @@ Predict.matrix.mpd.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX)) 
   }
   X
 }
 
 #######################################################
 ### Adding Monotone decreasing SCOP-spline construction without applying identifiability constraints
-### to be used with 'by' variable...
+### to be used with numeric 'by' variable...
 ########################################################
 
 smooth.construct.mpdBy.smooth.spec<- function(object, data, knots)
@@ -569,7 +560,7 @@ smooth.construct.mpdBy.smooth.spec<- function(object, data, knots)
   Sig[,1] <- -Sig[,1] ## monotone decrease case
 
   X <- X1%*%Sig # no drop intercept term
-  object$X<-X # the finished model matrix
+  object$X<-X # the final model matrix
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -583,7 +574,7 @@ smooth.construct.mpdBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1))  ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -635,9 +626,6 @@ Predict.matrix.mpdBy.smooth<-function(object,data)
 }
 
 
-
-
-
 ##############################################################
 ### Smooth constructor for the mixed constrainted smooths ......
 ##############################################################
@@ -675,7 +663,13 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
      # for monotone decreasing & concave smooth
   for (i in 1:(q-1)) Sig[i:(q-1),i]<--c(1:(q-i))
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -689,7 +683,7 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -734,6 +728,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
@@ -741,7 +736,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
 
 ###########################################################
 ### Adding decreasing & concave SCOP-spline construction without identifiability constraints
-### to be used with 'by' variable and linear functional terms...
+### to be used with numeric 'by' variable and linear functional terms...
 ##########################################################
 
 smooth.construct.mdcvBy.smooth.spec<- function(object, data, knots)
@@ -787,7 +782,7 @@ smooth.construct.mdcvBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1))  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -837,10 +832,6 @@ Predict.matrix.mdcvBy.smooth<-function(object,data)
 }
 
 
-
-
-
-
 ###############################################################
 ### Adding decreasing & convex SCOP-spline construction 
 ################################################################
@@ -878,7 +869,13 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
          Sig[i,(q-i+1):(q-1)] <- -c((i-1):1)
   }
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -892,7 +889,7 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -943,13 +940,14 @@ Predict.matrix.mdcx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
 
 ###########################################################
 ### Adding decreasing & convex SCOP-spline construction without identifiability constraints
-### to be used with 'by' variable and linear functional terms...
+### to be used with numeric 'by' variable and linear functional terms...
 ##########################################################
 
 smooth.construct.mdcxBy.smooth.spec<- function(object, data, knots)
@@ -1001,7 +999,7 @@ smooth.construct.mdcxBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1))  ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1094,7 +1092,13 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
        Sig[i,(q-i+1):(q-1)]<-c((i-1):1)
   }
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -1108,7 +1112,7 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1)  ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1160,6 +1164,7 @@ Predict.matrix.micv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
@@ -1167,7 +1172,7 @@ Predict.matrix.micv.smooth<-function(object,data)
 
 ###########################################################
 ### Adding increasing & concave SCOP-spline construction without identifiability constraints
-### to be used with 'by' variable and linear functional terms...
+### to be used with numeric 'by' variable and linear functional terms...
 ##########################################################
 
 smooth.construct.micvBy.smooth.spec<- function(object, data, knots)
@@ -1219,7 +1224,7 @@ smooth.construct.micvBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1))  ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1275,7 +1280,6 @@ Predict.matrix.micvBy.smooth<-function(object,data)
 }
 
 
-
 ###############################################################
 ### Adding monotone increasing & convex SCOP-spline construction 
 ################################################################
@@ -1309,7 +1313,13 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
      # for monotone increasing & convex smooth
   for (i in 1:(q-1)) Sig[i:(q-1),i]<-c(1:(q-i))
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -1323,7 +1333,7 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
  
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1337,7 +1347,6 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   class(object)<-"micx.smooth"  # Give object a class
   object
 }
-
 
 ## Prediction matrix for the `micx` smooth class... 
 
@@ -1369,13 +1378,14 @@ Predict.matrix.micx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
 
 ###########################################################
 ### Adding increasing & convex SCOP-spline construction without identifiability constraints
-### to be used with 'by' variable and linear functional terms...
+### to be used with numeric 'by' variable and linear functional terms...
 ##########################################################
 
 smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
@@ -1421,7 +1431,7 @@ smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
  
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1510,7 +1520,13 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   for (i in 2:(q-1)) Sig[i:(q-1),i]<--c(1:(q-i))
   
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -1524,7 +1540,7 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1571,13 +1587,14 @@ Predict.matrix.cv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
 
 ####################################################################################################
 ### Adding concave SCOP-spline construction without applying identifiability constraints
-### to be used with 'by' variable...
+### to be used with numeric 'by' variable...
 ####################################################################################################
 ## when 'by' variable takes more than one value, the smooth terms are identifiable without a
 ## 'zero intercept' constraint, so they are left unconstrained...
@@ -1627,7 +1644,7 @@ smooth.construct.cvBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1714,7 +1731,13 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   for (i in 2:(q-1)) Sig[i:(q-1),i]<- c(1:(q-i))
   
   X <- X1[,2:q]%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+
+  ## applying sum-to-zero (centering) constraint...
+  cmx <- colMeans(X)
+  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  object$X <- X # the final model matrix
+  object$cmX <- cmx
+
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -1728,7 +1751,7 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)-1  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1775,13 +1798,14 @@ Predict.matrix.cx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
+     X <- sweep(X,2,c(0,object$cmX))
   }
   X
 }
 
 ###########################################################
 ### Adding convex SCOP-spline construction without identifiability constraints
-### to be used with 'by' variable and linear functional terms...
+### to be used with numeric 'by' variable and linear functional terms...
 ##########################################################
 
 smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
@@ -1814,7 +1838,7 @@ smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
   for (i in 3:q) Sig[i:q,i] <- c(1:(q-i+1))
   
   X <- X%*%Sig # model submatrix for the constrained term
-  object$X<-X # the finished model matrix
+  object$X<-X # the final model matrix
   object$Sigma <- Sig
   object$P <- list()
   object$S <- list()
@@ -1828,7 +1852,7 @@ smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
   }
   object$p.ident <- c(FALSE,rep(TRUE,q-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated) 
   object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <- 2 ##m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   
   ## get model matrix for 1st and 2nd derivatives of the smooth...
@@ -1880,8 +1904,6 @@ Predict.matrix.cxBy.smooth<-function(object,data)
 }
 
 
-
-
 #####################################################
 ### Adding positive SCOP-spline construction 
 ######################################################
@@ -1916,7 +1938,7 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
      
   X <- X1[,2:q] 
  ## X <- X1
-  object$X <- X # the finished model matrix
+  object$X <- X # the final model matrix
   object$P <- list()
   object$S <- list()
   object$Sigma <- Sig
@@ -1931,7 +1953,7 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
  ## object$p.ident <- rep(TRUE,q)
   object$rank <- ncol(object$X)-1  # penalty rank
  ## object$rank <- ncol(object$X)  # penalty rank
-  object$null.space.dim <- m+1  # dim. of unpenalized space
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
@@ -1946,7 +1968,7 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
   object
 }
 
-## NOte: maybe no need to set the fisrt coefficient to zero, as not intercept is required in the model with 'po' smooth
+## NOte: maybe no need to set the first coefficient to zero, as no intercept is required in the model with 'po' smooth
 ## Prediction matrix for the `po` smooth class... 
 
 Predict.matrix.po.smooth<-function(object,data)

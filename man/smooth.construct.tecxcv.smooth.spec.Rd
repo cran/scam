@@ -48,8 +48,10 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \seealso{
 \code{\link{smooth.construct.tedmd.smooth.spec}}
 \code{\link{smooth.construct.tedecv.smooth.spec}}
+
 \code{\link{smooth.construct.tedecx.smooth.spec}}
 \code{\link{smooth.construct.tecvcv.smooth.spec}}
+
 \code{\link{smooth.construct.tecxcx.smooth.spec}}
 }
 \examples{

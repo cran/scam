@@ -4,7 +4,7 @@
 \title{Derivative of the univariate smooth model terms
 }
 \description{Function to get derivatives of the smooth model terms (currently only of the univariate smooths).
- Analytical derivatives for SCOP-splines, finite difference approximation is used for all others                                   
+ Analytical derivatives for SCOP-splines (shape constrained P-splines), finite difference approximation is used for all others                                   
 }
 \usage{
 derivative.scam(object,smooth.number=1,deriv=1)

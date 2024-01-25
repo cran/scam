@@ -53,10 +53,13 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \seealso{
 \code{\link{smooth.construct.mpi.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}}, 
+
 \code{\link{smooth.construct.cx.smooth.spec}}, 
-\code{\link{smooth.construct.cv.smooth.spec}}, 
+\code{\link{smooth.construct.cv.smooth.spec}},
+ 
 \code{\link{smooth.construct.mdcv.smooth.spec}}, 
 \code{\link{smooth.construct.micx.smooth.spec}}, 
+
 \code{\link{smooth.construct.micv.smooth.spec}}
 
 }

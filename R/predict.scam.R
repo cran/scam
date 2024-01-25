@@ -1,5 +1,5 @@
-
-## clone of the predict.gam(mgcv) .....
+## (c) Natalya Pya (2012-2023). Provided under GPL 2.
+## based on (c) Simon N Wood predict.gam(mgcv) ...
 
 
 predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
@@ -256,7 +256,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           Xfrag <- PredictMat(object$smooth[[k]],data)	
           if (!is.matrix(Xfrag)) Xfrag <- matrix(Xfrag,nrow=nrow(data))
           ## added code specific for scam....
-          if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",
+          if (inherits(object$smooth[[k]], c("mpi.smooth","mpic.smooth","mpd.smooth", "cv.smooth", "cx.smooth",
                  "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth", ## "mipoc.smooth", 
                  "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
                  "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
@@ -265,9 +265,10 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,-object$smooth[[k]]$n.zero]
           #  else if (inherits(object$smooth[[k]], c("mipoc.smooth"))) ## 'pss zero ' increasing constraint ...
            #    X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
-            else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tesmi2.smooth","tesmd1.smooth",
-                  "tesmd2.smooth","tescx.smooth","tescv.smooth")))  # for single monotonicity...
-               X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag%*%object$smooth[[k]]$Zc
+            else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tismi.smooth","tismd.smooth",
+                 "tesmi2.smooth","tesmd1.smooth",
+                  "tesmd2.smooth","tescx.smooth","tescv.smooth")))  # for single monotonicity...             
+                  X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag%*%object$smooth[[k]]$Zc               
             else ## unconstrainded smooths...
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
           Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
@@ -299,7 +300,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           ## CoRRECTED for SCAM ...
           fit[start:stop,n.pterms+k]<-X[,first:last,drop=FALSE]%*%object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",
+               if (inherits(object$smooth[[k]], c("mpi.smooth","mpic.smooth","mpd.smooth","cv.smooth", "cx.smooth",
                                 "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth"))){
                       if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))
@@ -328,8 +329,9 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                           Vp.c[,1] <- rep(0,nrow(Vp))
                           Vp.c[1,] <- rep(0,ncol(Vp))
                           se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
-               } else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth",
-                                            "tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth","tedecx.smooth", "tedecv.smooth", "tescx.smooth", 
+               } else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth","tesmi1.smooth",
+                                    "tismi.smooth","tismd.smooth","tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth",
+                                   "tedecx.smooth", "tedecv.smooth", "tescx.smooth", 
                                    "tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
                       # X0 - model matrix of the original data....
                       object.X <- model.matrix(object)
@@ -344,7 +346,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                       R <- qr.R(qrX)
                       qrA <- qr(t(A))
                       q <- ncol(X0)
-                      if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth", "temicx.smooth",
+                      if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth","tedmdc.smooth", "temicx.smooth",
                             "temicv.smooth", "tedecx.smooth","tedecv.smooth", "tecvcv.smooth",
                             "tecxcx.smooth","tecxcv.smooth"))) { # get RZaR for double monotonicity...
                             R <- R[-1,]
