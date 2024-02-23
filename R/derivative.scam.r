@@ -1,10 +1,11 @@
+## (c) Natalya Pya (2012-2024). Provided under GPL 2
+
 #################################################################
 ## function to get derivatives of the smooth model terms ....  ##
 ## (currently only univariate smooths)                         ##
 ## analytic derivatives for P-, SCOP-splines                   ##
 ## finite differencing using predict.gam() for others          ##                    
 ################################################################# 
-
 
 derivative.scam <- function(object, smooth.number=1,deriv=1){
  ## object - fitted scam object
@@ -23,23 +24,116 @@ derivative.scam <- function(object, smooth.number=1,deriv=1){
  Vp <- object$Vp.t[first:last,first:last] 
 
  if (inherits(object$smooth[[sn]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth",   
-      "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"))){
+      "mdcv.smooth","mdcx.smooth","micv.smooth", "micx.smooth", "mpiBy.smooth", "mpdBy.smooth",
+       "mdcvBy.smooth", "mdcxBy.smooth","micvBy.smooth", "micxBy.smooth","cvBy.smooth",
+       "cxBy.smooth", "po.smooth"))) {
       Sig <- object$smooth[[sn]]$Sigma 
       if (deriv==1){ ## 1st order derivatives
-             P <- diff(diag(q-1),difference=1)
+             P <- if (inherits(object$smooth[[sn]], c("miso.smooth", "mifo.smooth"))) diff(diag(q-3),difference=1)
+                  else diff(diag(q-1),difference=1) 
+             Xd <- object$smooth[[sn]]$Xdf1%*%P%*%Sig   
+          } 
+          else { ## 2nd order derivative
+             P <- if (inherits(object$smooth[[sn]], c("miso.smooth", "mifo.smooth"))) diff(diag(q-3),difference=2)
+                  else diff(diag(q-1),difference=2)
+             Xd <- object$smooth[[sn]]$Xdf2%*%P%*%Sig   
+          }
+   # } else if (inherits(object$smooth[[sn]], "pspline.smooth")){ ## unconstrained P-splines
+   #         if (deriv==1)  ## 1st order derivatives
+   #                Xd <- object$smooth[[sn]]$Xdf1%*%diff(diag(q-1),difference=1)
+   #         else ## 2nd order derivative
+   #               Xd <- object$smooth[[sn]]$Xdf2%*%diff(diag(q-1),difference=2) 
+   # }
+   } else {   ## for other unconstrained smooths via finite differencing using predict.gam() 
+          xx <- object$model[object$smooth[[sn]]$term]   ## find the data
+          if (object$smooth[[sn]]$by != "NA") {
+                  by <- rep(1, n)
+                  newd <- data.frame(x = xx, by = by)
+                  names(newd) <- c(object$smooth[[sn]]$term, object$smooth[[sn]]$by)
+                }
+                else {
+                  newd <- data.frame(x = xx)
+                  names(newd) <- object$smooth[[sn]]$term
+                }
+          X0 <- PredictMat(object$smooth[[sn]], newd)
+          eps <- 1e-7 ## finite difference interval
+          xx <- xx + eps 
+          if (object$smooth[[sn]]$by != "NA") {
+                  newd <- data.frame(x = xx, by = by)
+                  names(newd) <- c(object$smooth[[sn]]$term, object$smooth[[sn]]$by)
+                }
+                else {
+                  newd <- data.frame(x = xx)
+                  names(newd) <- object$smooth[[sn]]$term
+                }
+          X1 <- PredictMat(object$smooth[[sn]], newd)
+          Xd <- (X1-X0)/eps ## maps coefficients to (fd approx.) derivatives
+          if (deriv==2){ ## for 2nd oder derivative
+                  xx <- xx + eps 
+                  if (object$smooth[[sn]]$by != "NA") {
+                           newd <- data.frame(x = xx, by = by)
+                           names(newd) <- c(object$smooth[[sn]]$term, object$smooth[[sn]]$by)
+                        }
+                        else {
+                           newd <- data.frame(x = xx)
+                           names(newd) <- object$smooth[[sn]]$term
+                        }
+                   X2 <- PredictMat(object$smooth[[sn]], newd)
+                   Xd <- (X2-2*X1+X0)/eps^2
+              }
+          if (inherits(object$smooth[[sn]], c("miso.smooth", "mifo.smooth"))) {
+                 ind.con  <- object$smooth[[sn]]$n.zero
+                 Xd <- Xd[,-ind.con]
+          }
+      }
+ df <- Xd%*%beta.t ## values of the derivatives 
+ df.sd <- rowSums(Xd%*%Vp*Xd)^.5  ## standard errors of the derivative of smooth 
+ list(d=df,se.d=df.sd)
+}  ## end of derivative.scam
+
+
+
+
+################################
+## checking 'miso' and 'mpi' derivatives with finite differencing derivatives...
+
+
+derivative.scam.miso <-  function(object, smooth.number=1,deriv=1){
+ ## object - fitted scam object
+ ## smooth.number - number of the smooth model term which derivative is needed to be calculated
+ ## deriv - either 1 if the 1st derivative is required, or 2 if the 2nd
+
+ sn <- smooth.number
+ if (length(object$smooth[[sn]]$term)!=1) stop("derivative.smooth() currently handles only 1D smooths")
+ if (deriv!=1 & deriv!=2) 
+       stop(paste("deriv can be either 1 or 2"))
+ n <- length(object$y)
+ q <- object$smooth[[sn]]$bs.dim ## smooth basis dimension
+ first <- object$smooth[[sn]]$first.para
+ last <- object$smooth[[sn]]$last.para
+ beta.t <- object$coefficients.t[first:last]
+ Vp <- object$Vp.t[first:last,first:last] 
+
+ if (inherits(object$smooth[[sn]], c("mpd.smooth", "cv.smooth", "cx.smooth",   
+      "mdcv.smooth","mdcx.smooth","micv.smooth", "micx.smooth", "mpiBy.smooth", "mpdBy.smooth",
+       "mdcvBy.smooth", "mdcxBy.smooth","micvBy.smooth", "micxBy.smooth","cvBy.smooth",
+       "cxBy.smooth", "po.smooth"))) {
+      Sig <- object$smooth[[sn]]$Sigma 
+      if (deriv==1){ ## 1st order derivatives
+             P <- diff(diag(q-1),difference=1) 
              Xd <- object$smooth[[sn]]$Xdf1%*%P%*%Sig   
           } 
           else { ## 2nd order derivative
              P <- diff(diag(q-1),difference=2)
              Xd <- object$smooth[[sn]]$Xdf2%*%P%*%Sig   
           }
- } # else if (inherits(object$smooth[[sn]], "pspline.smooth")){ ## unconstrained P-splines
+   # } else if (inherits(object$smooth[[sn]], "pspline.smooth")){ ## unconstrained P-splines
    #         if (deriv==1)  ## 1st order derivatives
    #                Xd <- object$smooth[[sn]]$Xdf1%*%diff(diag(q-1),difference=1)
    #         else ## 2nd order derivative
    #               Xd <- object$smooth[[sn]]$Xdf2%*%diff(diag(q-1),difference=2) 
    # }
-   else{   ## for other unconstrained smooths via finite differencing using predict.gam() 
+   } else {   ## for other unconstrained smooths via finite differencing using predict.gam() 
           xx <- object$model[object$smooth[[sn]]$term]   ## find the data
           if (object$smooth[[sn]]$by != "NA") {
                   by <- rep(1, n)
@@ -77,10 +171,34 @@ derivative.scam <- function(object, smooth.number=1,deriv=1){
                    Xd <- (X2-2*X1+X0)/eps^2
               }
       }
+ if (inherits(object$smooth[[sn]], c("miso.smooth", "mifo.smooth"))) {
+  ind.con  <- object$smooth[[sn]]$n.zero
+  Xd <- Xd[,-ind.con]
+ } else if (inherits(object$smooth[[sn]], c("mpi.smooth"))) 
+    Xd <- Xd[,-1]
  df <- Xd%*%beta.t ## values of the derivatives 
  df.sd <- rowSums(Xd%*%Vp*Xd)^.5  ## standard errors of the derivative of smooth 
+   
  list(d=df,se.d=df.sd)
-}  ## end of derivative.scam
+}  ## end of derivative.scam.miso
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -8,7 +8,7 @@
   for creating tensor product bivariate smooths monotone decreasing in the second covariate which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
   It is constructed from a pair of single penalty
-  marginal smooths. This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd2",m=c(2,2))}. The default basis for the first marginal smooth is P-spline. Note: currently only cyclic cubic regression spline (\code{"cc"}) is implemented in addition to P-spline. 
+  marginal smooths. This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd2",m=c(2,2))}. The default basis for the first marginal smooth is P-spline. Cyclic cubic regression spline (\code{"cc"}) is implemented in addition to the P-spline. See an example below on how to call for it. 
 }
 \usage{
 \method{smooth.construct}{tesmd2.smooth.spec}(object, data, knots)
@@ -71,10 +71,11 @@ Natalya Pya <nat.pya@gmail.com>
 ## fit model ...
    b <- scam(y~s(x1,x2,bs="tesmd2",k=10),data=dat)
 ## plot results ...
-   par(mfrow=c(2,2),mar=c(4,4,2,2))
+   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
-   plot(b,pers=TRUE,theta = 30, phi = 40)
+   plot(b,scheme=1,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   par(old.par)
    vis.scam(b,theta = 40, phi = 20)
 
 ## example with cyclic cubic regression spline along the 1st covariate...
@@ -92,12 +93,13 @@ Natalya Pya <nat.pya@gmail.com>
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b1 <- scam(y~s(x1,x2,bs="tesmd2",xt="cc",k=10), data=dat)
+   b1 <- scam(y~s(x1,x2,bs="tesmd2",xt=list("cc"),k=10), data=dat)
 ## plot results ...
-   par(mfrow=c(2,2))
+   old.par <-par(mfrow=c(2,2))
    plot(b1,se=TRUE)
-   plot(b1,pers=TRUE,theta = 30, phi = 40)
+   plot(b1,scheme=1,theta = 30, phi = 40)
    plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
+   par(old.par)
    vis.scam(b1,theta=40,phi=20)
  }
 }

@@ -1,25 +1,26 @@
 Package: scam
-Version: 1.2-15
+Version: 1.2-16
 Author: Natalya Pya <nat.pya@gmail.com>
 Maintainer: Natalya Pya <nat.pya@gmail.com>
 Title: Shape Constrained Additive Models
-Date: 2024-01-25
-Description: Routines for generalized additive modelling under shape
-        constraints on the component functions of the linear predictor
-        (Pya and Wood, 2015) <doi:10.1007/s11222-013-9448-7>.
-        Models can contain multiple shape constrained (univariate
-        and/or bivariate) and unconstrained terms. The routines of gam() 
-        in package 'mgcv' are used for setting up the model matrix,  
-        printing and plotting the results.  Penalized likelihood
-        maximization based on Newton-Raphson method is used to fit a
-        model with multiple smoothing parameter selection by GCV or
-        UBRE/AIC.
+Date: 2024-02-23
+Description: Generalized additive models under shape
+        constraints on the component functions of the linear predictor.       
+        Models can include multiple shape-constrained (univariate
+        and bivariate) and unconstrained terms. Routines of the 
+        package 'mgcv' are used to set up the model matrix, print, 
+        and plot the results. Multiple smoothing parameter 
+        estimation by the Generalized Cross Validation or similar.
+        See Pya and Wood (2015) <doi:10.1007/s11222-013-9448-7> 
+        for an overview. A broad selection of shape-constrained 
+        smoothers, linear functionals of smooths with shape constraints,
+        and Gaussian models with AR1 residuals. 
 Depends: R (>= 2.15.0), mgcv (>= 1.8-2)
 Imports: methods, stats, graphics, Matrix, splines
 Suggests: nlme
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2024-01-25 16:16:50 UTC; natalyapyaarnqvist
+Packaged: 2024-02-23 08:26:25 UTC; natalya
 Repository: CRAN
-Date/Publication: 2024-01-25 20:50:02 UTC
+Date/Publication: 2024-02-23 09:40:02 UTC

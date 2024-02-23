@@ -5,31 +5,39 @@
 \packageTitle{scam}
 }
 \description{
-\code{scam} provides functions for generalized additive modelling under shape constraints on the component functions of the linear predictor of the GAM. Models can contain multiple shape constrained and unconstrained terms as well as bivariate smooths with double or single monotonicity. Univariate smooths under  eight possible shape constraints such as monotonically increasing/decreasing, convex/concave, increasing/decreasing and convex, increasing/decreasing and concave, are available as model terms.
+\code{scam} provides functions for generalized additive modelling under shape constraints on the component functions of the linear predictor of the GAM. Models can contain multiple univariate and bivariate shape constrained terms, unconstrained terms and parametric terms. A wide variety of shape constrained smooths covered in \code{\link{shape.constrained.smooth.terms}} are provided.
 
-The model set up is the same as in \code{gam()} in package \code{mgcv} with the added shape constrained smooths, so the unconstrained smooths can be of more than one variable, and other user defined smooths can be included.  Penalized log likelihood maximization is used to fit the model
-together with the automatic smoothness selection.
+The model set-up is similar to that of \code{gam()} of the package \code{mgcv}, so unconstrained smooths of one or more variables of the \code{mgcv} can be included in SCAMs. User-defined smooths can be added as well. SCAM is estimated by penalized log likelihood maximization and provides automatic smoothness selection by minimizing generalized cross validation or similar. A Bayesian approach is used to obtain a covariance matrix of the model coefficients and credible intervals for each smooth. Linear functionals of smooth functions with shape constraints, parametric model terms, simple linear random effects terms, bivariate interaction smooths with increasing/decreasing constraints (smooth ANOVA), and identity link Gaussian models with AR1 residuals are supported.
 }
+
 \details{
+  %\packageDESCRIPTION{scam}
+  %\packageIndices{scam}
+\code{scam} provides generalized additive modelling under shape constraints functions \code{\link{scam}}, \code{\link{summary.scam}}, \code{\link{plot.scam}}, \code{\link{scam.check}}, \code{\link{predict.scam}}, \code{\link{anova.scam}}, and \code{\link{vis.scam}}. These are based on the functions of the unconstrained GAM of the package \code{mgcv} and are similar in use.  
 
-\packageDESCRIPTION{scam}
-%\packageIndices{scam}
+The use of \code{scam()} is much like the use of \code{gam()}, except that within a \code{scam} model formula, shape constrained smooths of one or two predictors can be specified using \code{s} terms with a type of shape constraints used specified as a letter character string of the argument \code{bs}, e.g. \code{s(x, bs="mpi")} for smooth subject to increasing constraint. See \code{\link{shape.constrained.smooth.terms}} for a complete overview of what is available. scam model estimation is performed by penalized likelihood maximization, with smoothness selection by GCV, UBRE/AIC criteria. See \code{\link{scam}}, \code{\link{linear.functional.terms}} for a short discussion of model specification and some examples. See \code{\link{scam}} arguments \code{optimizer} and \code{optim.method}, and \code{\link{scam.control}} for detailed control of scam model fitting. For checking and visualization, see \code{\link{scam.check}}, \code{\link{plot.scam}}, \code{\link{qq.scam}} and \code{\link{vis.scam}}. For extracting fitting results, see \code{\link{summary.scam}} and \code{\link{anova.scam}}.
 
-The package provides generalized additive modelling under shape constraints on the component functions of the linear predictor. 
-\code{\link{scam}} and \code{\link{plot.scam}} functions are based on the functions of the unconstrained GAM \code{gam()} and \code{plot.gam()} in package \code{mgcv} and similar in use.  
-\code{\link{summary.scam}} allows to extract the results of the model fitting in the same way as in \code{summary.gam}. A Bayesian approach is used to obtain a covariance matrix of the model coefficients and credible intervals for each smooth. 
+A Bayesian approach to smooth modelling is used to obtain covariance matrix of the model coefficients and credible intervals for each smooth. \code{Vp} element of the fitted object of class \code{scam} returns the Bayesian covariance matrix, \code{Ve} returns the frequentist estimated covariance matrix for the parameter estimators. The 
+frequentist estimated covariance matrix for the reparametrized parameter estimators (obtained using the delta method) is returned in \code{Ve.t}, which is particularly useful for testing individual smooth
+terms for equality to the zero function (not so useful for CI's as smooths are usually biased).
+\code{Vp.t} returns the Bayesian covariance matrix for the reparametrized parameters. Frequentist approximations can be used for hypothesis testing based on model comparison; see \code{\link{anova.scam}} and \code{\link{summary.scam}} for info on hypothesis testing.
+
+For a complete list of functions type \code{library(help=scam)}.
+  
 }
+
 \author{
 \packageAuthor{scam} based partly on \code{mgcv} by Simon Wood
 
 Maintainer: \packageMaintainer{scam}
 }
+
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
 
 Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of Bath. Department of Mathematical Sciences
 
-Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman and Hall/CRC Press.
+Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman and Hall/CRC Press
 
 Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
 additive models. Journal of the Royal Statistical Society (B) 70(3):495-518 

@@ -1,3 +1,6 @@
+## (c) Simon N. Wood 23/2/03,  vis.gam() of the mgcv package
+
+
 vis.scam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="heat",
            contour.col=NULL,se=-1,type="link",plot.type="persp",zlim=NULL,nCol=50,...)
 ## hacked version of vis.gam() from mgcv package, (c) Simon N. Wood 23/2/03 

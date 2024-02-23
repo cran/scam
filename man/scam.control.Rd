@@ -1,7 +1,7 @@
 \name{scam.control}
 \alias{scam.control}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Setting GAM fitting defaults}
+\title{Setting SCAM fitting defaults}
 \description{ This is an internal function of package \code{scam} which allows 
 control of the numerical options for fitting a SCAM. 
 }

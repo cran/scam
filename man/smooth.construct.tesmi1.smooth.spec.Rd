@@ -10,9 +10,7 @@
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
   It is constructed from a pair of single penalty
   marginal smooths. This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmi1",m=2)}.
-  The basis for the second marginal smooth can be specified as a two letter character string  of the argument \code{xt} (eg \code{xt="cc"} to specify cyclic cubic regression spline). See example below. The default basis for the second marginal smooth is P-spline. Note: currently only cyclic cubic regression spline is implemented in addition to P-spline. 
-  
-
+  The basis for the second marginal smooth can be specified as a two letter character string  of the argument \code{xt} (eg \code{xt="cc"} to specify cyclic cubic regression spline). See example below. The default basis for the second marginal smooth is P-spline. Cyclic cubic regression spline (\code{"cc"}) is implemented in addition to the P-spline. See an example below on how to call for it. 
 }
 \usage{
 \method{smooth.construct}{tesmi1.smooth.spec}(object, data, knots)
@@ -75,11 +73,11 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 ## fit model ...
    b <- scam(y~s(x1,x2,bs="tesmi1",k=c(10,10)), data=dat)
 ## plot results ...
-   par(mfrow=c(2,2))
+   old.par<- par(mfrow=c(2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
+   par(old.par)
    vis.scam(b,theta=40,phi=20)
 
 ## example with cyclic cubic regression spline along the second covariate...
@@ -98,13 +96,13 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b1 <- scam(y~s(x1,x2,bs="tesmi1",xt="cc",k=10), data=dat)
+   b1 <- scam(y~s(x1,x2,bs="tesmi1",xt=list("cc"),k=10), data=dat)
 ## plot results ...
-   par(mfrow=c(2,2))
+   old.par<- par(mfrow=c(2,2))
    plot(b1,se=TRUE)
    plot(b1,pers=TRUE,theta = 30, phi = 40)
    plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
+   par(old.par)
    vis.scam(b1,theta=40,phi=20)
 
  }

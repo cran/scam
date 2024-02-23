@@ -68,10 +68,8 @@ require(scam)
 test <- function(x,z){
   -exp(4*x)/(1+exp(4*x))-2*sin(pi*z)-(x+1)^0.6*z
 }
-
 set.seed(7)
 n <- 600
-old.par <- par(mfrow=c(2,2))
 x <- runif(n)*4-1
 z <- runif(n)
 xs <- seq(-1,3,length=30); zs <- seq(0,1,length=30)
@@ -79,8 +77,9 @@ pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
 truth <- matrix(test(pr$x,pr$z),30,30)
 f <- test(x,z)
 y <- f + rnorm(n)*0.3
-bi <- scam(y~ s(x)+s(z)+ s(x,z,bs="tismd"))
+bi <- scam(y~ ti(x)+ti(z)+ s(x,z,bs="tismd"))
 summary(bi)
+old.par <- par(mfrow=c(2,2))
 persp(xs,zs,truth);title("truth")
 vis.scam(bi);title("tismd")
 
@@ -89,8 +88,8 @@ bc <- scam(y~s(x,z,bs="tesmd1"))
 vis.scam(bc);title("tesmd1")
 par(old.par)
 
-plot(bi,pages=1,scale=0)
-plot(bi,select=3,pers=TRUE)
+plot(bi,pages=1,scheme=2)
+plot(bi,select=3,scheme=1,zlim=c(-3,3))
  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

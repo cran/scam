@@ -71,7 +71,6 @@ test <- function(x,z){
 
 set.seed(7)
 n <- 600
-old.par <- par(mfrow=c(2,2))
 x <- runif(n)*4-1
 z <- runif(n)
 xs <- seq(-1,3,length=30); zs <- seq(0,1,length=30)
@@ -79,8 +78,9 @@ pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
 truth <- matrix(test(pr$x,pr$z),30,30)
 f <- test(x,z)
 y <- f + rnorm(n)*0.3
-bi <- scam(y~ s(x)+s(z)+ s(x,z,bs="tismi"))
+bi <- scam(y~ ti(x)+ti(z)+ s(x,z,bs="tismi"))
 summary(bi)
+old.par <- par(mfrow=c(2,2))
 persp(xs,zs,truth);title("truth")
 vis.scam(bi);title("tismi")
 
@@ -89,9 +89,8 @@ bc <- scam(y~s(x,z,bs="tesmi1"))
 vis.scam(bc);title("tesmi1")
 par(old.par)
 
-plot(bi,pages=1,scale=0)
-plot(bi,select=3,pers=TRUE)
- 
+plot(bi,pages=1,scheme=2)
+plot(bi,select=3,scheme=1,zlim=c(-5,5)) 
 
  }
 }

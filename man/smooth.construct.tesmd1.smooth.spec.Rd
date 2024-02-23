@@ -9,8 +9,7 @@
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
   It is constructed from a pair of single penalty marginal smooths. 
   This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tesmd1",m=2)}. 
-  The default basis for the second marginal smooth is P-spline. Note: currently only cyclic cubic regression spline (\code{"cc"}) is implemented in addition to P-spline. 
-  
+  The default basis for the second marginal smooth is P-spline. Cyclic cubic regression spline (\code{"cc"}) is implemented in addition to the P-spline. See an example below on how to call for it.   
 }
 \usage{
 \method{smooth.construct}{tesmd1.smooth.spec}(object, data, knots)
@@ -75,11 +74,11 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 ## fit model ...
    b <- scam(y~s(x1,x2,bs="tesmd1",k=10),data=dat)
 ## plot results ...
-   par(mfrow=c(2,2),mar=c(4,4,2,2))
+   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
+   par(old.par)
    vis.scam(b,theta=40,phi=20)
 
 ## example with cyclic cubic regression spline along the second covariate...
@@ -97,13 +96,13 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    x22 <- rep(x2,n)
    dat <- list(x1=x11,x2=x22,y=y)
 ## fit model ...
-   b1 <- scam(y~s(x1,x2,bs="tesmd1",xt="cc",k=10), data=dat)
+   b1 <- scam(y~s(x1,x2,bs="tesmd1",xt=list("cc"),k=10), data=dat)
 ## plot results ...
-   par(mfrow=c(2,2))
+   old.par <- par(mfrow=c(2,2))
    plot(b1,se=TRUE)
    plot(b1,pers=TRUE,theta = 30, phi = 40)
    plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
+   par(old.par)
    vis.scam(b1,theta=40,phi=20)
   }
 } 

@@ -5,7 +5,8 @@
 \title{Some diagnostics for a fitted scam object
 }
 \description{Takes a fitted \code{scam} object produced by \code{scam()} and produces some diagnostic information
-about the fitting procedure and results. This function is almost the same as \code{\link{gam.check}} of the \code{mgcv} library.
+about the fitting procedure and results. This function is almost the same as \code{\link{gam.check}} of the \code{mgcv} library. The default is to produce four residual plots and some information about the
+convergence of the smoothness selection optimization.
 }
 \usage{
 scam.check(b,type=c("deviance","pearson","response"),old.style=FALSE, pch=".",

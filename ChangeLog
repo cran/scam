@@ -1,3 +1,16 @@
+1.2-16
+
+* scam-package.Rd: updated package details and descriptions to give a full overview of the current package functionality. DESCRIPTION updated as well.
+
+* predict: bug fixed with the prediction method when used on the original data, which occured after introducing extra centring constraints on univariate and bivariate scop-splines subject to monotonicity and convexity. Thanks to Steven Novick for reporting the bug. 
+
+* smooth.construct: bug fixed with 'tismi' and 'tismd' identifiability constraint along the unconsstrained marginal  
+
+* examples in .Rd files with usage of "cc" marginal in the bivariate scop-splines fixed
+
+* derivative.scam: bug fixed with 'miso', 'mifo' smooths when calculating derivatives. Thanks to Ben Evans.
+
+
 1.2-15
 
 * scam, scam.fit.post: bug fixed when an AR1 error model used for the residuals for Gaussian-identity link models, some fitting results were wrongly extracted, standardized residuals are now correctly returned.

@@ -97,13 +97,11 @@ smooth.construct.tismi.smooth.spec<- function(object, data, knots)
   IS <- matrix(1,q1,q1)  ## coef summation matrix
   IS[upper.tri(IS)] <-0
   X1 <- X1%*%IS
-## apply scop indentifiability constraint on the marginal...
-  X1 <- X1[,-1]
- # cmx <- colMeans(X1)
- # X1 <- sweep(X1,2,cmx) ## apply centering constraint
-  
-  cmx <- colMeans(X2)
-  X2 <- sweep(X2,2,cmx) ## apply centering constraint for the unconstrained marginal
+  X1 <- X1[,-1] ## apply scop indentifiability constraint on the marginal
+   
+ # cmx <- colMeans(X2)
+ # X2 <- sweep(X2,2,cmx) ## apply centering constraint for the unconstrained marginal
+ # object$cmX <- cmx
   X2 <- X2[,-1]
   X <- matrix(0,n,(q1-1)*(q2-1)) ## tensor product model matrix
  # X <- matrix(0,n,q1*(q2-1)) 
@@ -138,7 +136,7 @@ smooth.construct.tismi.smooth.spec<- function(object, data, knots)
  ## create the penalty matrix... NEED here rather than from marginal.matrices.tesmi1.ps() used for X and S 
   ## since identifiability constraints were applied on the marginal smooths
   S <- list()
-  # get the penalty matrix for the first monotone smooth...
+  # get the penalty matrix for the first monotone marginal...
   I2<- diag(q2-1)
   P <- diff(diag(q1-1),difference=1) 
   Pm1 <- matrix(0,q1-2,q1-1) # marginal sqrt penalty
@@ -146,7 +144,7 @@ smooth.construct.tismi.smooth.spec<- function(object, data, knots)
   S[[1]]<- Pm1%x%I2
   S[[1]] <- crossprod(S[[1]])  ## t(S[[1]])%*%S[[1]]
 
- # get penalty for the 2nd smooth...
+ # get penalty for the 2nd marginal...
   I2 <- diff(diag(q2-1),difference=1) 
   I21<- diff(diag(q2-1),difference=2)
   I1 <- diag(q1-1)
@@ -161,7 +159,7 @@ smooth.construct.tismi.smooth.spec<- function(object, data, knots)
   object$S[[1]] <- S[[1]]
   object$S[[2]] <- S[[2]]
   object$p.ident <- rep(TRUE,(q1-1)*(q2-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)  
- # object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) 
+  object$p.ident[1:(q2-1)] <- rep(FALSE, q2-1) 
   object$rank <- ncol(object$X)-1  # penalty rank
   object$null.space.dim <-  3 ##  dim. of unpenalized space
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
@@ -199,7 +197,9 @@ Predict.matrix.tismi.smooth<-function(object,data)
   IS <- matrix(1,q1,q1)  ## coef summation matrix
   IS[upper.tri(IS)] <-0
   X1 <- bm$X1%*%IS
+ 
   X2 <- bm$X2
+#  X2 <- sweep(X2,2,object$cmX) ## apply centering constraint for the unconstrained marginal
   X <- matrix(0,n,q1*q2) ## tensor product model matrix
   for (i in 1:n)
       X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
@@ -301,12 +301,12 @@ smooth.construct.tismd.smooth.spec<- function(object, data, knots)
   X1 <- X1%*%IS
   ## apply scop indentifiability constraint on the marginal...
   X1 <- X1[,-1]
- # cmx <- colMeans(X1)
- # X1 <- sweep(X1,2,cmx) ## apply centering constraint
-  
-  cmx <- colMeans(X2)
-  X2 <- sweep(X2,2,cmx) ## apply centering constraint for the unconstrained marginal
-  X2 <- X2[,-1]
+
+ # cmx <- colMeans(X2)
+ # X2 <- sweep(X2,2,cmx) ## apply centering constraint for the unconstrained marginal
+ # object$cmX <- cmx
+
+  X2 <- X2[,-1] ## apply zero-intercept constraint 
   X <- matrix(0,n,(q1-1)*(q2-1)) ## tensor product model matrix
   for (i in 1:n)
       X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
@@ -387,9 +387,12 @@ Predict.matrix.tismd.smooth<-function(object,data)
   IS[upper.tri(IS)] <-0
   IS[,1] <- -IS[,1]
   X1 <- bm$X1%*%IS
+  
+  X2 <- bm$X2
+ # X2 <- sweep(X2,2,object$cmX) ## apply centering constraint for the unconstrained marginal
   X <- matrix(0,n,q1*q2)  # tensor product model matrix
   for (i in 1:n)
-      X[i,] <- X1[i,]%x%bm$X2[i,] # Kronecker product of two rows of marginal model matrices
+      X[i,] <- X1[i,]%x%X2[i,] # Kronecker product of two rows of marginal model matrices
   
   X  # return the prediction matrix
 }

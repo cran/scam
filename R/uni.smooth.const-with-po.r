@@ -107,8 +107,9 @@ Predict.matrix.mpi.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -248,7 +249,7 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
   ## get unconstrained matrix Sigma and remove the first m+1 columns and rows...
   Sig <- matrix(1,q,q)  ## coef summation matrix
   Sig[upper.tri(Sig)] <-0
-  ind <- 1:(m+1) ## 1:3;
+  ind <- 1:(m+1) ## 1:3 if m=2;
   ## Sig[,ind] <- 0; Sig[ind,] <- 0
   Sig <- Sig[-ind,-ind]
   X <- X1[,-ind]%*%Sig # drop (m+1) start terms, model submatrix for the scop-term
@@ -256,7 +257,7 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
   object$P <- list()
   object$S <- list()
   object$Sigma <- Sig
-
+ 
   if (!object$fixed) # create the penalty matrix
   { P <- diff(diag(q-length(ind)),difference=1)
     object$P[[1]] <- P
@@ -272,9 +273,10 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
   object$df<-ncol(object$X)     # maximum DoF 
 
   ## get model matrix for 1st and 2nd derivatives of the smooth...
-  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  h <- xk[q]-xk[q-1] ##(max(x)-min(x))/(q-m-1) ## distance between two adjacent knots (both expressions give the same distance)
+  ## Xdf1, Xdf2 need to be checked...
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,(m+2):(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,(m+2):(q-2)]/h^2 ## ord is by two less for the 2nd derivative
 
   class(object)<-"miso.smooth"  # Give object a class
   object
@@ -378,8 +380,9 @@ smooth.construct.mifo.smooth.spec<- function(object, data, knots)
 
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
-  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  ## Xdf1, Xdf2 need to be checked...
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1-(m+1))]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2-(m+1))]/h^2 ## ord is by two less for the 2nd derivative
 
   class(object)<-"mifo.smooth"  # Give object a class
   object
@@ -519,8 +522,9 @@ Predict.matrix.mpd.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX)) 
+    ## X <- sweep(X,2,c(0,object$cmX)) 
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -728,8 +732,9 @@ Predict.matrix.mdcv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+    ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -940,8 +945,9 @@ Predict.matrix.mdcx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+   ##  X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -1164,8 +1170,9 @@ Predict.matrix.micv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+    ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -1378,8 +1385,9 @@ Predict.matrix.micx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+    ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -1442,7 +1450,7 @@ smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
   object$knots <- xk;
   object$m <- m;
   object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
-  class(object)<-"micxBy.smooth"  # Give object a class
+  class(object)<- "micxBy.smooth"  # Give object a class
   object
 }
 
@@ -1587,8 +1595,9 @@ Predict.matrix.cv.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+    ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 
@@ -1798,8 +1807,9 @@ Predict.matrix.cx.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
      X <- X%*%Sig 
-     X <- sweep(X,2,c(0,object$cmX))
+    ## X <- sweep(X,2,c(0,object$cmX))
   }
+  X <- sweep(X,2,c(0,object$cmX))
   X
 }
 

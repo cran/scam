@@ -61,7 +61,8 @@ For details see \code{\link{smooth.construct.miso.smooth.spec}}.
 
 \item Decreasing/increasing and convex/concave SCOP-splines used with numeric 'by' variable: \code{bs="mdcxBy"}, \code{bs="mdcvBy"}, \code{bs="micxBy"}, \code{bs="micvBy"}. 
 
-These work similar to \code{mdcx.smooth.spec}, \code{mdcv.smooth.spec}, \code{micx.smooth.spec}, \code{micv.smooth.spec}, but without applying an identifiability constraint ('zero intercept' constraint). Use when the smooth term has a numeric \code{by} variable  that takes more than one value.
+These work similar to \code{mdcx.smooth.spec}, \code{mdcv.smooth.spec}, \code{micx.smooth.spec}, \cr
+ \code{micv.smooth.spec}, but without applying an identifiability constraint ('zero intercept' constraint). Use when the smooth term has a numeric \code{by} variable  that takes more than one value.
  For details see \code{\link{smooth.construct.mdcx.smooth.spec}}, 
 
 \code{\link{smooth.construct.mdcv.smooth.spec}},
@@ -72,7 +73,7 @@ These work similar to \code{mdcx.smooth.spec}, \code{mdcv.smooth.spec}, \code{mi
 
 }
 
-For all types of the mixed constrained smoothing a first order difference penalty applied to the basis coefficients starting with the third one is used. 
+For all types of the mixed constrained smoothing a first order difference penalty applied to the basis coefficients starting with the third one is used. Centring ('sum-to-zero') constraint has been applied to univariate SCOP-splines subject to monotonicity (convexity) constraints after implementing the 'zero intercept' identifiability constraint. This is achieved by dropping the first (constant) column of the spline model matrix and subtracting the corresponding column means from the elements of the remaining columns afterwards. 'Sum-to-zero' constraint orthogonalized the smooth to the model intercept term, thus avoiding confounding with the intercept. The standard errors of the estimated intercept become lower with the centring constraint.
 
 
 Using the concept of the tensor product spline bases bivariate smooths under monotonicity constraint where monotonicity may be 
@@ -138,8 +139,10 @@ See \code{\link{smooth.construct.tismi.smooth.spec}} for details.
 
 See \code{\link{smooth.construct.tismd.smooth.spec}} for details.
  }
-Double penalties for the shape constrained tensor product smooths are obtained from the penalties of the marginal smooths.
+Double penalties for the shape constrained tensor product smooths are obtained from the penalties of the marginal smooths. For the bivariate SCOP-splines with monotonicity (convexity) constraints along one covariate, the 'sum-to-zero' constraints are applied after dropping the first columns of the model matrix of the constrained marginal smooth. The basis for the unconstrained marginal must be non-negative over the region where the marginal monotonicity (convexity) is to hold. For the bivariate interaction smooths \code{"tismi"}  and \code{"tismd"} the following identifiability steps are implemented: i) dropped the first column of the \code{"mpi"} (\code{"mpd"}) marginals, ii) applied 'sum-to-zero' constraints to the marginals and to the unconstrained B-spline basis, iii) tensor product constructed. The 'sum-to-zero' constraint is applied to the final tensor product model matrix afters removing its first column when constructing bivariate SCOP-splines with double monotonicity (convexity). These result in faster convergence of the optimization routines and more stable intercept estimates.
 
+Also linear functionals of smooths with shape constraints (increasing/decreasing and convex/concave) are 
+supported. See \code{\link{linear.functional.terms}}. 
 }
 
 \seealso{\code{\link{s}}, \code{\link{smooth.construct.mpi.smooth.spec}}, 

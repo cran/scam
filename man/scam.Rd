@@ -3,14 +3,11 @@
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
-\description{This function fits a SCAM to data. Univariate smooths subject to monotonicity, convexity, or monotonicity plus convexity are available as model terms, as well as
-   bivariate smooths with double or single monotonicity. Smoothness selection is estimated as part of the fitting. 
-   Confidence/credible intervals are available for each smooth term.    
+\description{This function fits a SCAM to data. Various shape constrained smooths (SCOP-splines), including univariate smooths subject to monotonicity, convexity, or monotonicity plus convexity, bivariate smooths with double or single monotonicity  are available as model terms. See \code{\link{shape.constrained.smooth.terms}} for a complete overview of what is available. Smoothness selection is estimated as part of the fitting. Confidence/credible intervals are available for each smooth term.    
 
-  All the shaped constrained smooths have been added to the \code{gam()} in package \code{mgcv} setup using the \code{smooth.construct} function. The routine calls a \code{gam()} function for the model set up, but there are separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, \code{\link{bfgs_gcv.ubre}}. Any unconstrained smooth available in \code{gam} can be taken as model terms. 
-
-
+  The shaped constrained smooths have been added to the \code{gam()} in package \code{mgcv} setup using the \code{smooth.construct} function.  The routine calls a \code{gam()} function for the model set up, but there are separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, \code{\link{bfgs_gcv.ubre}}. Any smooth available in the \code{mgcv} can be taken as a model term for SCAM. User-defined smooths can be included as well.
 }
+
 \usage{
 scam(formula, family = gaussian(), data = list(), gamma = 1, 
       sp = NULL, weights = NULL, offset = NULL,optimizer=c("bfgs","newton"), 
@@ -21,10 +18,11 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{formula}{A SCAM formula.  
- This is exactly like the formula for a GAM (see \code{formula.gam} of the \code{mgcv} library) except that monotone smooth terms,
- can be added in the expression of the form \cr
- \code{s(x1,k=12,bs="mpi",by=z),}\cr  where \code{bs} indicates the basis to use for the constrained smooth: 
- the built in options for the monotonic smooths are described in \code{\link{shape.constrained.smooth.terms}}, 
+ This is exactly like the formula for a GAM (see \code{formula.gam} of the \code{mgcv} library) except that shape constrained smooth terms,
+ can be added in the expression of the form, e.g., 
+ \code{s(x1,k=12,bs="mpi",by=z),}  where \code{bs} indicates the basis to use for the constrained smooth (increasing in this case): 
+ the built in options for the shape constrained smooths are described in \cr 
+ \code{\link{shape.constrained.smooth.terms}}, 
 } 
 
   \item{family}{A family object specifying the distribution and link to use in
@@ -100,7 +98,7 @@ where the independent response variables \eqn{Y_i}{Y_i} follow Poisson distribut
 \eqn{f_1}{f_1}, \eqn{m_2}{m_2}, and \eqn{f_3}{f_3} are smooth functions of the corresponding covariates, and \eqn{m_2}{m_2} 
 is subject to monotone increasing constraint.  
 
-All available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
+Available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
 
 Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero. Use \code{acf(model$std.rsd)} for computing and plotting estimates of the autocorrelation function to check correlation.
 
@@ -294,7 +292,7 @@ plot(b,pages=1,shade=TRUE)
 ##===============================
 ## Gaussian model, two smooth terms: increasing and mixed (decreasing and convex)...
  ## simulating data...
-set.seed(5)
+set.seed(4)
 n <- 200
 x1 <- runif(n)*4-1;
 f1 <- exp(4*x1)/(1+exp(4*x1)) # increasing smooth
@@ -392,10 +390,11 @@ plot(b,shade=TRUE)
 ## fit model  and plot ...
    b <- scam(y~s(x1,x2,k=c(10,10),bs=c("tesmd1","ps")),data=dat,optimizer="efs")
    summary(b)
-   par(mfrow=c(2,2),mar=c(4,4,2,2))
+   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
    plot(b,se=TRUE)
    plot(b,pers=TRUE,theta = 30, phi = 40)
    plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+   par(old.par)
 
 ## example with random effect smoother...
    set.seed(2)

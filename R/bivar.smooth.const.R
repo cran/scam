@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2023). Provided under GPL 2.
+## (c) Natalya Pya (2012-2024). Provided under GPL 2.
 ## Shape constrained smooth construct for bivariate terms.
 ## (2023) with sum-to-zero contraint applied to the final tensor product model matrices, XSig, after scop constraints...
 
@@ -75,6 +75,7 @@ smooth.construct.tedmd.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -141,6 +142,7 @@ Predict.matrix.tedmd.smooth <- function(object, data)
   Sig <- IS1%x%IS # Knonecker product to get Sigma
   Sig[,1] <- rep(1,ncol(Sig))
   X <- X%*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -276,6 +278,7 @@ smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
   
   # create the penalty matrix
   S <- list()
@@ -346,6 +349,7 @@ Predict.matrix.tedmi.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -466,6 +470,7 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
 
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ##  t(D)%*%S[[1]]%*%D
@@ -525,6 +530,7 @@ Predict.matrix.tesmd1.smooth<-function(object,data)
   Sig <- IS%x%I
   # get final model matrix
   X <- X%*%Sig
+ # X <- sweep(X,2,c(0,object$cmX))
   X  # return the prediction matrix
 }
 
@@ -652,6 +658,7 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -876,6 +883,7 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ## t(D)%*%S[[1]]%*%D
@@ -1281,6 +1289,7 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -1560,6 +1569,7 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1631,6 +1641,7 @@ Predict.matrix.temicx.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -1728,6 +1739,7 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1799,6 +1811,7 @@ Predict.matrix.temicv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -1893,6 +1906,7 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1960,6 +1974,7 @@ Predict.matrix.tedecv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -2053,6 +2068,7 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -2120,6 +2136,7 @@ Predict.matrix.tedecx.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -2265,6 +2282,7 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -2424,6 +2442,7 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -2568,6 +2587,7 @@ smooth.construct.tecvcv.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -2636,6 +2656,7 @@ Predict.matrix.tecvcv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -2729,7 +2750,8 @@ smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
- 
+  object$cmX <- cmx
+
   # create the penalty matrix
   S <- list()
   I2<- diag(q2)
@@ -2797,6 +2819,7 @@ Predict.matrix.tecxcx.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -2891,6 +2914,7 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
+  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -2930,8 +2954,7 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   object
 }
 
-####################################################################
-
+#############################################
 
 Predict.matrix.tecxcv.smooth <- function(object, data)
 {  ## prediction method function for the `tecxcv' smooth class
@@ -2959,6 +2982,7 @@ Predict.matrix.tecxcv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
+  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 

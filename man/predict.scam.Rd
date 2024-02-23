@@ -128,13 +128,23 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 f <- f1+f2
 y <- f+rnorm(n)*0.2
 dat <- data.frame(x1=x1,x2=x2,y=y)
-b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi"),
-    family=gaussian(link="identity"),data=dat)
+b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi"),data=dat)
 
 newd <- data.frame(x1=seq(-3,3,length.out=20),x2=seq(-1,3,length.out=20))
 pred <- predict(b,newd)
 pred
 predict(b,newd,type="terms",se=TRUE)
+
+## prediction on the original data...
+pr <- predict(b,type="terms")
+x<-sort(x1,index=TRUE)
+old.par <- par(mfrow=c(2,2))
+plot(x$x,(pr[,1])[x$ix],type="l",col=3,xlab="x1")
+z<-sort(x2,index=TRUE)
+plot(z$x,(pr[,2])[z$ix],type="l",col=3,xlab="x2")
+plot(b,select=1,scale=0,se=FALSE)
+plot(b,select=2,scale=0,se=FALSE)
+par(old.par)
 
 ## linear extrapolation with predict.scam()...
 set.seed(3)
@@ -150,6 +160,12 @@ ylim<- c(min(y,exp(fe$fit)),max(y,exp(fe$fit)))
 plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylim=ylim,ylab="y",xlab="x")
 lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
 
+## prediction on the original data...
+pr <- predict(b)
+plot(x,y)
+lines(x,exp(pr),col=3)
+
+
 ## Gaussian model ....
 ## simulating data...
  set.seed(2)
@@ -158,28 +174,32 @@ lines(c(x,newd[[1]]),c(b$fitted,exp(fe$fit)),col=3)
  f <- exp(4*x)/(1+exp(4*x)) # monotone increasing smooth
  y <- f+rnorm(n)*0.1
  dat <- data.frame(x=x,y=y)
- b <- scam(y~ s(x,k=25,bs="mpi"),family=gaussian,data=dat)
+ b <- scam(y~ s(x,k=25,bs="mpi"),data=dat)
  newd <- data.frame(x=c(3.2,3.3,3.6))
  fe <- predict(b,newd)
  plot(c(x,newd[[1]]),c(y,NA,NA,NA),ylab="y",xlab="x")
  lines(c(x,newd[[1]]),c(b$fitted,fe),col=3)
 
 ### passing observed data + new data...
-   newd <- data.frame(x=c(x,3.2,3.3,3.6))
-   fe <- predict(b,newd,se=TRUE)
-   plot(newd[[1]],c(y,NA,NA,NA),ylab="y",xlab="x")
-   lines(newd[[1]],fe$fit,col=2)
-   lines(newd[[1]],fe$fit+2*fe$se.fit,col=3)
-   lines(newd[[1]],fe$fit-2*fe$se.fit,col=4)
+ newd <- data.frame(x=c(x,3.2,3.3,3.6))
+ fe <- predict(b,newd,se=TRUE)
+ plot(newd[[1]],c(y,NA,NA,NA),ylab="y",xlab="x")
+ lines(newd[[1]],fe$fit,col=2)
+ lines(newd[[1]],fe$fit+2*fe$se.fit,col=3)
+ lines(newd[[1]],fe$fit-2*fe$se.fit,col=4)
 
 ## prediction with CI...
-   newd <- data.frame(x=seq(-1.2,3.5,length.out=100))
-   fe <- predict(b,newd,se=TRUE)
-   ylim<- c(min(y,fe$se.fit),max(y,fe$se.fit))
-   plot(newd[[1]],fe$fit,type="l",ylim=ylim,ylab="y",xlab="x")
-   lines(newd[[1]],fe$fit+2*fe$se.fit,lty=2)
-   lines(newd[[1]],fe$fit-2*fe$se.fit,lty=2)
+ newd <- data.frame(x=seq(-1.2,3.5,length.out=100))
+ fe <- predict(b,newd,se=TRUE)
+ ylim<- c(min(y,fe$se.fit),max(y,fe$se.fit))
+ plot(newd[[1]],fe$fit,type="l",ylim=ylim,ylab="y",xlab="x")
+ lines(newd[[1]],fe$fit+2*fe$se.fit,lty=2)
+ lines(newd[[1]],fe$fit-2*fe$se.fit,lty=2)
  
+## prediction on the original data...
+pr <- predict(b)
+plot(x,y)
+lines(x,pr,col=3)
 
 ## bivariate example...
    set.seed(2)

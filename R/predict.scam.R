@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2023). Provided under GPL 2.
+## (c) Natalya Pya (2012-2024). Provided under GPL 2.
 ## based on (c) Simon N Wood predict.gam(mgcv) ...
 
 
@@ -261,22 +261,23 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                  "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
                  "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
-            else if (inherits(object$smooth[[k]], c("miso.smooth","mifo.smooth"))) ## 'zero start' and pss zero increasing constraints...
+            else if (inherits(object$smooth[[k]], c("miso.smooth","mifo.smooth"))) ## 'zero start' and pss zero increasing constraints
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,-object$smooth[[k]]$n.zero]
           #  else if (inherits(object$smooth[[k]], c("mipoc.smooth"))) ## 'pss zero ' increasing constraint ...
            #    X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
-            else if (inherits(object$smooth[[k]], c("tesmi1.smooth","tismi.smooth","tismd.smooth",
-                 "tesmi2.smooth","tesmd1.smooth",
-                  "tesmd2.smooth","tescx.smooth","tescv.smooth")))  # for single monotonicity...             
+            else if (inherits(object$smooth[[k]], c("tesmi1.smooth", "tesmi2.smooth", "tesmd1.smooth",
+                  "tesmd2.smooth","tescx.smooth","tescv.smooth"))) { ## for single monotonicity/ convexity             
                   X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag%*%object$smooth[[k]]$Zc               
-            else ## unconstrainded smooths...
+                  X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- sweep(X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para],2,object$smooth[[k]]$cmX)
+               } else if (inherits(object$smooth[[k]], c("tismi.smooth","tismd.smooth"))) {## for smooth interaction             
+                  X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag %*%object$smooth[[k]]$Zc                                
+               } else ## unconstrainded smooths...
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
           Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
           if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
         }
         if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- klab
     } ## smooths done
-
 
     # Now have prediction matrix for this block, now do something with it
     if (type=="lpmatrix") { 
