@@ -1920,7 +1920,7 @@ Predict.matrix.cxBy.smooth<-function(object,data)
 
 
 smooth.construct.po.smooth.spec<- function(object, data, knots)
-## construction of the positivelt costrained smooth
+## construction of the positively costrained smooth
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline

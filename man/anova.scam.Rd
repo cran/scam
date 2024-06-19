@@ -3,10 +3,10 @@
 \alias{print.anova.scam}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Approximate hypothesis tests related to  SCAM fits}
-\description{Performs hypothesis tests relating to one or more fitted \code{scam} objects.
- The function is a clone of \code{anova.gam} of the \code{mgcv} package. 
+\description{Performs hypothesis tests relating to one or more fitted \code{\link{scam}} objects.
+ The function is a clone of \code{\link[mgcv]{anova.gam}} of the \code{mgcv} package. 
 
-The documentation below is similar to that of object \code{\link{anova.gam}}.
+The documentation below is similar to that of object \code{\link[mgcv]{anova.gam}}.
 }
 \usage{
 \method{anova}{scam}(object, ..., dispersion = NULL, test = NULL,
@@ -22,13 +22,13 @@ The documentation below is similar to that of object \code{\link{anova.gam}}.
 \item{test}{what sort of test to perform for a multi-model call. One of
 \code{"Chisq"}, \code{"F"} or \code{"Cp"}. }
 \item{freq}{whether to use frequentist or Bayesian approximations for parametric term 
-p-values. See \code{\link{summary.gam}} for details.}
+p-values. See \code{\link[mgcv]{summary.gam}} for details.}
 \item{p.type}{selects exact test statistic to use for single smooth term p-values. See
  \code{\link{summary.scam}} for details.}
 \item{digits}{number of digits to use when printing output.}
 }
 
-\details{ see \code{\link{anova.gam}} for details.
+\details{ see \code{\link[mgcv]{anova.gam}} for details.
 }
 
 \value{In the multi-model case \code{anova.scam} produces output identical to
@@ -63,7 +63,7 @@ For a single model, interpretation is similar to drop1, not anova.lm.
 } 
 
 \seealso{  \code{\link{scam}}, \code{\link{predict.scam}},
-\code{\link{scam.check}}, \code{\link{summary.scam}}, \code{\link{anova.gam}} 
+\code{\link{scam.check}}, \code{\link{summary.scam}}, \code{\link[mgcv]{anova.gam}} 
 }
 
 \examples{

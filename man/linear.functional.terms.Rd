@@ -25,7 +25,7 @@ See \code{linear.functional.terms(mgcv)}.
 library(scam)
 ## decreasing smooth...
 set.seed(4)
-rf <- function(x=seq(-1,3,length=100)) {
+rf <- function(x=seq(-1,3,length=100)) { ## taken from mgcv package
 ## generates random functions...
   m <- ceiling(runif(1)*5) ## number of components
   f <- x*0;

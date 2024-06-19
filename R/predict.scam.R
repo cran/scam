@@ -257,11 +257,11 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           if (!is.matrix(Xfrag)) Xfrag <- matrix(Xfrag,nrow=nrow(data))
           ## added code specific for scam....
           if (inherits(object$smooth[[k]], c("mpi.smooth","mpic.smooth","mpd.smooth", "cv.smooth", "cx.smooth",
-                 "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth", ## "mipoc.smooth", 
+                 "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth",  
                  "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
                  "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
-            else if (inherits(object$smooth[[k]], c("miso.smooth","mifo.smooth"))) ## 'zero start' and pss zero increasing constraints
+            else if (inherits(object$smooth[[k]], c("miso.smooth","mifo.smooth"))) ## 'zero start' and  'zero end' increasing constraints
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,-object$smooth[[k]]$n.zero]
           #  else if (inherits(object$smooth[[k]], c("mipoc.smooth"))) ## 'pss zero ' increasing constraint ...
            #    X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
@@ -270,9 +270,9 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                   X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag%*%object$smooth[[k]]$Zc               
                   X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- sweep(X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para],2,object$smooth[[k]]$cmX)
                } else if (inherits(object$smooth[[k]], c("tismi.smooth","tismd.smooth"))) {## for smooth interaction             
-                  X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag %*%object$smooth[[k]]$Zc                                
-               } else ## unconstrainded smooths...
-               X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
+                   X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag %*%object$smooth[[k]]$Zc                                
+               } else ## unconstrainded smooths, 'by' constrained and local scop smooths...
+                    X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
           Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
           if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
         }
@@ -290,46 +290,44 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         ii <- ind[object$assign==i]
         ## CORRECTIONS FOR SCAM....
         fit[start:stop,i] <- as.matrix(X[,ii,drop=FALSE])%*%object$coefficients.t[ii]
-        if (se.fit) se[start:stop,i]<-
-        sqrt(rowSums((as.matrix(X[,ii,drop=FALSE])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii,drop=FALSE])))
+        if (se.fit) se[start:stop,i] <-
+               sqrt(rowSums((as.matrix(X[,ii,drop=FALSE])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii,drop=FALSE])))
       }
 
       if (n.smooth&&!para.only) { 
         for (k in 1:n.smooth) # work through the smooth terms 
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
 
-          ## CoRRECTED for SCAM ...
+          ## CORRECTED for SCAM ...
           fit[start:stop,n.pterms+k]<-X[,first:last,drop=FALSE]%*%object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-               if (inherits(object$smooth[[k]], c("mpi.smooth","mpic.smooth","mpd.smooth","cv.smooth", "cx.smooth",
+               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",
                                 "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth"))){
                       if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))
                           else 
                               X1 <- cbind(rep(1,nrow(X)),X[,first:last]) # prediction matrix
-                                # X0 - model matrix of the original data....
-                          object.X <- model.matrix(object)
-                          X0 <- cbind(rep(1,nrow(object.X)),object.X[,first:last]) 
-                          q <- ncol(X0)
-                          onet <- matrix(rep(1,nrow(X0)),1,nrow(X0))
-                          A <- onet%*%X0
-                          qrX <- qr(X0)
-                          R <- qr.R(qrX) 
-                          qrA <- qr(t(A))
-                          R <- R[-1,]
-                          RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
-                          RZa.inv <- solve(RZa)
-                          RZaR <- RZa.inv%*%R
-                          if (nrow(X)==1)
-                              XZa <- t(qr.qty(qrA,X1))[,2:q]
-                          else
-                              XZa <- t(qr.qty(qrA,t(X1)))[,2:q]
-                          Ga <- XZa%*%RZaR
+                      ##          # X0 - model matrix of the original data....
+                      ##    object.X <- model.matrix(object)
+                      ##    X0 <- cbind(rep(1,nrow(object.X)),object.X[,first:last]) 
+                      ##    q <- ncol(X0)
+                      ##    onet <- matrix(rep(1,nrow(X0)),1,nrow(X0))
+                      ##    A <- onet%*%X0
+                      ##    qrX <- qr(X0)
+                      ##    R <- qr.R(qrX) 
+                      ##    qrA <- qr(t(A))
+                      ##    R <- R[-1,]
+                      ##    RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
+                      ##    RZa.inv <- solve(RZa)
+                      ##    RZaR <- RZa.inv%*%R
+                      ##    if (nrow(X)==1)  XZa <- t(qr.qty(qrA,X1))[,2:q]
+                      ##     else     XZa <- t(qr.qty(qrA,t(X1)))[,2:q]
+                      ##    Ga <- XZa%*%RZaR
                           Vp <- object$Vp.t[c(1,first:last),c(1,first:last)] 
-                          Vp.c <- Vp
-                          Vp.c[,1] <- rep(0,nrow(Vp))
-                          Vp.c[1,] <- rep(0,ncol(Vp))
-                          se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp.c)*Ga))
+                          Vp[,1] <- rep(0,nrow(Vp))
+                          Vp[1,] <- rep(0,ncol(Vp))
+                      ##    se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp)*Ga))
+                          se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%Vp)*X1))
                } else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth","tesmi1.smooth",
                                     "tismi.smooth","tismd.smooth","tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth",
                                    "tedecx.smooth", "tedecv.smooth", "tescx.smooth", 
@@ -371,7 +369,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                        se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp)*Ga))
                } else if (inherits(object$smooth[[k]], c("miso.smooth", "mifo.smooth"))) { ## 'zero start' and passing through zero increasing constraint ...
                        se[start:stop,n.pterms+k] <- sqrt(rowSums((X[,first:last,drop=FALSE]%*%object$Vp.t[first:last,first:last])*X[,first:last,drop=FALSE]))
-               } else { ## for unconstrained smooth terms..... 
+               } else { ## for local scop smooth terms, scop with'by' and unconstrained smooth terms..... 
                     if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
                       X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
                       meanL1 <- object$smooth[[k]]$meanL1
@@ -387,24 +385,24 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         if (se.fit) colnames(se) <- ColNames
       } else { # para.only
         if (para.only&&is.list(object$pterms)) { 
-          ## have to use term labels that match original data, or termplot fails 
-          ## to plot. This only applies for 'para.only==1' calls which are 
-          ## designed for use from termplot called from plot.gam
-          term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
-        }
+            ## have to use term labels that match original data, or termplot fails 
+            ## to plot. This only applies for 'para.only==1' calls which are 
+            ## designed for use from termplot called from plot.gam
+            term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
+          }
         colnames(fit) <- term.labels
         if (se.fit) colnames(se) <- term.labels
         if (para.only) { 
-          # retain only terms of order 1 - this is to make termplot work
-          order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order") #attr(object$pterms,"order")
-          term.labels <- term.labels[order==1]
-          ## fit <- as.matrix(as.matrix(fit)[,order==1])
-          fit <- fit[,order==1,drop=FALSE]
-          colnames(fit) <- term.labels
-          if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
-            se <- se[,order==1,drop=FALSE] 
-            colnames(se) <- term.labels } 
-          }
+           # retain only terms of order 1 - this is to make termplot work
+           order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order") #attr(object$pterms,"order")
+           term.labels <- term.labels[order==1]
+           ## fit <- as.matrix(as.matrix(fit)[,order==1])
+           fit <- fit[,order==1,drop=FALSE]
+           colnames(fit) <- term.labels
+           if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
+              se <- se[,order==1,drop=FALSE] 
+              colnames(se) <- term.labels } 
+           }
         }
        ##if (!is.null(terms)) { # return only terms requested via `terms'
        ## if (sum(!(terms %in%colnames(fit)))) 
@@ -419,16 +417,16 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
        ##}
       
     } else {# "link" or "response"
-       k<-attr(attr(object$model,"terms"),"offset")
-       ## CORRECTED for SCAM...
-       fit[start:stop]<-X%*%object$coefficients.t + rowSums(Xoff)
-       if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
-       if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp.t)*X))
-       if (type=="response") {# transform    
-         fam<-object$family;linkinv<-fam$linkinv;dmu.deta<-fam$mu.eta  
-         if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
-         fit[start:stop]<-linkinv(fit[start:stop])
-       }
+        k<-attr(attr(object$model,"terms"),"offset")
+        ## CORRECTED for SCAM...
+        fit[start:stop]<-X%*%object$coefficients.t + rowSums(Xoff)
+        if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
+        if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp.t)*X))
+        if (type=="response") {# transform    
+           fam<-object$family;linkinv <- fam$linkinv;dmu.deta<-fam$mu.eta  
+           if (se.fit) se[start:stop] <- se[start:stop]*abs(dmu.deta(fit[start:stop])) 
+           fit[start:stop] <- linkinv(fit[start:stop])
+        }
       }
     rm(X)   
   } ## end of prediction block loop

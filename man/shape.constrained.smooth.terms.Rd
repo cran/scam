@@ -2,7 +2,7 @@
 \alias{shape.constrained.smooth.terms}
 \title{Shape preserving smooth terms in SCAM}
 \description{
-As in \code{mgcv(gam)}, shape preserving smooth terms are specified in a \code{\link{scam}} formula using \code{\link{s}} 
+As in \code{mgcv(gam)}, shape preserving smooth terms are specified in a \code{\link{scam}} formula using \code{\link[mgcv]{s}} 
 terms. All the shape constrained smooth terms (SCOP-splines) are constructed using the B-splines basis proposed by Eilers and Marx (1996) with a discrete penalty on the basis coefficients.
 
 The univariate single penalty built-in shape constrained smooth classes are summarized as follows.
@@ -70,6 +70,8 @@ These work similar to \code{mdcx.smooth.spec}, \code{mdcv.smooth.spec}, \code{mi
 \code{\link{smooth.construct.micx.smooth.spec}}, 
 
 \code{\link{smooth.construct.micv.smooth.spec}}. 
+
+\item Locally shape-constrained P-splines (LSCOP-splines): \code{bs="lmpi"}. Locally increasing splines that are monotone increasing up to a specified change point and become unconstrained beyond that point. For details see \code{\link{smooth.construct.lmpi.smooth.spec}}. 
 
 }
 
@@ -145,7 +147,7 @@ Also linear functionals of smooths with shape constraints (increasing/decreasing
 supported. See \code{\link{linear.functional.terms}}. 
 }
 
-\seealso{\code{\link{s}}, \code{\link{smooth.construct.mpi.smooth.spec}}, 
+\seealso{\code{\link[mgcv]{s}}, \code{\link{smooth.construct.mpi.smooth.spec}}, 
 \code{\link{smooth.construct.mpd.smooth.spec}},
 
 \code{\link{smooth.construct.cx.smooth.spec}}, 

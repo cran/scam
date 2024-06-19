@@ -1,3 +1,8 @@
+## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## routines for getting summary information of the fitted scam...
+## based on summary routines (c) Simon N Wood
+
+
 ############################################################
 ## summary functions for scam() (clone of summary.gam())...
 ## of mgcv version 1.7-22, 
@@ -5,8 +10,7 @@
 ## only with freq=T/F....
 ###########################################################
 
-##### mgcv::: smoothTest
-
+##### mgcv::: smoothTest (c) Simon N. Wood 
 smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
 ## Forms Cox, Koh, etc type test statistic, and
 ## obtains null distribution by simulation...
@@ -28,10 +32,7 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
   list(stat=t,pval=pval)  
 } 
 
-
-###### mgcv::: liu2
-
-
+###### mgcv::: liu2 (c) Simon N. Wood 
 liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # Evaluate Pr[sum_i \lambda_i \chi^2_h_i < x] approximately.
 # Code adapted from CompQuadForm package of Pierre Lafaye de Micheaux 
@@ -86,8 +87,7 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 }
 
 
-#### mgcv::: simf
-
+#### mgcv::: simf (c) Simon N. Wood 
 simf <- function(x,a,df,nq=50) {
 ## suppose T = sum(a_i \chi^2_1)/(chi^2_df/df). We need
 ## Pr[T>x] = Pr(sum(a_i \chi^2_1) > x *chi^2_df/df). Quadrature 
@@ -100,8 +100,7 @@ simf <- function(x,a,df,nq=50) {
   pr/nq 
 }
 
-#### the same as mgcv::: recov.gam
-
+#### the same as mgcv::: recov.gam (c) Simon N. Wood 
 recov.scam <- function(b,re=rep(0,0),m=0) {
 ## b is a fitted gam object. re is an array of indices of 
 ## smooth terms to be treated as fully random....
@@ -210,8 +209,7 @@ recov.scam <- function(b,re=rep(0,0),m=0) {
 } ## end of recov
 
 
-### same as mgcv::: reTest.scam
-
+### same as mgcv::: reTest.scam, (c) Simon N. Wood 
 reTest.scam <- function(b,m) {
 ## Test the mth smooth for equality to zero
 ## and accounting for all random effects in model 
@@ -242,6 +240,7 @@ reTest.scam <- function(b,m) {
 
 
 ########## mgcv::: testStat
+## (c) Simon N. Wood 
 ## below is not the updated version of testStat(), not the one of the mgcv version 1.8-40
 
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
@@ -349,15 +348,14 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 
 
 
-####################################################
-##### function to get all the summary information....
-#############################################
+########################################################################
+##### function to get all the summary information of the fitted scam....
+########################################################################
 
 model.matrix.scam <- function(object,...)
 { if (!inherits(object,"scam")) stop("`object' is not of class \"scam\"")
   predict(object,type="lpmatrix",...)
 }
-
 
 
 summary.scam <- function (object,dispersion = NULL,freq = FALSE,...) 
@@ -394,7 +392,7 @@ summary.scam <- function (object,dispersion = NULL,freq = FALSE,...)
 
 
     ## Now the individual parameteric coefficient p-values...
-    ## (copied from mgcv-1.8-34)============
+    ## (copied from mgcv-1.8-34 (c) Simon N Wood) ============
 
     se <- diag(covmat)^0.5
     residual.df<-length(object$y)-sum(object$edf)
@@ -636,8 +634,7 @@ pinvXVX <- function (X, V, rank = NULL)
     vec
 }
  
-################ mgcv::: eigXVX
-## (c) Simon N. Wood 
+## mgcv::: eigXVX (c) Simon N. Wood 
 
 eigXVX <- function (X, V, rank = NULL, tol = .Machine$double.eps^0.5) 
 {
@@ -704,11 +701,9 @@ print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3),
 
 
 
-
 ###############################################
-## anova for scam models (clone of summary.gam())...
-## of mgcv versions up to 1.8-11...
-## (c) Simon N. Wood 
+## anova for scam models (clone of summary.gam())
+## of mgcv versions up to 1.8-11 (c) Simon N. Wood ...
 ###############################################
 
 

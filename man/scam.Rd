@@ -69,7 +69,7 @@ scam(formula, family = gaussian(), data = list(), gamma = 1,
   
   \item{knots}{An optional list containing user specified knot values to be used for basis construction. Different terms can use different numbers of knots.}
   
-  \item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring beta parameters re-parameterization.}
+  \item{not.exp}{if \code{TRUE} then \code{notExp(x,b,threshold)} re-parameterization function will be used in place of \code{exp()} (default value) to ensure positivity in the model coefficients (scop-splines coefficients). \code{notExp()} is a softplus function, \code{1/b*log(1+exp(b*x)}, as implemented in PyTorch, it reverts to the linear function when x*b > threshold, for numerical stability.}
 
   \item{start}{Initial values for the model coefficients.}
 
@@ -167,7 +167,7 @@ expected value for  each datum.}
               BFGS taken to get convergence; \code{grad}, the gradient of the GCV/UBRE score at 
               convergence.} 
 
-\item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring beta parameters re-parameterization.}
+\item{not.exp}{if \code{TRUE} then \code{notExp()} function will be used in place of \code{exp} (default value) in positivity ensuring model parameters re-parameterization.}
 
 \item{nsdf}{number of parametric, non-smooth, model terms including the
           intercept.}
@@ -194,7 +194,7 @@ expected value for  each datum.}
 
 \item{smooth}{list of smooth objects, containing the basis information for each term in the 
 model formula in the order in which they appear. These smooth objects are returned by
-the \code{\link{smooth.construct}} objects.}
+the \code{\link[mgcv]{smooth.construct}} objects.}
 
 \item{sp}{estimated smoothing parameters for the model. These are the underlying smoothing
 parameters, subject to optimization.}
@@ -208,7 +208,7 @@ parameters, subject to optimization.}
 
 \item{trA}{trace of the influence matrix, total number of the estimated degrees of freedom (\code{sum(edf)}).}
 
-\item{var.summary}{A named list of summary information on the predictor variables. See \code{\link{gamObject}}.}
+\item{var.summary}{A named list of summary information on the predictor variables. See \code{\link[mgcv]{gamObject}}.}
 
 \item{Ve}{frequentist estimated covariance matrix for the parameter
          estimators.}
@@ -263,7 +263,7 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 }
 \seealso{\code{\link{scam-package}}, \code{\link{shape.constrained.smooth.terms}}, 
-    \code{\link{gam}}, \code{\link{s}},
+    \code{\link[mgcv]{gam}}, \code{\link[mgcv]{s}},
     \code{\link{plot.scam}}, \code{\link{summary.scam}}, \code{\link{scam.check}}, \code{\link{predict.scam}}
 
 

@@ -2,7 +2,7 @@
 \alias{residuals.scam}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{SCAM residuals}
-\description{This function is a clone of the \code{mgcv} library code \code{\link{residuals.gam}}.
+\description{This function is a clone of the \code{mgcv} library code \code{\link[mgcv]{residuals.gam}}.
 It returns residuals for a fitted \code{scam} model
   object. Pearson, deviance, working and response residuals are
   available. 
@@ -18,7 +18,7 @@ It returns residuals for a fitted \code{scam} model
   \item{type}{the type of residuals wanted. }
    \item{...}{other arguments.}
 }
-\details{See  \code{residuals.gam} for details.
+\details{See  \code{\link[mgcv]{residuals.gam}} for details.
 }
 \value{ An array of residuals.
 }

@@ -284,7 +284,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
                        if (newslope < c2*initslope) {# the curvature condition (Wolfe 2) is not satisfied
                               if (alpha == 1 && Newtlen < maxNstep)
                                  {  ## alpha.max <- maxNstep/Newtlen
-                                     repeat 
+                                     for (kk in 1:40) ## repeat 
                                         {  old.alpha <- alpha
                                            old.score1 <- score1
                                            alpha <- min(2*alpha, alpha.max)
@@ -314,7 +314,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
                                           {  sc.lo <- old.score1
                                              sc.hi <- score1 
                                           }
-                                      repeat
+                                      for (kk in 1:40) ## repeat
                                          {  alpha.incr <- -newslope*alpha.diff^2/(2*(sc.hi-(sc.lo+newslope*alpha.diff)))
                                             if (alpha.incr < .2*alpha.diff) 
                                                   alpha.incr <- .2*alpha.diff
@@ -444,7 +444,8 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
                   if (consecmax ==5)
                       termcode <- 5 # limit of 5 maxNsteps was reached
                }
-         else consecmax <- 0 
+          else consecmax <- 0 
+    
          ##---------------------
          if (termcode > 0)
                break
@@ -476,8 +477,18 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
          ct <- "Iteration limit reached"
    else if (termcode ==5)
          ct <- "Five consecutive steps of length maxNstep have been taken" 
+  ## else if (!curv.condition){ ## curvature condition not met; B can not be updated (can fail to be +ve def)
+  ##       termcode <- 6 
+  ##       ct <- "step failed" 
+  ##  }
+     
+
    list (gcv.ubre=score, rho=rho, dgcv.ubre=grad, iterations=i, B=B, conv.bfgs = ct, object=b$object, score.hist=score.hist[!is.na(score.hist)], termcode = termcode, check.grad= b$check.grad,
        dgcv.ubre.check = b$dgcv.ubre.check) 
 } ## end bfgs_gcv.ubre
 
+
+
+#######
+## Note: bfgs needs checking for dealing with 'infinite' smoothing parameters (when converged)...
 

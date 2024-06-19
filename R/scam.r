@@ -351,7 +351,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
   
    object$conv <- best$conv # whether or not the inner full Newton(or bfgs) method converged
    if (object$optimizer[2] == "newton")
-        post <- scam.fit.post(G=G, object=best) 
+        post <- scam.fit.post(G=G, object=best,control=control) 
    else post <- scam.fit.post1(G=G, object=best) ## for inner bfgs method
 
    object$edf <- best$edf  # post$edf 
@@ -487,8 +487,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
 ##############################################################
 
 scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=1e-7,
-                          keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),bfgs=list(),
-                          trace =FALSE, print.warn=FALSE) 
+                          keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),bfgs=list(), trace =FALSE, print.warn=FALSE, b.notexp=1, threshold.notexp=20) 
 # Control structure for a scam. 
 # devtol.fit is the tolerance to use in the scam.fit call within each IRLS. 
 # check.analytical - logical whether the analytical gradient of GCV/UBRE should be checked for bfgs method
@@ -496,6 +495,7 @@ scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=
 # maxHalf is the number of step halvings to employ in bfgs_gcv.ubre search, before giving up on a search direction. 
 # trace turns on or off some de-bugging information.
 # print.warn =FALSE - when set to 'FALSE' turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if mu or eta are out of bounds.
+# b.notexp, threshold.notexp are parameters of notExp() softPlus function
 {   if (!is.numeric(devtol.fit) || devtol.fit <= 0) 
         stop("value of devtol.fit must be > 0")
     if (!is.numeric(steptol.fit) || devtol.fit <= 0) 
@@ -539,8 +539,14 @@ scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
     if (efs.tol<=0) efs.tol <- .1
+
+    # notExp (sofPlus) function defaults...
+    if (!is.numeric(b.notexp) || b.notexp <= 0) 
+        stop("value of b.notexp must be > 0") 
+    if (!is.numeric(threshold.notexp) || threshold.notexp <= 0) 
+        stop("value of threshold.notexp must be > 0") 
     
-    list(maxit=maxit, devtol.fit=devtol.fit, steptol.fit=steptol.fit, keepData=as.logical(keepData[1]), nlm=nlm, optim=optim,bfgs=bfgs,efs.lspmax=efs.lspmax,efs.tol=efs.tol,trace = trace, print.warn=print.warn)    
+    list(maxit=maxit, devtol.fit=devtol.fit, steptol.fit=steptol.fit, keepData=as.logical(keepData[1]), nlm=nlm, optim=optim,bfgs=bfgs,efs.lspmax=efs.lspmax,efs.tol=efs.tol,trace = trace, print.warn=print.warn,b.notexp=b.notexp, threshold.notexp=threshold.notexp)    
 } ## end scam.control
 
 
@@ -699,6 +705,11 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
   aic <- family$aic
   mu.eta <- family$mu.eta
   mu.eta <- family$mu.eta
+
+  if (not.exp){
+     b.notexp <- control$b.notexp
+     th.notexp <- control$threshold.notexp
+  }
   
    if (AR1.rho!=0) {
         ld <- 1/sqrt(1-AR1.rho^2) ## leading diagonal of root inverse correlation
@@ -809,7 +820,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
       else {
           beta <- beta0
           beta.t <- beta    ## current beta tilde
-          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) # values of re-para beta of the constrained term
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp) # values of re-para beta of the constrained term
       }
       ## Initialization of parameters finishes here 
       #################################################
@@ -834,13 +845,13 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
           if (ii>20) stop("Can't find valid starting values: please specify some")
           beta <- beta * .9 + null.coef * .1
           beta.t <- beta    ## current beta tilde
-          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)
           eta <- as.numeric(X%*%beta.t + offset)   
           mu <- linkinv(eta)
         }
         betaold <- null.coef <- beta
         betaold.t <- beta   
-        betaold.t[iv] <- if (!not.exp) exp(betaold[iv]) else notExp(betaold[iv])
+        betaold.t[iv] <- if (!not.exp) exp(betaold[iv]) else notExp(betaold[iv],b.notexp,th.notexp)
         etaold <- as.numeric(X%*%betaold.t + offset) 
         old.pdev <- sum(dev.resids(y,linkinv(etaold),weights)) + sum((rS%*%betaold)^2)
       ##################################################################
@@ -890,7 +901,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
          if (!not.exp) {
              Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
          } else {
-             Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+             Cdiag[iv] <- DnotExp(beta[iv],b.notexp,th.notexp); C1diag[iv] <- D2notExp(beta[iv],b.notexp,th.notexp)
            }
 
          tX1 <- Cdiag*t(X)
@@ -980,7 +991,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
       ##   step <- 1                      # initial trial step length
       ##   beta <- c(betaold)+step*delta    # current parameter estimates
          beta.t <- beta                 # current reparameterized beta
-         beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])  # values of re-para beta of the shape constrained term
+         beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)  # values of re-para beta of the shape constrained term
        ##  eta <- drop(as.numeric(X%*%beta.t + offset))  # linear predictor
        ##  mu <- linkinv(eta)          # fitted values
        ##  dev <- sum(dev.resids(y,mu,weights)) # deviance of the working model
@@ -1038,7 +1049,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
                ## beta <- c(betaold)+step*delta   ## update current parameter estimates
                   beta <- (beta + c(betaold))/2 
                   beta.t <- beta       ## update current re-para beta
-                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)   
                   eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
                   mu <- linkinv(eta)   ## fitted values
                   dev <- sum(dev.resids(y, mu, weights))
@@ -1066,7 +1077,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
                ## beta <- c(betaold)+step*delta   ## update current parameter estimates
                   beta <- (beta + c(betaold))/2 ## update current parameter estimates
                   beta.t <- beta       ## update current re-para beta
-                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                  beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)   
                   eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
                   mu <- linkinv(eta)   ## fitted values
                 }
@@ -1128,7 +1139,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
               ## beta <- c(betaold)+step*delta   ## update current parameter estimates
                 beta <- (beta + c(betaold))/2
                 beta.t <- beta       ## update current re-para beta
-                beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])   
+                beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)   
                 eta <- as.numeric(X%*%beta.t + offset)   ## linear predictor  
                 mu <- linkinv(eta)   ## fitted values
                 dev <- sum(dev.resids(y, mu, weights)) ## update deviance of the working model
@@ -1176,7 +1187,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
 
      if (!not.exp) { Cdiag[iv] <- C1diag[iv] <- beta.t[iv]
      } else {
-             Cdiag[iv] <- DnotExp(beta[iv]); C1diag[iv] <- D2notExp(beta[iv])
+             Cdiag[iv] <- DnotExp(beta[iv],b.notexp,th.notexp); C1diag[iv] <- D2notExp(beta[iv],b.notexp,th.notexp)
      }
 
      X1 <- t(Cdiag*t(X)) 
@@ -1284,7 +1295,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
      KtIQ1R <-  if (!not.exp) crossprod(I.plus*K,wX1) 
                   else crossprod(I.plus*K,wXC1)
      C2diag <- rep(0,q)
-     C2diag[iv] <- if (!not.exp)  C1diag[iv] else D3notExp(beta[iv])
+     C2diag[iv] <- if (!not.exp)  C1diag[iv] else D3notExp(beta[iv],b.notexp,th.notexp)
      XC2 <- t(C2diag*t(X))
      XC1 <- t(C1diag*t(X))
      
@@ -1345,7 +1356,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
 ## function to get null deviance and covariance matrices after fit   ##
 #######################################################################
 
-scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.known, not.exp)
+scam.fit.post<- function(G, object,control) ##,sig2,offset,intercept, weights,scale.known, not.exp)
 {  ## Function to compute null deviance and covariance matrices after a scam fit.
    ## covariance matrix should use expected Hessian, so re-computation of factors 
    ## is required.  
@@ -1355,6 +1366,10 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
    weights <- G$weights; scale.known <- G$scale.known; not.exp <- G$not.exp
    n <- nobs <- NROW(y) # number of observations
    q <- ncol(X)
+   if (not.exp) {
+     b.notexp <- control$b.notexp
+     th.notexp <- control$threshold.notexp
+   }
  
    linkinv <- object$family$linkinv
    dev.resids <- object$family$dev.resids
@@ -1379,7 +1394,7 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
    if (!not.exp) {
              Cdiag[iv] <- C1diag[iv] <- object$beta.t[iv]
      } else {
-             Cdiag[iv] <- DnotExp(object$beta[iv]); C1diag[iv] <- D2notExp(object$beta[iv])
+             Cdiag[iv] <- DnotExp(object$beta[iv],b.notexp,th.notexp); C1diag[iv] <- D2notExp(object$beta[iv],b.notexp,th.notexp)
       }
     X1 <- t(Cdiag*t(X)) 
     g.deriv <- 1/object$family$mu.eta(eta)        # diag(G)
@@ -1516,14 +1531,59 @@ scam.fit.post<- function(G, object) ##,sig2,offset,intercept, weights,scale.know
 
 
 ### the following three functions are for use in place of exp(beta)
-### notExp() is similar to that in R package mgcv() of Simon N Wood
-### in positivity ensuring beta parameters re-parameterization.... they have `better' 
-### over/underflow characteristics, but is still continuous to second
-### derivative. 
+### notExp(), from scam version 1.2-17, is a softplus function suggested by Jens Lichter, and as implemented in PyTorch, to ensure positivity when re-parameterizing scop-spline coefficients.
+## 'for numerical stability the implementation reverts to the linear function when x*b > threshold
 ### DnotExp() calculates the first derivative
 ### D2notExp() gets the second derivative 
 
-notExp <- function(x){
+notExp <- function(x,b=1,threshold=20){
+## Softplus function, as implemented in PyTorch, 
+## https://pytorch.org/docs/stable/generated/torch.nn.Softplus.html
+## 'for numerical stability the implementation reverts to the linear function when
+## x*b > threshold
+  f <- x
+  ind <- x*b < threshold
+  f[ind] <- 1/b*log(1+exp(b*x[ind]))
+  f
+}
+
+
+DnotExp <- function(x,b=1,threshold=20) {
+## first derivative of notExp()...
+  f <- 1
+  ind <- x*b < threshold
+  f[ind] <- exp(b*x[ind])/(1+exp(b*x[ind]))
+  f
+}
+
+D2notExp <- function(x,b=1,threshold=20) {
+## second derivative of notExp()...
+  f <- 0
+  ind <- x*b < threshold
+  f[ind] <- b*exp(b*x[ind])/(1+exp(b*x[ind]))^2
+  f
+}
+
+
+D3notExp <- function(x,b=1,threshold=20) {
+## third derivative of notExp()...
+  f <- 0
+  ind <- x*b < threshold
+  f[ind] <- b^2*exp(b*x[ind])*(1-exp(2*b*x[ind]))/(1+exp(b*x[ind]))^4
+  f
+}
+
+
+
+### the following three functions are for use in place of exp(beta)
+### notExp0(), used up till scam version 1.2-16, is similar to that in R package mgcv() of Simon N Wood
+### in positivity ensuring beta parameters re-parameterization.... they have `better' 
+### over/underflow characteristics, but is still continuous to second
+### derivative. 
+### DnotExp0() calculates the first derivative
+### D2notExp0() gets the second derivative 
+
+notExp0 <- function(x){
   f <- x
   ind <- x > 1
   f[ind] <- exp(1)*(x[ind]^2+1)/2
@@ -1534,7 +1594,7 @@ notExp <- function(x){
   f
 }
 
-DnotExp <- function(x) {
+DnotExp0 <- function(x) {
 ## first derivative of notExp()...
   f <- x
   ind <- x > 1
@@ -1546,7 +1606,7 @@ DnotExp <- function(x) {
   f
 }
 
-D2notExp <- function(x) {
+D2notExp0 <- function(x) {
 ## second derivative of notExp()...
   f <- x
   ind <- x > 1
@@ -1559,7 +1619,7 @@ D2notExp <- function(x) {
 }
 
 
-D3notExp <- function(x) {
+D3notExp0 <- function(x) {
 ## third derivative of notExp()...
   f <- x
   ind <- x > 1
@@ -1570,8 +1630,6 @@ D3notExp <- function(x) {
   f[ind] <-  48*x[ind]*(1-x[ind]^2)/exp(1)/(x[ind]^2+1)^4
   f
 }
-
-
 
 
 ## checking derivatives...

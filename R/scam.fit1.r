@@ -43,7 +43,7 @@ scam.fit1 <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
 { score <- function(y,X,beta,offset,weights, rS,S.t, q,iv,linkinv, dev.resids,mu.eta,variance) {
   ## function to calculate penalized deviance and its gradient
     beta.t <- beta ## re-parameterized beta
-    beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) ## values of re-para beta of the shape constrained terms
+    beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp) ## values of re-para beta of the shape constrained terms
     eta <- as.numeric(X%*%beta.t + as.numeric(offset))  ## linear predictor
     mu <- linkinv(eta)  ## fitted values
     dev <- sum(dev.resids(y,mu,weights)) ## deviance
@@ -112,7 +112,11 @@ scam.fit1 <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
   aic <- family$aic
   mu.eta <- family$mu.eta
   mu.eta <- family$mu.eta
-  
+  if (not.exp){
+     b.notexp <- control$b.notexp
+     th.notexp <- control$threshold.notexp
+  }  
+
    if (AR1.rho!=0) {
         ld <- 1/sqrt(1-AR1.rho^2) ## leading diagonal of root inverse correlation
         sd <- -AR1.rho*ld         ## sub diagonal
@@ -220,7 +224,7 @@ scam.fit1 <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
       else {
           beta <- beta0
           beta.t <- beta    ## current beta tilde
-          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) # values of re-para beta of the constrained term
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp) # values of re-para beta of the constrained term
       }
       ## end of initialization of parameters  
       ##############################################
@@ -252,13 +256,13 @@ scam.fit1 <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
           if (ii>20) stop("Can't find valid starting values: please specify some")
           beta <- beta * .9 + null.coef * .1
           beta.t <- beta    ## current beta tilde
-          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv])
+          beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp)
           eta <- as.numeric(X%*%beta.t + offset)   
           mu <- linkinv(eta)
         }
         betaold <- null.coef <- beta
         betaold.t <- beta   
-        betaold.t[iv] <- if (!not.exp) exp(betaold[iv]) else notExp(betaold[iv])
+        betaold.t[iv] <- if (!not.exp) exp(betaold[iv]) else notExp(betaold[iv],b.notexp,th.notexp)
         etaold <- as.numeric(X%*%betaold.t + offset) 
         old.pdev <- sum(dev.resids(y,linkinv(etaold),weights)) + sum((rS%*%betaold)^2)
       ##################################################################
@@ -483,13 +487,13 @@ scam.fit1 <- function(G,sp, gamma=1, etastart=NULL, mustart=NULL, env=env,
  
        ## now define things at their converged values from the quasi-Newton method...
        beta.t <- beta
-       beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv]) ## values of re-para beta of the shape constrained terms     
+       beta.t[iv] <- if (!not.exp) exp(beta[iv]) else notExp(beta[iv],b.notexp,th.notexp) ## values of re-para beta of the shape constrained terms     
        eta <- as.numeric(X%*%beta.t + offset)    
        mu <- linkinv(eta)   
        dev <- sum(dev.resids(y,mu,weights))
    
        Cdiag <- rep(1,q)
-       Cdiag[iv] <- if (!not.exp) beta.t[iv] else DnotExp(beta[iv])
+       Cdiag[iv] <- if (!not.exp) beta.t[iv] else DnotExp(beta[iv],b.notexp,th.notexp)
        X1 <- t(Cdiag*t(X)) 
        g.deriv <- 1/mu.eta(eta)   ## diag(G)
        w1 <- weights/(variance(mu)*g.deriv^2)   ## diag(W1)

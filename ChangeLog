@@ -1,3 +1,15 @@
+
+1.2-17
+
+* smooth.construct: a new shape-constrained smoother, 'lmpi', has been added. 'lmpi' is a locally increasing spline up to a given change point. In collaboration with Jens Lichter. Thanks
+
+* notExp: transformation function to ensure positivity of the scop-spline coefficients (for use in place of exp()) has been changed. It is now a softplus function, as implemented in PyTorch. Thanks to Jens Lichter for the suggestion. 
+
+* bfgs: bug corrected with bfgs going to infinite loop when selecting step length. Thanks to Akshat Dwivedi and Joe Robinson 
+
+* plot, predict: matrix singularity issue fixed in predict method, could happen when the number of knots is too close to the number of observations. bug fixed with plotting univariate some scop smooths, gave a slight shift in the fitted curve. imposing centering constraint within plot function is now removed. Thanks to Jens Lichter    
+
+
 1.2-16
 
 * scam-package.Rd: updated package details and descriptions to give a full overview of the current package functionality. DESCRIPTION updated as well.

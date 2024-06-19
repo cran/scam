@@ -3,7 +3,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Prediction from fitted SCAM model}
 \description{ 
-This function is a clone of the \code{mgcv} library code \code{\link{predict.gam}} with some modifications 
+This function is a clone of the \code{mgcv} library code \code{\link[mgcv]{predict.gam}} with some modifications 
 to adopt shape preserving smooth terms.
 It takes a fitted \code{scam} object produced by \code{scam()} 
 and produces predictions given a new set of values for the model covariates 
@@ -95,7 +95,7 @@ then all variables must be supplied.
 
 }
 
-\details{See \code{\link{predict.gam}} for details.
+\details{See \code{\link[mgcv]{predict.gam}} for details.
 }
 
 \references{

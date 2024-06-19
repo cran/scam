@@ -8,9 +8,9 @@
 model (fitted by penalized likelihood maximization). 
 Used by \code{AIC}.
 
- The function is a clone of \code{logLik.gam} of the \code{mgcv} package. 
+ The function is a clone of \code{\link[mgcv]{logLik.gam}} of the \code{mgcv} package. 
 
-The documentation below is similar to that of object \code{\link{logLik.gam}}.
+The documentation below is similar to that of object \code{\link[mgcv]{logLik.gam}}.
 }
 \usage{
 \method{logLik}{scam}(object,...)
@@ -22,7 +22,7 @@ The documentation below is similar to that of object \code{\link{logLik.gam}}.
 
 }
 
-\details{ see \code{\link{logLik.gam}} for details.
+\details{ see \code{\link[mgcv]{logLik.gam}} for details.
 }
 
 \value{Standard \code{logLik} object: see \code{\link{logLik}}.

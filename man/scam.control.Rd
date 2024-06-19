@@ -8,7 +8,7 @@ control of the numerical options for fitting a SCAM.
 \usage{
 scam.control(maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=1e-7,
             keepData=FALSE,efs.lspmax=15,efs.tol=.1, nlm=list(),optim=list(),
-            bfgs=list(), trace =FALSE, print.warn=FALSE) 
+            bfgs=list(), trace =FALSE, print.warn=FALSE,b.notexp=1, threshold.notexp=20) 
 }
 \arguments{ 
 
@@ -44,6 +44,11 @@ used for outer estimation of log smoothing parameters.}
 \item{trace}{turns on or off some de-bugging information.}
 
 \item{print.warn}{ when set to \code{FALSE} turns off printing warning messages for step halving under non-finite exponentiated coefficients,  non-finite deviance and/or if \code{mu} or \code{eta} are out of bounds.}
+
+\item{b.notexp}{parameter \code{b} of the model coefficients re-parameterization \code{softPlus()} function used as the \code{notExp()} function in place of \code{exp()} to ensure positivity.}
+
+\item{threshold.notexp}{parameter \code{threshold} of the \code{softPlus()} function used as the \code{notExp()} function. The implementation reverts to the linear function when \code{coef*b > threshold}.}
+
 }
 
 \details{ Outer iteration is used to estimate smoothing parameters of SCAM by GCV/UBRE score optimization. The default procedure is the built-in BFGS method which is controlled by the list \code{bfgs} with the following elements: \code{steptol.bfgs} (default 1e-7) is the relative convergence tolerance; 
@@ -54,7 +59,7 @@ used for outer estimation of log smoothing parameters.}
 \code{del} is an increment for finite differences when checking analytical gradients (default 1e-4). 
 
 If outer iteration using \code{nlm} is used for fitting, then the control list \code{nlm} stores control arguments
-for calls to routine \code{nlm}. As in \code{gam.control} the list has the following named elements: \code{ndigit} is the number
+for calls to routine \code{nlm}. As in \code{\link[mgcv]{gam.control}} the list has the following named elements: \code{ndigit} is the number
 of significant digits in the GCV/UBRE score; \code{gradtol} is the tolerance used to judge convergence of the gradient of the GCV/UBRE score to zero 
 (default 1e-6); \code{stepmax} is the maximum allowable log smoothing parameter step (default 2);
  \code{steptol} is the minimum allowable step length (default 1e-4); 
@@ -79,10 +84,10 @@ and marginal likelihood estimation of semiparametric generalized linear
 models. Journal of the Royal Statistical Society (B) 73(1):3-36
 
 }
-\author{ Natalya Pya Arnqvist \email{nat.pya@gmail.com}  based partly on \code{\link{gam.control}} by Simon Wood}
+\author{ Natalya Pya Arnqvist \email{nat.pya@gmail.com}  based partly on \code{\link[mgcv]{gam.control}} by Simon Wood}
 
 
-\seealso{\code{\link{scam}}, \code{\link{scam.fit}}, \code{\link{gam.control}} }
+\seealso{\code{\link{scam}}, \code{\link{scam.fit}}, \code{\link[mgcv]{gam.control}} }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..
 

@@ -4,7 +4,7 @@
 \title{SCAM formula}
 \description{ Description of \code{\link{scam}} formula (see \code{gam} of the \code{mgcv} package for Details), and how to extract it from a fitted \code{scam} object.
 
-The function is a clone of \code{formula.gam} of the \code{mgcv} package. 
+The function is a clone of \code{\link[mgcv]{formula.gam}} of the \code{mgcv} package. 
 }
 \usage{
 \method{formula}{scam}(x,...)
@@ -19,7 +19,7 @@ The function is a clone of \code{formula.gam} of the \code{mgcv} package.
 print an appropriate description of the model.
 }
 
-\details{ see \code{\link{formula.gam}} for details.
+\details{ see \code{\link[mgcv]{formula.gam}} for details.
 }
 
 

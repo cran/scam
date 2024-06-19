@@ -4,7 +4,7 @@
 \title{Visualization of SCAM objects}
 \description{ Produces perspective or contour plot views of \code{scam} model
 predictions.
-The code is a clone of \code{vis.gam} of the \code{mgcv} package.
+The code is a clone of \code{\link[mgcv]{vis.gam}} of the \code{mgcv} package.
  
 }
 \usage{
@@ -14,7 +14,7 @@ vis.scam(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,
 }
 
 \arguments{
-        The documentation below is the same as in documentation object \code{\link{vis.gam}}.
+        The documentation below is the same as in documentation object \code{\link[mgcv]{vis.gam}}.
 
   \item{x}{a \code{scam} object, produced by \code{scam()}}
 
@@ -63,7 +63,7 @@ scale. \code{NULL} to choose automatically.}
 
 
 \seealso{
-\code{\link{persp}}, \code{\link{vis.gam}},  and \code{\link{scam}}.
+\code{\link{persp}}, \code{\link[mgcv]{vis.gam}},  and \code{\link{scam}}.
 }
 \examples{
 library(scam)
