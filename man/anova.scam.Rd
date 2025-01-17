@@ -56,9 +56,6 @@ Wood, S.N. (2013b) A simple test for random effects in regression models. Biomet
 \section{WARNING}{ If models 'a' and 'b' differ only in terms with no un-penalized components then 
 p values from anova(a,b) are unreliable, and usually much too low.
 
-Default P-values will usually be wrong for parametric terms penalized using `paraPen': use freq=TRUE
-to obtain better p-values when the penalties are full rank and represent conventional random effects.
-
 For a single model, interpretation is similar to drop1, not anova.lm.
 } 
 

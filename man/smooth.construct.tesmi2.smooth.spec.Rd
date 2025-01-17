@@ -57,54 +57,47 @@ Natalya Pya <nat.pya@gmail.com>
 \examples{
  \dontrun{
 ## tensor product `tesmi2' example 
-  ## simulating data...
-   require(scam)
-   set.seed(2)
-   n <- 30
-   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1)
-   f <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-        f[i,j] <- 2*sin(pi*x1[i]) +exp(4*x2[j])/(1+exp(4*x2[j]))
-   f <- as.vector(t(f))
-   y <- f+rnorm(length(f))*.3
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+require(scam)
+simu <- function(x,z) {2*sin(pi*x) +exp(4*z)/(1+exp(4*z)) }
+xs <- seq(0,1,length=30); zs <- seq(-1,3,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth <- matrix(simu(pr$x,pr$z),30,30)
+   
+set.seed(24)
+n <- 500
+x <- runif(n)
+z <- runif(n)*4-1
+f <- simu(x,z)
+y <- f + rnorm(n)*.3
 ## fit model ...
-   b <- scam(y~s(x1,x2,bs="tesmi2",k=c(10,10)),data=dat)
-## plot results ...
-   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
-   plot(b,se=TRUE)
-   plot(b,pers=TRUE, theta = 50, phi = 20) 
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   par(old.par)
-   vis.scam(b,theta=50,phi=20)
+b <- scam(y~s(x,z,bs="tesmi2",k=c(10,10)))
+old.par <- par(mfrow=c(2,2))
+persp(xs,zs,truth,theta=50,phi=20);title("truth")
+vis.scam(b,theta=50,phi=20);title("tesmi2")
+plot(b,se=TRUE)
+plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
+par(old.par)
 
-## example with cyclic cubic regression spline along the 1st covariate...
-   set.seed(2)
-   n <- 30
-   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1) 
-   f <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-        f[i,j] <- sin(2*pi*x1[i])+ exp(4*x2[j])/(1+exp(4*x2[j]))
-   f <- as.vector(t(f))
-   y <- f+rnorm(length(f))*.3
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+## example with cyclic cubic regression spline along the first covariate...
+simu2 <- function(x,z) {sin(2*pi*x)+ exp(4*z)/(1+exp(4*z))}
+xs <- seq(0,1,length=30); zs <- seq(-1,3,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth2 <- matrix(simu2(pr$x,pr$z),30,30)
+    
+set.seed(2)
+n <- 500
+x <- runif(n)
+z <- runif(n)*4-1
+f <- simu2(x,z)
+y <- f + rnorm(n)*.3
 ## fit model ...
-   b1 <- scam(y~s(x1,x2,bs="tesmi2",xt=list("cc"),k=10), data=dat)
-## plot results ...
-   old.par <- par(mfrow=c(2,2))
-   plot(b1,se=TRUE)
-   plot(b1,pers=TRUE,theta = 50, phi = 20)
-   plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   par(old.par)
-   vis.scam(b1,theta=40,phi=20)
+b1 <- scam(y~s(x,z,bs="tesmi2",xt=list("cc"),k=10))
+old.par <- par(mfrow=c(2,2))
+plot(b1,se=TRUE)
+vis.scam(b1,theta=50,phi=20);title("tesmi2, cyclic")
+plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
+persp(xs,zs,truth2,theta = 50, phi = 20);title("truth")
+par(old.par)    
  }
 }
 

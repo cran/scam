@@ -203,7 +203,7 @@ estimate.scam <- function(G,optimizer,optim.method,rho, env,  control)
    }
    
    object$sp <- sp
-   object$q.f <- G$q.f
+ ##  object$q.f <- G$q.f
    object$p.ident <- G$p.ident
    object$S <- G$S
    object$optimizer <- optimizer

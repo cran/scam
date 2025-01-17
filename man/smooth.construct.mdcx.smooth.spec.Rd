@@ -75,9 +75,9 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    y <- f+rnorm(n)*.4
    dat <- data.frame(x=x,y=y)
    ## fit model ...
-   b <- scam(y~s(x,k=15,bs="mdcx"),family=gaussian(link="identity"),data=dat)
+   b <- scam(y~s(x,k=15,bs="mdcx"),data=dat)
    ## fit unconstrained model ...
-   b1 <- scam(y~s(x,k=15,bs="ps"),family=gaussian(link="identity"),data=dat)
+   b1 <- scam(y~s(x,k=15,bs="ps"),data=dat)
    ## plot results ...
    plot(x,y,xlab="x",ylab="y")
    lines(x,f)           ## the true function

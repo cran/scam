@@ -53,54 +53,51 @@ Natalya Pya <nat.pya@gmail.com>
 \examples{
  \dontrun{
 ## tensor product `tesmd2' example 
-  ## simulating data...
-   require(scam)
-   set.seed(2)
-   n <- 30
-   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1)
-   f <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-        f[i,j] <- 2*sin(pi*x1[i])-exp(4*x2[j])/(1+exp(4*x2[j]))
-   f <- as.vector(t(f))
-   y <- f+rnorm(length(f))*.2
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+require(scam)
+simu <- function(x,z) { 2*sin(pi*x)-exp(4*z)/(1+exp(4*z))} 
+xs <-seq(0,1,length=30); zs <- seq(-1,3,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth <- matrix(simu(pr$x,pr$z),30,30)
+   
+set.seed(5)
+n <- 500
+x <- runif(n)
+z <- runif(n)*4-1
+f <- simu(x,z)
+y <- f + rnorm(n)*.3
 ## fit model ...
-   b <- scam(y~s(x1,x2,bs="tesmd2",k=10),data=dat)
-## plot results ...
-   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
-   plot(b,se=TRUE)
-   plot(b,scheme=1,theta = 30, phi = 40)
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   par(old.par)
-   vis.scam(b,theta = 40, phi = 20)
+b <- scam(y~s(x,z,bs="tesmd2",k=10))
+summary(b)
+old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
+plot(b,se=TRUE)
+plot(b,pers=TRUE,theta = 30, phi = 40);title("tesmd2")
+plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
+par(old.par)  
+vis.scam(b,theta = 30, phi = 40) 
 
-## example with cyclic cubic regression spline along the 1st covariate...
-   set.seed(4)
-   n <- 30
-   x1 <- sort(runif(n)); x2 <- sort(runif(n)*4-1) 
-   f <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-        f[i,j] <- sin(2*pi*x1[i])-exp(4*x2[j])/(1+exp(4*x2[j]))
-   f <- as.vector(t(f))
-   y <- f+rnorm(length(f))*.2
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+## example with cyclic cubic regression spline along the second covariate...
+simu2 <- function(x,z) { sin(2*pi*x)-exp(4*z)/(1+exp(4*z)) } 
+xs <-seq(0,1,length=30); zs <- seq(-1,3,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth <- matrix(simu2(pr$x,pr$z),30,30)
+   
+set.seed(5)
+n <- 500
+x <- runif(n)
+z <- runif(n)*4-1
+f <- simu2(x,z)
+y <- f + rnorm(n)*.3
 ## fit model ...
-   b1 <- scam(y~s(x1,x2,bs="tesmd2",xt=list("cc"),k=10), data=dat)
-## plot results ...
-   old.par <-par(mfrow=c(2,2))
-   plot(b1,se=TRUE)
-   plot(b1,scheme=1,theta = 30, phi = 40)
-   plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   par(old.par)
-   vis.scam(b1,theta=40,phi=20)
+b <- scam(y~s(x,z,bs="tesmd2",xt=list("cc"),k=10))
+summary(b)
+old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
+plot(b,se=TRUE)
+plot(b,pers=TRUE,theta = 30, phi = 40);title("tesmd2, cyclic")
+plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
+par(old.par)  
+vis.scam(b,theta = 30, phi = 40)     
  }
 }
 \keyword{models} \keyword{regression}%-- one or more ..

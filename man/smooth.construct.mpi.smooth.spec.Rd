@@ -67,7 +67,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 }
 \examples{ 
-## Monotone increasing P-splines example 
+## Monotone increasing SCOP-splines example 
   ## simulating data...
    require(scam)
    set.seed(12)
@@ -154,7 +154,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  ## constraints are applied to the smooths, which usually means that the 'by'
  ## factor variable should be included as a parametric term, as well. 
 
-
 ## numeric 'by' variable example...
  set.seed(3)
  n <- 200
@@ -166,10 +165,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  b <- scam(y~s(x,by=z,bs="mpiBy"),data=dat)
  plot(b,shade=TRUE)
  summary(b)
- ## unconstrained fit...
- b1 <- scam(y~s(x,k=15,by=z),data=dat)
- plot(b1,shade=TRUE)
- summary(b1)
  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

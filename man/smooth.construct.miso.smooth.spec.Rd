@@ -63,7 +63,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   ## Monotone increasing SCOP-spline examples with a start at zero constraint...
   ## passing through 0 at -1...
   require(scam)
-  set.seed(7)
+  set.seed(2)
   n <- 100;
   x <- c(-1,runif(n-1)*4-1); ## starting at -1 for a function to be zero at a start
   z <- runif(n)
@@ -76,7 +76,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 \dontrun{
   ## passing through 0 at 0...
-  set.seed(53)
+  set.seed(2)
   n <- 100;
   x <- c(0,runif(n-1)); ## starting at 0 for a function to be zero at a start
   z <- runif(n)

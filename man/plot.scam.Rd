@@ -106,7 +106,7 @@ getting plots on the response scale, when the model consists only of a single sm
 intervals that include the uncertainty about the overall mean. If \code{FALSE} then the 
 uncertainty relates purely to the centred smooth itself. An extension of the argument
 presented in Nychka (1988) suggests that \code{TRUE} results in better coverage performance,
-and this is also suggested by simulation.}
+and this is also suggested by simulation. Note, \code{seWithMean} currently works only when plotting unconstrained smooths.}
 
 \item{unconditional}{ if \code{TRUE} then the smoothing parameter uncertainty
           corrected covariance matrix is used to compute uncertainty
@@ -173,7 +173,7 @@ plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)
 b <- scam(y~x0+s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"),optimizer=c("efs","bfgs"))
 plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)    
 
-\dontrun{
+
  ## example with 2-d plots...
  ## simulating data...
    set.seed(2)
@@ -210,7 +210,7 @@ plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=3)
    plot(b,all.terms=TRUE,scheme=c(2,1))
    par(op)
 
-  }
+  
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression} \keyword{hplot} %-- one or more ...

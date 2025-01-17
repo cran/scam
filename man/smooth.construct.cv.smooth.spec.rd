@@ -59,7 +59,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 }
 \examples{
  \dontrun{
-## Concave P-splines example 
+## Concave SCOP-splines example 
   ## simulating data...
    require(scam)
    set.seed(1)

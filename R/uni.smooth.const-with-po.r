@@ -14,7 +14,7 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
    #require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
-  if (m<1) stop("silly m supplied")
+  if (m < 0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -72,7 +72,8 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   class(object)<-"mpi.smooth"  # Give object a class
   object
@@ -125,7 +126,7 @@ smooth.construct.mpiBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -174,8 +175,8 @@ smooth.construct.mpiBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
-
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
   class(object)<-"mpiBy.smooth"  # Give object a class
   object
 }
@@ -223,7 +224,7 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -276,8 +277,8 @@ smooth.construct.miso.smooth.spec<- function(object, data, knots)
   h <- xk[q]-xk[q-1] ##(max(x)-min(x))/(q-m-1) ## distance between two adjacent knots (both expressions give the same distance)
   ## Xdf1, Xdf2 need to be checked...
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,(m+2):(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,(m+2):(q-2)]/h^2 ## ord is by two less for the 2nd derivative
-
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
   class(object)<-"miso.smooth"  # Give object a class
   object
 }
@@ -331,7 +332,7 @@ smooth.construct.mifo.smooth.spec<- function(object, data, knots)
     stop(paste("'mifo' smooth works only with a 'finish at zero' constraint; 'pc' argument does not work here"))
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -382,8 +383,8 @@ smooth.construct.mifo.smooth.spec<- function(object, data, knots)
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   ## Xdf1, Xdf2 need to be checked...
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1-(m+1))]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2-(m+1))]/h^2 ## ord is by two less for the 2nd derivative
-
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
   class(object)<-"mifo.smooth"  # Give object a class
   object
 }
@@ -422,7 +423,6 @@ Predict.matrix.mifo.smooth<-function(object,data)
 }
 
 
-
 ########################################################
 ### Adding Monotone decreasing SCOP-spline construction 
 ########################################################
@@ -433,7 +433,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic splines
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -455,7 +455,7 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
  # Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
   Sig <- matrix(-1,q,q)  ## coef summation matrix
   Sig[upper.tri(Sig)] <-0
-  Sig[,1] <- -Sig[,1] ## monotone decrease case
+  Sig[,1] <- -Sig[,1] ## monotone decreasing case
   X <- X1[,-1]%*%Sig[-1,-1] # drop intercept term
   
   ## applying sum-to-zero (centering) constraint...
@@ -481,7 +481,8 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -501,7 +502,7 @@ Predict.matrix.mpd.smooth<-function(object,data)
  # Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
   Sig <- matrix(-1,q,q)  ## coef summation matrix
   Sig[upper.tri(Sig)] <-0
-  Sig[,1] <- -Sig[,1] ## monotone decrease case
+  Sig[,1] <- -Sig[,1] ## monotone decreasing case
   ## find spline basis inner knot range...
   ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
   m <- m + 1
@@ -539,7 +540,7 @@ smooth.construct.mpdBy.smooth.spec<- function(object, data, knots)
   # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic splines
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -584,7 +585,8 @@ smooth.construct.mpdBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -644,7 +646,7 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubis spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -693,7 +695,8 @@ smooth.construct.mdcv.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -749,7 +752,7 @@ smooth.construct.mdcvBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubis spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -793,7 +796,8 @@ smooth.construct.mdcvBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -847,7 +851,7 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   #require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -900,7 +904,8 @@ smooth.construct.mdcx.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -961,7 +966,7 @@ smooth.construct.mdcxBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1011,7 +1016,8 @@ smooth.construct.mdcxBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1071,7 +1077,7 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1124,7 +1130,8 @@ smooth.construct.micv.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1187,7 +1194,7 @@ smooth.construct.micvBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1237,7 +1244,8 @@ smooth.construct.micvBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1297,7 +1305,7 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m < 1) stop("silly m supplied")
+  if (m < 0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1346,7 +1354,8 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1401,7 +1410,7 @@ smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m < 1) stop("silly m supplied")
+  if (m < 0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1445,7 +1454,8 @@ smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1504,7 +1514,7 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1554,7 +1564,8 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1614,7 +1625,7 @@ smooth.construct.cvBy.smooth.spec<- function(object, data, knots)
  # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1659,7 +1670,8 @@ smooth.construct.cvBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1716,7 +1728,7 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   # require(splines)
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1766,7 +1778,8 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1823,7 +1836,7 @@ smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default 
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1868,7 +1881,8 @@ smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,1:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,1:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <- if (m==0) matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines
+                 else splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative 
 
   object$knots <- xk;
   object$m <- m;
@@ -1924,7 +1938,7 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
-  if (m<1) stop("silly m supplied")
+  if (m<0) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
   nk <- q+m+2 ## number of knots
@@ -1941,13 +1955,12 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
   if (length(xk)!=nk) # right number of knots?
   stop(paste("there should be ", nk," supplied knots"))
   #  get model matrix-------------
-  X1 <- splineDesign(xk,x,ord=m+2)
-  # use matrix Sigma and remove the first column for the positive smooth
+  X <- splineDesign(xk,x,ord=m+2)
+ 
   Sig <- diag(1,(q-1))  ## identity matrix 
  ## Sig <- diag(1,q)  ## identity matrix
      
-  X <- X1[,2:q] 
- ## X <- X1
+  X <- X[,-1] ## X[,1:(q-1)] 
   object$X <- X # the final model matrix
   object$P <- list()
   object$S <- list()
@@ -1972,7 +1985,8 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
   ## get model matrix for 1st and 2nd derivatives of the smooth...
   h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
   object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
-  object$Xdf2 <- splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd derivative
+  object$Xdf2 <-  if (m>0) splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd deriv
+                  else matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines    
 
   class(object)<-"po.smooth"  # Give object a class
   object
@@ -1984,7 +1998,7 @@ smooth.construct.po.smooth.spec<- function(object, data, knots)
 Predict.matrix.po.smooth<-function(object,data)
 ## prediction method function for the `po' smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
-  q <- object$df +1
+ ## q <- object$df +1
  ## Sig <- diag(1,q)   # Define Matrix Sigma
   ## find spline basis inner knot range...
   ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
@@ -2005,6 +2019,311 @@ Predict.matrix.po.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
   }
+  X
+}
+
+##################################################################
+### Adding SCOP-spline with decreasing and positivity constraints
+##################################################################
+
+smooth.construct.dpo.smooth.spec<- function(object, data, knots)
+## construction of the positively costrained smooth
+{ 
+  m <- object$p.order[1]
+  if (is.na(m)) m <- 2 ## default for cubic spline
+  if (m<0) stop("silly m supplied")
+  if (object$bs.dim<0) object$bs.dim <- 10 ## default
+  q <- object$bs.dim 
+  nk <- q+m+2 ## number of knots
+  if (nk<=0) stop("k too small for m")
+  x <- data[[object$term]]  ## the data
+  xk <- knots[[object$term]] ## will be NULL if none supplied
+  if (is.null(xk)) # space knots through data
+     { n<-length(x)
+       xk<-rep(0,q+m+2)
+       xk[(m+2):(q+1)]<-seq(min(x),max(x),length=q-m)
+       for (i in 1:(m+1)) {xk[i]<-xk[m+2]-(m+2-i)*(xk[m+3]-xk[m+2])}
+       for (i in (q+2):(q+m+2)) {xk[i]<-xk[q+1]+(i-q-1)*(xk[m+3]-xk[m+2])}
+     }
+  if (length(xk)!=nk) # right number of knots?
+  stop(paste("there should be ", nk," supplied knots"))
+  #  get model matrix-------------
+  X1 <- splineDesign(xk,x,ord=m+2)
+   
+  # get matrix Sigma and remove the last column for the decreasing and positive smooth 
+  Sig <- matrix(1,q,q)  ## coef summation matrix
+  Sig[lower.tri(Sig)] <-0
+  X <- X1%*%Sig
+  X <- X[,-q]
+  
+  object$X <- X # the final model matrix
+ 
+  object$Sigma <- Sig[-q,-q]
+  object$P <- list()
+  object$S <- list()
+
+  if (!object$fixed) # create the penalty matrix
+  { P <- diff(diag(q-1),difference=1)
+    object$P[[1]] <- P
+    object$S[[1]] <- crossprod(P)
+  }   
+   
+  object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
+ ## object$p.ident <- rep(TRUE,q)
+  object$rank <- ncol(object$X)-1  # penalty rank
+ ## object$rank <- ncol(object$X)  # penalty rank
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
+  object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
+  object$knots <- xk;
+  object$m <- m;
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <-  if (m>0) splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd deriv
+                  else matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines    
+
+  class(object)<-"dpo.smooth"  # Give object a class
+  object
+}
+
+## Prediction matrix for the `dpo` smooth class... 
+Predict.matrix.dpo.smooth<-function(object,data)
+## prediction method function for the `dpo' smooth class
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
+  q <- object$df +1
+  # elements of matrix Sigma for decreasing smooth...
+ # Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
+  Sig <- matrix(1,q,q)  ## coef summation matrix
+  Sig[lower.tri(Sig)] <-0
+  
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig     
+  }
+  X
+}
+
+##################################################################
+### Adding SCOP-spline with inreasing and positivity constraints
+##################################################################
+
+smooth.construct.ipo.smooth.spec<- function(object, data, knots)
+## construction of the increasing and positively costrained smooth
+{ 
+  m <- object$p.order[1]
+  if (is.na(m)) m <- 2 ## default for cubic spline
+  if (m<0) stop("silly m supplied")
+  if (object$bs.dim<0) object$bs.dim <- 10 ## default
+  q <- object$bs.dim 
+  nk <- q+m+2 ## number of knots
+  if (nk<=0) stop("k too small for m")
+  x <- data[[object$term]]  ## the data
+  xk <- knots[[object$term]] ## will be NULL if none supplied
+  if (is.null(xk)) # space knots through data
+     { n<-length(x)
+       xk<-rep(0,q+m+2)
+       xk[(m+2):(q+1)]<-seq(min(x),max(x),length=q-m)
+       for (i in 1:(m+1)) {xk[i]<-xk[m+2]-(m+2-i)*(xk[m+3]-xk[m+2])}
+       for (i in (q+2):(q+m+2)) {xk[i]<-xk[q+1]+(i-q-1)*(xk[m+3]-xk[m+2])}
+     }
+  if (length(xk)!=nk) # right number of knots?
+  stop(paste("there should be ", nk," supplied knots"))
+  #  get model matrix-------------
+  X1 <- splineDesign(xk,x,ord=m+2)
+   
+  # get matrix Sigma and remove the first column for the increasing and positive smooth 
+  Sig <- matrix(1,q,q)  ## coef summation matrix
+  Sig[upper.tri(Sig)] <-0
+  X <- X1%*%Sig
+  X <- X[,-1]
+  object$X <- X # the final model matrix
+  object$Sigma <- Sig[-1,-1]
+  object$P <- list()
+  object$S <- list()
+
+  if (!object$fixed) # create the penalty matrix
+  { P <- diff(diag(q-1),difference=1)
+    object$P[[1]] <- P
+    object$S[[1]] <- crossprod(P)
+  }   
+   
+  object$p.ident <- rep(TRUE,q-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
+ ## object$p.ident <- rep(TRUE,q)
+  object$rank <- ncol(object$X)-1  # penalty rank
+ ## object$rank <- ncol(object$X)  # penalty rank
+  object$null.space.dim <-2 ## m+1  # dim. of unpenalized space
+  object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
+  object$knots <- xk;
+  object$m <- m;
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+
+  ## get model matrix for 1st and 2nd derivatives of the smooth...
+  h <- (max(x)-min(x))/(q-m-1) ## distance between two adjacent knots
+  object$Xdf1 <- splineDesign(xk,x,ord=m+1)[,2:(q-1)]/h ## ord is by one less for the 1st derivative
+  object$Xdf2 <-  if (m>0) splineDesign(xk,x,ord=m)[,2:(q-2)]/h^2 ## ord is by two less for the 2nd deriv
+                  else matrix(0,nrow(X),ncol(object$Xdf1)-1) ## for piecewise linear splines    
+
+  class(object)<-"ipo.smooth"  # Give object a class
+  object
+}
+
+## Prediction matrix for the `ipo` smooth class... 
+Predict.matrix.ipo.smooth<-function(object,data)
+## prediction method function for the `ipo' smooth class
+{ m <- object$m+1; # spline order, m+1=3 default for cubic spline
+  q <- object$df +1
+  # elements of matrix Sigma for increasing smooth...
+ # Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
+  Sig <- matrix(1,q,q)  ## coef summation matrix
+  Sig[upper.tri(Sig)] <-0
+  
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
+  m <- m + 1
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig     
+  }
+  X
+}
+
+##################################################################
+### Adding cyclic P-spline with positivity constraint
+## based on  R routines for the package mgcv (c) Simon Wood 2000-2019
+##################################################################
+cSplineDes <- function (x, knots, ord = 4,derivs=0)
+{ ## cyclic version of spline design... the package mgcv (c) Simon Wood 2000-2019
+  ##require(splines)
+  nk <- length(knots)
+  if (ord<2) stop("order too low")
+  if (nk<ord) stop("too few knots")
+  knots <- sort(knots)
+  k1 <- knots[1]
+  if (min(x)<k1||max(x)>knots[nk]) stop("x out of range")
+  xc <- knots[nk-ord+1] ## wrapping involved above this point
+  ## copy end intervals to start, for wrapping purposes...
+  knots <- c(k1-(knots[nk]-knots[(nk-ord+1):(nk-1)]),knots)
+  ind <- x>xc ## index for x values where wrapping is needed
+  X1 <- splineDesign(knots,x,ord,outer.ok=TRUE,derivs=derivs)
+  x[ind] <- x[ind] - max(knots) + k1
+  if (sum(ind)) { ## wrapping part...
+    X2 <- splineDesign(knots,x[ind],ord,outer.ok=TRUE,derivs=derivs) 
+    X1[ind,] <- X1[ind,] + X2
+  }
+  X1 ## final model matrix
+} ## cSplineDes
+
+
+smooth.construct.cpop.smooth.spec<- function(object, data, knots)
+## construction of the cyclic and positively costrained smooth
+##`s(x,bs="cpop",m=c(2,1))' would be a cubic B-spline basis with a 1st order difference 
+## penalty with positivity constraint. m==c(0,0) would be linear splines with a ridge penalty).
+{ 
+ if (length(object$p.order)==1) m <- rep(object$p.order,2) 
+  else m <- object$p.order  ## m[1] - basis order, m[2] - penalty order
+  m[is.na(m)] <- 2 ## default
+  object$p.order <- m
+  if (object$bs.dim<0) object$bs.dim <- max(10,m[1]) ## default
+  nk <- object$bs.dim +1  ## number of interior knots
+  if (nk<=m[1]) stop("basis dimension too small for b-spline order")
+  if (length(object$term)!=1) stop("Basis only handles 1D smooths")
+  x <- data[[object$term]]    # find the data
+  k <- knots[[object$term]]
+  
+  if (is.null(k)) { x0 <- min(x);x1 <- max(x) } else
+  if (length(k)==2) { 
+    x0 <- min(k);x1 <- max(k);
+    if (x0>min(x)||x1<max(x)) stop("knot range does not include data")
+  } 
+  if (is.null(k)||length(k)==2) {
+     k <- seq(x0,x1,length=nk)  
+  } else {
+    if (length(k)!=nk) 
+    stop(paste("there should be ",nk," supplied knots"))
+  }
+
+  if (length(k)!=nk) stop(paste("there should be",nk,"knots supplied"))
+
+  X <- cSplineDes(x,k,ord=m[1]+2)  ## model matrix
+  
+  if (!is.null(k)) {
+    if (sum(colSums(X)==0)>0) warning("knot range is so wide that there is *no* information about some basis coefficients")
+  }  
+
+  p.ord <- m[2]
+  np <- ncol(X)
+  if (p.ord>np-1) stop("penalty order too high for basis dimension")
+  
+  Sig <- diag(1,(np-1))  ## identity matrix 
+  object$X <- X[,-1] 
+  object$Sigma <- Sig
+
+  object$p.ident <- rep(TRUE,np-1) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
+  object$C <- matrix(0, 0, ncol(object$X)) # to have no other constraints 
+
+
+  ## now construct penalty...  
+  np <- np-1
+  
+  De <- diag(np + p.ord)
+  if (p.ord>0) { 
+    for (i in 1:p.ord) De <- diff(De)
+    D <- De[,-(1:p.ord)]
+    D[,(np-p.ord+1):np] <-  D[,(np-p.ord+1):np] + De[,1:p.ord]
+  } else D <- De
+  object$S <- list(t(D)%*%D)  # get penalty
+
+  ## other stuff...
+  object$rank <- ncol(object$X)-1 # penalty rank
+  object$null.space.dim <- 1    # dimension of unpenalized space
+  object$knots <- k; 
+  object$m <- m      # store p-spline specific info.   
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
+   
+  class(object)<-"cpopspline.smooth"  # Give object a class
+  object
+}
+
+
+Predict.matrix.cpopspline.smooth<-function(object,data)
+## prediction method function for the cpopspline smooth class
+{ x <- data[[object$term]] 
+  k0 <- min(object$knots);k1 <- max(object$knots) 
+  if (min(x)<k0||max(x)>k1) x <- cwrap(k0,k1,x)
+  X <- cSplineDes(x,object$knots,object$m[1]+2)
   X
 }
 

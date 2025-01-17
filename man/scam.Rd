@@ -1,11 +1,11 @@
 \name{scam}
-% \Rdversion{1.2-11}
+% \Rdversion{1.2-18}
 \alias{scam}
 \title{Shape constrained additive models (SCAM) and integrated smoothness selection}
 
 \description{This function fits a SCAM to data. Various shape constrained smooths (SCOP-splines), including univariate smooths subject to monotonicity, convexity, or monotonicity plus convexity, bivariate smooths with double or single monotonicity  are available as model terms. See \code{\link{shape.constrained.smooth.terms}} for a complete overview of what is available. Smoothness selection is estimated as part of the fitting. Confidence/credible intervals are available for each smooth term.    
 
-  The shaped constrained smooths have been added to the \code{gam()} in package \code{mgcv} setup using the \code{smooth.construct} function.  The routine calls a \code{gam()} function for the model set up, but there are separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, \code{\link{bfgs_gcv.ubre}}. Any smooth available in the \code{mgcv} can be taken as a model term for SCAM. User-defined smooths can be included as well.
+  The shaped constrained smooths have been added to the \code{gam()} in the \code{mgcv} package setup using the \code{smooth.construct} function.  The routine calls a \code{gam()} function for the model set up, but there are separate functions for the model fitting, \code{\link{scam.fit}}, and smoothing parameter selection, \code{\link{bfgs_gcv.ubre}}. Any smooth available in the \code{mgcv} can be taken as a model term for SCAM. User-defined smooths can be included as well.
 }
 
 \usage{
@@ -98,7 +98,8 @@ where the independent response variables \eqn{Y_i}{Y_i} follow Poisson distribut
 \eqn{f_1}{f_1}, \eqn{m_2}{m_2}, and \eqn{f_3}{f_3} are smooth functions of the corresponding covariates, and \eqn{m_2}{m_2} 
 is subject to monotone increasing constraint.  
 
-Available shape constrained smooths are decsribed in \code{\link{shape.constrained.smooth.terms}}.
+Available shape constrained smooths are described in \code{\link{shape.constrained.smooth.terms}}. The shape constrained terms are added to the \code{formula} via \code{s()} terms that can have more that one argument. Unconstrained terms of the \code{mgcv} package, specified using \code{s}, \code{te},
+\code{ti}, \code{t2}, can be added as well. There is an option to indicate whether the smooth term is a fixed degrees of freedom regression spline (unpenalized) or a penalized regression spline, by setting the argument \code{fx} of \code{s} term to \code{TRUE} or \code{FALSE} (default). See an example below.
 
 Residual auto-correlation with a simple AR1 correlation structure can be dealt with, for Gaussian models with identity link. Currently, the AR1 correlation parameter should be supplied (rather than estimated) in \code{AR1.rho}. \code{AR.start} input argument (logical) allows to set independent sections of AR1 correlation. Standardized residuals (approximately uncorrelated under correct model) are returned in \code{std.rsd} if \code{AR1.rho} is non zero. Use \code{acf(model$std.rsd)} for computing and plotting estimates of the autocorrelation function to check correlation.
 
@@ -268,12 +269,10 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 
 }
-
-
 \examples{
-##=============================
+##=======
 ## Gaussian model, two smooth terms: unconstrained and increasing...
- ## simulating data...
+## simulating data...
 require(scam)
 set.seed(4)
 n <- 200
@@ -289,9 +288,9 @@ b
 summary(b)
 plot(b,pages=1,shade=TRUE)
 
-##===============================
+##=======
 ## Gaussian model, two smooth terms: increasing and mixed (decreasing and convex)...
- ## simulating data...
+## simulating data...
 set.seed(4)
 n <- 200
 x1 <- runif(n)*4-1;
@@ -300,12 +299,12 @@ x2 <- runif(n)*3-1;
 f2 <- exp(-3*x2)/15  # decreasing and convex smooth
 y <- f1+f2 + rnorm(n)*.4
 dat <- data.frame(x1=x1,x2=x2,y=y)
-  ## fit model, results, and plot...
+## fit model, results, and plot...
 b <- scam(y~ s(x1,bs="mpi")+s(x2, bs="mdcx"),data=dat)
 summary(b)
 plot(b,pages=1,scale=0,shade=TRUE)
 
-##=================================
+##=======
 \dontrun{
 ## using the extended Fellner-Schall method for smoothing parameter selection...
 b0 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="efs")
@@ -329,9 +328,9 @@ b3 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="nlm")
 summary(b3)
 }
 
-##===================================
+##=======
 ## Poisson model ....
- ## simulating data...
+## simulating data...
 set.seed(2)
 n <- 200
 x1 <- runif(n)*6-3
@@ -341,16 +340,15 @@ f2 <- exp(4*x2)/(1+exp(4*x2)) # monotone increasing smooth
 f <- f1+f2
 y <- rpois(n,exp(f))
 dat <- data.frame(x1=x1,x2=x2,y=y)
-  ## fit model, get results, and plot...
+## fit model, get results, and plot...
 b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi"),
       family=poisson(link="log"),data=dat,optimizer=c("efs","bfgs"))
 summary(b)
 plot(b,pages=1,shade=TRUE)
 scam.check(b)
 
-
 ## Gamma model...
-   ## simulating data...
+## simulating data...
 set.seed(6)
 n <- 300
 x1 <- runif(n)*6-3
@@ -362,57 +360,61 @@ f3 <- 3*exp(-x3^2)  # unconstrained term
 f <- f1+f2+f3
 y <- rgamma(n,shape=1,scale=exp(f))
 dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
-   ## fit model, get results, and plot...
+## fit model, get results, and plot...
 b <- scam(y~s(x1,bs="ps")+s(x2,k=15,bs="mpi")+s(x3,bs="ps"),
           family=Gamma(link="log"),data=dat,optimizer=c("efs","bfgs"))
 b
 summary(b)
-par(mfrow=c(2,2))
+old.par <- par(mfrow=c(2,2))
 plot(b,shade=TRUE)
+par(old.par) 
+  ## run with unpenalized terms...
+b1 <- scam(y~s(x1,bs="ps")+s(x2,k=15,bs="mpi",fx=TRUE)+s(x3,bs="ps",fx=TRUE),
+          family=Gamma(link="log"),data=dat,optimizer=c("efs","bfgs"))  
+summary(b1)
 
 \dontrun{
 ## bivariate example...
- ## simulating data...
-   set.seed(2)
-   n <- 30
-   x1 <- sort(runif(n)*4-1)
-   x2 <- sort(runif(n))
-   f1 <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-       { f1[i,j] <- -exp(4*x1[i])/(1+exp(4*x1[i]))+2*sin(pi*x2[j])}
-   f <- as.vector(t(f1))
-   y <- f+rnorm(length(f))*.2
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
-## fit model  and plot ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs=c("tesmd1","ps")),data=dat,optimizer="efs")
-   summary(b)
-   old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
-   plot(b,se=TRUE)
-   plot(b,pers=TRUE,theta = 30, phi = 40)
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
-   par(old.par)
+simu <- function(x,z) -exp(4*x)/(1+exp(4*x))+2*sin(pi*z)
+xs <- seq(-1,3,length=30); zs <- seq(0,1,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth <- matrix(simu(pr$x,pr$z),30,30)
+   
+set.seed(2)
+n <- 500
+x <- runif(n)*4-1
+z <- runif(n)
+f <- simu(x,z)
+y <- f + rnorm(n)*.2
+## fit model ...
+b <- scam(y~s(x,z,k=c(10,10),bs=c("tesmd1","ps")),optimizer="efs")
+summary(b)
+old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
+plot(b,se=TRUE)
+plot(b,pers=TRUE,theta = 30, phi = 40);title("tesmd1")
+plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
+par(old.par)  
+vis.scam(b,theta = 30, phi = 40)  
+
 
 ## example with random effect smoother...
-   set.seed(2)
-   n <- 200
-   x1 <- runif(n)*6-3
-   f1 <- 3*exp(-x1^2) # unconstrained term
-   x2 <- runif(n)*4-1;
-   f2 <- exp(4*x2)/(1+exp(4*x2)) # increasing smooth
-   f <- f1+f2
-   a <- factor(sample(1:10,200,replace=TRUE))   
-   Xa <- model.matrix(~a-1)    # random main effects
-   y <- f + Xa\%*\%rnorm(length(levels(a)))*.5 + rnorm(n)*.4    
-   dat <- data.frame(x1=x1,x2=x2,y=y,a=a)
-   ## fit model and plot...
-   b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi")+s(a,bs="re"), data=dat)
-   summary(b)
-   scam.check(b)
-   plot(b,pages=1,shade=TRUE)
+set.seed(2)
+n <- 200
+x1 <- runif(n)*6-3
+f1 <- 3*exp(-x1^2) # unconstrained term
+x2 <- runif(n)*4-1;
+f2 <- exp(4*x2)/(1+exp(4*x2)) # increasing smooth
+f <- f1+f2
+a <- factor(sample(1:10,200,replace=TRUE))   
+Xa <- model.matrix(~a-1)    # random main effects
+y <- f + Xa\%*\%rnorm(length(levels(a)))*.5 + rnorm(n)*.4    
+dat <- data.frame(x1=x1,x2=x2,y=y,a=a)
+## fit model and plot...
+b <- scam(y~s(x1,bs="cr")+s(x2,bs="mpi")+s(a,bs="re"), data=dat)
+summary(b)
+scam.check(b)
+plot(b,pages=1,shade=TRUE)
 
 ## example with AR1 errors...
 set.seed(8)
@@ -429,10 +431,9 @@ dat <- data.frame(x1=x1,x2=x2,y=y)
 b <- scam(y~s(x1,bs="cr")+s(x2,k=25,bs="mpi"),
             data=dat, AR1.rho=.6, optimizer="efs")
 b
-## Raw residuals still show correlation...
+## raw residuals still show correlation...
 acf(residuals(b)) 
-## But standardized are now fine...
-x11()
+## but standardized are now fine...
 acf(b$std.rsd)
  }
 }

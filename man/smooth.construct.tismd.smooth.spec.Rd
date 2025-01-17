@@ -87,7 +87,7 @@ vis.scam(bi);title("tismd")
 bc <- scam(y~s(x,z,bs="tesmd1"))
 vis.scam(bc);title("tesmd1")
 par(old.par)
-
+## other plots..
 plot(bi,pages=1,scheme=2)
 plot(bi,select=3,scheme=1,zlim=c(-3,3))
  }

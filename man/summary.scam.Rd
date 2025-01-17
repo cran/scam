@@ -150,9 +150,8 @@ f <- f1+f2+f3
 y <- f + rnorm(n)*.3
 dat <- data.frame(x1=x1,x2=x2,x3=x3,y=y)
 ## fit model ...
-b <- scam(y~s(x1,k=15,bs="cr",m=2)+s(x2,k=30,bs="mpi",m=2)+s(x3,k=30,bs="mpd",m=2),
+b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"),
      data=dat)
-
 summary(b)
 plot(b,pages=1,shade=TRUE)  
  }  

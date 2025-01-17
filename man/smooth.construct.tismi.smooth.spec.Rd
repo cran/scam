@@ -68,7 +68,6 @@ require(scam)
 test <- function(x,z){
   exp(4*x)/(1+exp(4*x))+2*sin(pi*z)+(x+1)^0.6*z
 }
-
 set.seed(7)
 n <- 600
 x <- runif(n)*4-1

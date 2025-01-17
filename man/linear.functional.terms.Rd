@@ -17,7 +17,7 @@ See \code{linear.functional.terms(mgcv)}.
 %\author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 \examples{
- \dontrun{
+
 ###########################################
 ## similar to a "signal" regression 
 ## example from mgcv() ...
@@ -25,7 +25,7 @@ See \code{linear.functional.terms(mgcv)}.
 library(scam)
 ## decreasing smooth...
 set.seed(4)
-rf <- function(x=seq(-1,3,length=100)) { ## taken from mgcv package
+rf <- function(x=seq(-1,3,length=100)) { ## from mgcv package
 ## generates random functions...
   m <- ceiling(runif(1)*5) ## number of components
   f <- x*0;
@@ -94,7 +94,7 @@ plot(b,shade=TRUE);lines(x,f,col=2);
 g <- scam(y~s(X,by=L,k=20)) 
 plot(g,shade=TRUE);lines(x,f,col=2)
 
- }
+ 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

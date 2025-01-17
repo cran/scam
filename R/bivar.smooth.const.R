@@ -1,6 +1,6 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2025). Provided under GPL 2.
 ## Shape constrained smooth construct for bivariate terms.
-## (2023) with sum-to-zero contraint applied to the final tensor product model matrices, XSig, after scop constraints...
+## (2023) with sum-to-zero contraint applied to the final tensor product model matrices, XSig, after scop constraints, for bivariate smooths with double monotonicity or concavity/convexity only..
 
 ####################################################################################### 
 ### Tensor product P-spline construction with double monotone decreasing constraint,
@@ -203,7 +203,6 @@ marginal.linear.extrapolation <- function(object, data)
 ####################################################################################### 
 ### Tensor product P-spline construction with double monotone increasing constraint  ##
 #######################################################################################
-
 
 smooth.construct.tedmi.smooth.spec <- function(object, data, knots)
 { ## construction of the double monotone increasing smooth surface
@@ -467,10 +466,10 @@ smooth.construct.tesmd1.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+ ## cmx <- colMeans(X)
+##  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+ ## object$cmX <- cmx
 
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ##  t(D)%*%S[[1]]%*%D
@@ -655,10 +654,10 @@ smooth.construct.tesmd2.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+##  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -731,7 +730,6 @@ marginal.matrices.tesmi2.ps <- function(x,z,xk,zk,m,q1,q2)
 
 ###########################################################################
 ## Prediction matrix for the `tesmd2` smooth class *************************
-
 
 Predict.matrix.tesmd2.smooth<-function(object,data)
 ## prediction method function for the `tesmd2' smooth class
@@ -880,10 +878,10 @@ smooth.construct.tesmi1.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+ ## cmx <- colMeans(X)
+ ## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+ ## object$cmX <- cmx
  
   object$S <- list()
   object$S[[1]] <- crossprod(D,S[[1]])%*%D ## t(D)%*%S[[1]]%*%D
@@ -1286,10 +1284,10 @@ smooth.construct.tesmi2.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+ ## cmx <- colMeans(X)
+ ## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+ ## object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -1566,10 +1564,10 @@ smooth.construct.temicx.smooth.spec<- function(object, data, knots)
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+##  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1641,7 +1639,7 @@ Predict.matrix.temicx.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
-  X <- sweep(X,2,c(0,object$cmX))
+##  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -1736,10 +1734,10 @@ smooth.construct.temicv.smooth.spec<- function(object, data, knots)
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+##  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1811,7 +1809,7 @@ Predict.matrix.temicv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
-  X <- sweep(X,2,c(0,object$cmX))
+##  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -1821,7 +1819,6 @@ Predict.matrix.temicv.smooth <- function(object, data)
 ## Tensor product P-spline construction with mixed constraints: 
 ## decreasing wrt the 1st covariate and concave wrt the second covariate ...
 ##############################################################
-
 
 smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with mixed constraints: decreasing
@@ -1903,10 +1900,10 @@ smooth.construct.tedecv.smooth.spec<- function(object, data, knots)
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
   
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -1974,7 +1971,7 @@ Predict.matrix.tedecv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
-  X <- sweep(X,2,c(0,object$cmX))
+##  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -1983,7 +1980,6 @@ Predict.matrix.tedecv.smooth <- function(object, data)
 ## Tensor product P-spline construction with mixed constraints:
 ## decreasing wrt the 1st covariate and convex wrt the 2nd covariate ...
 #################################################################
-
 
 smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with mixed constraints: decreasing
@@ -2065,10 +2061,10 @@ smooth.construct.tedecx.smooth.spec<- function(object, data, knots)
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+ ## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -2136,7 +2132,7 @@ Predict.matrix.tedecx.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
-  X <- sweep(X,2,c(0,object$cmX))
+ ## X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 
@@ -2279,10 +2275,10 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+##  X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+##  object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -2311,7 +2307,6 @@ smooth.construct.tescv.smooth.spec<- function(object, data, knots)
 }
 
 ####################################################################
-
 
 Predict.matrix.tescv.smooth <- function(object, data)
 {  ## prediction method function for the `tescv' smooth class
@@ -2344,7 +2339,6 @@ Predict.matrix.tescv.smooth <- function(object, data)
 ## Tensor product P-spline construction with single convexity 
 ## constraint wrt the second covariate ...
 ################################################################
-
 
 smooth.construct.tescx.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with single convexity 
@@ -2439,10 +2433,10 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
   X <- X%*%D 
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+##  cmx <- colMeans(X)
+ ## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+ ## object$cmX <- cmx
  
   # create the penalty matrix
   object$S <- list()
@@ -2470,7 +2464,6 @@ smooth.construct.tescx.smooth.spec<- function(object, data, knots)
 }
 
 ####################################################################
-
 
 Predict.matrix.tescx.smooth <- function(object, data)
 {  ## prediction method function for the `tescx' smooth class
@@ -2665,7 +2658,6 @@ Predict.matrix.tecvcv.smooth <- function(object, data)
 ## constraint...
 ################################################################
 
-
 smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with double
 ## convexity constraint...
@@ -2792,7 +2784,6 @@ smooth.construct.tecxcx.smooth.spec<- function(object, data, knots)
 
 ####################################################################
 
-
 Predict.matrix.tecxcx.smooth <- function(object, data)
 {  ## prediction method function for the `tecxcx' smooth class
   if (length(object$bs.dim)==1)
@@ -2828,7 +2819,6 @@ Predict.matrix.tecxcx.smooth <- function(object, data)
 ## Tensor product P-spline construction with convexity 
 ## constraint along the 1st covarite and concavity along the 2nd...
 ################################################################
-
 
 smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
 ## construction of the bivariate smooth surface with convexity 
@@ -2911,10 +2901,10 @@ smooth.construct.tecxcv.smooth.spec<- function(object, data, knots)
   X <- X[,2:ncol(X)]%*%Sig[2:ncol(Sig),2:ncol(Sig)]  
 
   ## applying sum-to-zero (centering) constraint...
-  cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+ ## cmx <- colMeans(X)
+ ## X <- sweep(X,2,cmx) ## subtract cmx from columns 
   object$X <- X # the final model matrix with identifiability constraint
-  object$cmX <- cmx
+ ## object$cmX <- cmx
  
   # create the penalty matrix
   S <- list()
@@ -2982,7 +2972,7 @@ Predict.matrix.tecxcv.smooth <- function(object, data)
   Sig <- IS1 %x% IS2 
   # get final model matrix
   X <- X %*%Sig
-  X <- sweep(X,2,c(0,object$cmX))
+##  X <- sweep(X,2,c(0,object$cmX))
   X # return the prediction matrix
 }
 

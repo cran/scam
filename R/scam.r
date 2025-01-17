@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2025). Provided under GPL 2.
 ## routines for fitting scam()...
 ## based on setup routines (c) Simon N Wood
 
@@ -230,13 +230,18 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          assign("start",rep(0,0),envir=env)
      }
    
-
-   q.f <- rep(0,n.terms)
-   if (n.terms >0) for (i in 1:n.terms) 
-                      q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 
-   G$S <- Q$S
-   G$q.f <- q.f
-   G$q0 <- G$off[1]-1  ## number of the parameters of the strictly parametric model
+  G$S <- Q$S
+  ## q.f <- rep(0,n.terms)
+  ## if (n.terms >0) for (i in 1:n.terms) 
+  ##                    q.f[i] <- ncol(G$smooth[[i]]$S[[1]]) + 1 
+  ## G$q.f <- q.f
+  ## G$q0 <- G$off[1]-1  ## number of the parameters of the strictly parametric model
+                       ## G$off - first coef penalized by each element of S 
+                       ## Note, that as paraPen is not implemented in scam, G$off  does not include user supplied penalties on the parametric part of the model as it does with mgcv, plus it doe not include unpenalized smooths
+   G$q0 <- if (G$intercept) 1+ length(unlist(lapply(G$pterms,attr,"term.labels"))) 
+          else length(unlist(lapply(G$pterms,attr,"term.labels"))) ## number of the parameters of the strictly parametric model, excluding intercept
+   
+   
    G$p.ident <- Q$p.ident  ## vector of 0's & 1's for the model parameters identification: 
    G$n.terms <- n.terms   ## number of the smooth terms in the SCAM
   # G$intercept <- intercept
@@ -298,7 +303,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
          nobs <- NROW(y)
          eval(family$initialize)
          G$y <- y  ## needed to set factor response values as numeric
-         def.sp <- initial.sp.scam(G,optimizer=optimizer, Q,q.f=q.f,n.terms=n.terms,family=family,
+         def.sp <- initial.sp.scam(G,optimizer=optimizer, Q, n.terms=n.terms,family=family, ## ,q.f=q.f
               intercept=intercept,offset=G$offset, env=env,
               weights=weights, control=control) 
          rho <- log(def.sp+1e-4) ## get initial log(sp) ...
@@ -554,7 +559,7 @@ scam.control <- function (maxit = 200, maxHalf=30, devtol.fit=1e-7, steptol.fit=
 ## function to get initial estimates of smoothing parameters...##
 #################################################################
 
-initial.sp.scam <- function(G,optimizer,Q,q.f,n.terms,family,intercept,offset, env= env,
+initial.sp.scam <- function(G,optimizer,Q, n.terms,family,intercept,offset, env= env, ##,q.f=q.f
                       weights, control=control) 
 {  ## function to get initial estimates of smoothing parameters
    control$devtol.fit <- 1e-4
@@ -578,15 +583,19 @@ initial.sp.scam <- function(G,optimizer,Q,q.f,n.terms,family,intercept,offset, e
    def.sp <- array(0,n.p) ## initialize the initial sp values
    j <- 1
    if (n.terms >0)  for (i in 1:n.terms){
-                       for (kk in 1:length(G$smooth[[i]]$S)){
-                          start <- G$off[j]
-                          finish <- start + ncol(G$smooth[[i]]$S[[kk]])-1
-                          # matrix norm of the Hessian elements penalized by S[[kk]]...
-                          Hi.norm <- sum(H[start:finish,start:finish]*H[start:finish,start:finish]) 
-                          Si.norm <- sum(G$smooth[[i]]$S[[kk]]*G$smooth[[i]]$S[[kk]])
-                          def.sp[j] <- (Hi.norm/Si.norm)^0.5
-                          j <- j+1
-                       }
+                      if (is.null(G$smooth[[i]]$fixed)) fixed <- FALSE  ## check if the smooth should be unpenalized
+                        else if (G$smooth[[i]]$fixed) fixed <- TRUE else fixed <- FALSE  
+                      if (!fixed){   ##  if (!G$smooth[[i]]$fixed){
+                         for (kk in 1:length(G$smooth[[i]]$S)){
+                           start <- G$off[j]
+                           finish <- start + ncol(G$smooth[[i]]$S[[kk]])-1
+                           # matrix norm of the Hessian elements penalized by S[[kk]]...
+                           Hi.norm <- sum(H[start:finish,start:finish]*H[start:finish,start:finish]) 
+                           Si.norm <- sum(G$smooth[[i]]$S[[kk]]*G$smooth[[i]]$S[[kk]])
+                           def.sp[j] <- (Hi.norm/Si.norm)^0.5
+                           j <- j+1
+                          }
+                      }  
                     }
    ## Create again new environments with `start' initially empty...
    env <- new.env()
@@ -617,22 +626,24 @@ penalty_pident <- function(object)
    p.ident <- rep(FALSE,q) # initialize vector of parameter identifications
                       # with `TRUE' - for a parameter to be exponentiated, `FALSE' - otherwise
    off.terms <- rep(0,n.terms) # starting points for each term
-   off <- object$off
-   if (n.terms ==length(off))
-          off.terms <- off
-   else 
-      {   off.terms[1] <- off[1]
-          k <- 1
-          l <- 1
-          while (l<length(off))
-              {   if (off[l]!=off[l+1])
-                     {   off.terms[k+1] <- off[l+1] 
-                         k <- k+1; l <- l+1 
-                     } 
-                  else l <- l+1
-              }
-     
-      }
+   for (i in 1:n.terms)
+        off.terms[i] <- object$smooth[[i]]$first.para
+ ##  below is not correct for getting off.terms when some smooths are unpenalized (having fx=TRUE)
+ ##  off <- object$off
+ ##  if (n.terms ==length(off))
+ ##         off.terms <- off
+ ##  else 
+ ##     {   off.terms[1] <- off[1]
+ ##         k <- 1; l <- 1
+ ##         while (l<length(off))
+ ##            {   if (off[l]!=off[l+1])
+ ##                    {   off.terms[k+1] <- off[l+1] 
+ ##                        k <- k+1; l <- l+1 
+ ##                    } 
+ ##                 else l <- l+1
+ ##            }
+ ##  }
+                
    if (n.terms>0) 
          for (i in 1:n.terms){
               if (cons.terms[i]==1){
@@ -643,20 +654,24 @@ penalty_pident <- function(object)
                   ind <- attr(object$smooth[[i]],"del.index") ## to remove unidentifiable model coefficients, scam_1.2-15
                   if (!is.null(ind)) 
                          object$smooth[[i]]$p.ident <- object$smooth[[i]]$p.ident[-ind]
-                  p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- object$smooth[[i]]$p.ident
+                 ## p.ident[off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[1]])-1)] <- object$smooth[[i]]$p.ident
+                    p.ident[off.terms[i]:object$smooth[[i]]$last.para] <- object$smooth[[i]]$p.ident
               }
           } 
    ## getting the list of penalty matrices in terms of the full model vector of coefficients...
-   S <- list()
-   j <- 1
+   S <- list(); j <- 1
    if (n.terms>0) 
         for(i in 1:n.terms){
+           if (is.null(object$smooth[[i]]$fixed)) fixed <- FALSE  ## check if the smooth should be unpenalized
+             else if (object$smooth[[i]]$fixed) fixed <- TRUE else fixed <- FALSE    
+           if (!fixed){  ## if (!object$smooth[[i]]$fixed){
               for (kk in 1:length(object$smooth[[i]]$S)){
                      S[[j]] <- matrix(0,q,q) # initialize penalty matrix
                      S[[j]][off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1),
                    off.terms[i]:(off.terms[i]+ncol(object$smooth[[i]]$S[[kk]])-1)] <- object$smooth[[i]]$S[[kk]]
                             j <- j+1       
                }
+            }   
          }
    object$S <- S 
    object$p.ident <- p.ident
@@ -687,7 +702,7 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
 { y <- G$y;  X <- G$X;  S <- G$S; not.exp <- G$not.exp; gamma <- G$gamma
   AR1.rho <- G$AR1.rho
   attr(X,"dimnames") <- NULL
-  q0 <- G$q0; q.f <- G$q.f
+   ## q0 <- G$q0; q.f <- G$q.f
   p.ident <- G$p.ident; n.terms <- G$n.terms
   family <- G$family; intercept <- G$intercept; offset <- G$offset;
   weights <- G$weights;  

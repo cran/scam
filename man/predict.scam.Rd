@@ -228,7 +228,6 @@ lines(x,pr,col=3)
    persp(xp,zp,fc,expand= 0.85,ticktype = "simple",xlab="x1",
      ylab="x2",zlab="f^",main="", theta = 80, phi = 40)
 
-
 ## obtaining a 'prediction matrix'...
 newd <- data.frame(x1=c(-2,-1),x2=c(0,1))
 Xp <- predict(b,newdata=newd,type="lpmatrix")

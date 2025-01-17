@@ -105,14 +105,12 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
     last <- x$smooth[[i]]$last.para
     edf <- sum(x$edf[first:last]) ## Effective DoF for this term
     term.lab <- sub.edf(x$smooth[[i]]$label,edf)
-    #P <- plot(x$smooth[[i]],P=NULL,data=x$model,n=n,n2=n2,xlab=xlab,ylab=ylab,too.far=too.far,label=term.lab,
-    #          se1.mult=se1.mult,se2.mult=se2.mult,xlim=xlim,ylim=ylim,main=main,scheme=scheme[i],...)
     attr(x$smooth[[i]],"coefficients") <- x$coefficients[first:last]   ## relevent coefficients
     P <- plot(x$smooth[[i]],P=NULL,data=x$model,partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,label=term.lab,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
                      se1.mult=se1.mult,se2.mult=se2.mult,shift=shift,trans=trans,
-                     by.resids=by.resids,scheme=scheme[i],...)
+                     by.resids=by.resids,scheme=scheme[i],...) ## plot.mgcv.smooth() called here
 
     if (is.null(P)) pd[[i]] <- list(plot.me=FALSE) 
     else if (is.null(P$fit)) {
@@ -122,7 +120,9 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
       ## dealing with univariate shape-constrained smooths ...
       const.dif <- 0  
       if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
-                      "mdcx.smooth","micv.smooth","micx.smooth", "po.smooth", "mifo.smooth", "miso.smooth","mpdBy.smooth", "cxBy.smooth","mpiBy.smooth","cvBy.smooth","mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth", "lmpi.smooth")))
+                      "mdcx.smooth","micv.smooth","micx.smooth", "po.smooth",
+                      "ipo.smooth","dpo.smooth","cpopspline.smooth", 
+                      "mifo.smooth", "miso.smooth","mpdBy.smooth", "cxBy.smooth","mpiBy.smooth","cvBy.smooth","mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth", "lmpi.smooth", "lipl.smooth")))
               {
                         q <- ncol(P$X) ## length(p)
                        ## beta.c <- if (!x$not.exp) c(0,exp(p)) else c(0,notExp(p)) 
@@ -135,15 +135,21 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                                 beta.c[-x$smooth[[i]]$n.zero] <- p
                            } else if (inherits(x$smooth[[i]], c("mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth", "lmpi.smooth"))) {
                                  beta.c <- p
+                           } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
+                                  beta.c <- c(p,0)
+                            } else if (inherits(x$smooth[[i]], c("lipl.smooth"))) {
+                                  beta.c <- c(p,rep(0,x$smooth[[i]]$n.zero.col))       
                            } else beta.c <- c(0,p)
 
                         fit.c <- P$X%*%beta.c # fitted values for the SCOP-splines identifiability constraints
-                        if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth", "miso.smooth"))) 
-                               p <- beta.c ## c(0,p)
-                          else if (inherits(x$smooth[[i]], c("mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) ## no changes in p here
-                               p <- p
-                          else ## for ("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",       "mdcx.smooth","micv.smooth","micx.smooth",))) centering constraint applied within smooth construction, so no need for the code below to apply a vertical shift to achieve the centered smooth..
-                               p <- c(0,p)
+                        
+                        if (!inherits(x$smooth[[i]], c("mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) p <- beta.c ## if NOT those marked
+                        
+                    ##    p <- if (inherits(x$smooth[[i]], c("mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) ## no changes in p here
+                    ##            p
+                     ##        else ## for ("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth", "mdcx.smooth","micv.smooth","micx.smooth",))) centering constraint applied within smooth construction, so no need for the code below to apply a vertical shift to achieve the centered smooth..
+                      ##         beta.c                      
+                       ## below is before version 1.2-17        
                        ##   else { ## get a constant, a difference between two fits obtained by using 'zeroed
                        ##        ## intercept' constraint of the SCOP-spline  and the centering constraint;
                        ##         ## centered-fit= SCOP-fit + const...
@@ -163,6 +169,24 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                        ##         p <- c(0,beta.a)
                        ##         p <- qr.qy(qrA,p)
                        ##        }
+                       
+                       if (inherits(x$smooth[[i]], c("mpiBy.smooth","mpdBy.smooth","ipo.smooth", "dpo.smooth"))) { ## to avoid high correlation between beta and the intercept, impose centering constraint for scop-splines that do not include centering const within smooth constraction...
+                              const.dif <- -sum(fit.c)/n 
+                              onet <- matrix(rep(1,n),1,n)
+                              A <- onet%*%P$X 
+                              qrX <- qr(P$X)
+                              R <- qr.R(qrX) 
+                              qrA <- qr(t(A))
+                              if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
+                                      R <- R[-q,]
+                                      RZa <- t(qr.qty(qrA,t(R)))[,1:(q-1)] 
+                              } else {  
+                                      R <- R[-1,]
+                                      RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
+                                   }   
+                              RZa.inv <- solve(RZa)
+                              RZaR <- RZa.inv%*%R                          
+                       }                       
          }
         ## dealing with bivariate shape-constrained smooths...
         if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth",
@@ -213,10 +237,10 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
           }
       ## end shape-constrained supplement
      
-      ## added code to centralize the fit if no 'by' variable...
-      ft <- P$X%*%p ## centered fit
-      if (is.null(offset)) P$fit <- ft ## centered fit
+      ft <- P$X%*%p 
+      if (is.null(offset)) P$fit <- ft 
               else P$fit <- ft + offset 
+              
      ## if (x$smooth[[i]]$by=="NA"){
      ##       if (is.null(offset)) P$fit <- ft ## get the fit with the centering identifiability constraint
      ##           else P$fit <- ft + offset 
@@ -224,13 +248,15 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
      ##             else P$fit <- ft + offset - const.dif
      ##       } 
       ## 'minus'- const.dif is applied to get back to the scop fit with the original 'zeroed intercept'constraint:
-      ## SCOP.fit = centered.fit - const(const.dif)
+      ## SCOP.fit = centered.fit/ft - const(const.dif)
      
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se && P$se) { ## get standard errors for fit ...
         if (inherits(x$smooth[[i]], c("mpi.smooth","mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
-                 "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth","mifo.smooth","miso.smooth",
-                 "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth")))
+                 "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth",
+                 "ipo.smooth","dpo.smooth","cpopspline.smooth",
+                 "mifo.smooth","miso.smooth",
+                 "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth", "lipl.smooth")))
          { ## univariate scop smooths...
                   if (inherits(x$smooth[[i]], c("miso.smooth","mifo.smooth"))) {
                      Vp <- x$Vp.t[first:last, first:last] 
@@ -238,15 +264,24 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      ## adding rows and columns of 0's...
                      Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
                      Vp.c[-ind,-ind] <- Vp  
+                   } else if (inherits(x$smooth[[i]], c("lipl.smooth"))) {
+                     Vp <- x$Vp.t[first:last, first:last] 
+                     ind <- c((ncol(Vp)+1):(ncol(Vp)+ x$smooth[[i]]$n.zero.col))
+                     ## adding rows and columns of 0's...
+                     Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
+                     Vp.c[-ind,-ind] <- Vp  
                    } else if (inherits(x$smooth[[i]], c("mpdBy.smooth",  "cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) {
-                      Vp.c <- x$Vp.t[first:last, first:last]                 
+                      Vp.c <- x$Vp.t[first:last, first:last]      
+                   } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
+                       Vp.c <- x$Vp.t[c(first:last,1),c(first:last,1)] 
+                       Vp.c[,q] <- rep(0,nrow(Vp.c))
+                       Vp.c[q,] <- rep(0,ncol(Vp.c))                                
                    } else {
                      Vp.c <- x$Vp.t[c(1,first:last),c(1,first:last)] 
                     # Vp.c <- Vp
                      Vp.c[,1] <- rep(0,nrow(Vp.c))
                      Vp.c[1,] <- rep(0,ncol(Vp.c)) 
                     }
-
                    ## since for univariate dicreasing/increasing, convex/concave, mixed constraints, 'centering' contraint is now applied after imposing the scop constraints within each smooth constructor, there is no need for centering the smooth after the fit
                 ##   if (inherits(x$smooth[[i]], c("po.smooth","mifo.smooth","miso.smooth","mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth", "lmpi.smooth"))) {
                 ##      se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))                       
@@ -255,7 +290,14 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                 ##       Ga <- XZa%*%RZaR                                         
                 ##       se.fit <- sqrt(rowSums((Ga%*%Vp.c)*Ga))    
                 ##    }  
-                     se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))                    
+                
+                     if (inherits(x$smooth[[i]], c("mpiBy.smooth","mpdBy.smooth","ipo.smooth", "dpo.smooth"))) {  ## , "cpopspline.smooth"
+                            XZa <- if (inherits(x$smooth[[i]], c("dpo.smooth"))) t(qr.qty(qrA,t(P$X)))[,1:(q-1)]
+                                  ## else if (inherits(x$smooth[[i]], c("po.smooth"))) t(qr.qty(qrA,t(P$X)))
+                                   else t(qr.qty(qrA,t(P$X)))[,2:q]
+                           Ga <- XZa%*%RZaR                                         
+                           se.fit <- sqrt(pmax(0,rowSums((Ga%*%Vp.c)*Ga)))    
+                     } else se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))                    
            } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",
                   "tesmi1.smooth","tesmi2.smooth",  "tismi.smooth", "tismd.smooth",
                   "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth", "tedecx.smooth",
@@ -286,10 +328,10 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
 
       if (partial.resids) { 
              P$p.resid <- fv.terms[,length(order)+i] + w.resid 
-             if (inherits(x$smooth[[i]], c("mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
-                                           "mdcx.smooth", "micv.smooth", "micx.smooth"))) ## "mpi.smooth",
-                  P$p.resid <- P$p.resid + const.dif ## to shift the resid/fitted smooth, to get a centering smooth, as
-                                                 ## centered.fit= SCOP.fit + const(const.dif)           
+           ##  if (inherits(x$smooth[[i]], c("mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
+           ##                                "mdcx.smooth", "micv.smooth", "micx.smooth"))) ## "mpi.smooth",
+           ##       P$p.resid <- P$p.resid + const.dif ## to shift the resid/fitted smooth, to get a centering smooth, as
+           ##                                      ## centered.fit= SCOP.fit + const(const.dif)           
       }
       if (se && P$se) P$se <- se.fit*P$se.mult  # Note multiplier
       P$X <- NULL
@@ -414,6 +456,9 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
   if (pages>0) par(oldpar)
   invisible(pd)
 } ## end plot.scam
+
+
+## NOTE: 'centering' constraints applied after the fit in plot.scam function to only "mpiBy.smooth","mpdBy.smooth","ipo.smooth", "dpo.smooth". maybe to apply it to other six 'by' scop-splines? although, short simulation study sisn't show issue with high correlation between the intercept and smooth coefficients... predict.scam() function includes coef. re-parametrization due to 'centering' constraint only for "ipo.smooth", "dpo.smooth".
 
 
 #######################################################################################

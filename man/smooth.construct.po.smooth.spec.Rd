@@ -1,20 +1,29 @@
 \name{smooth.construct.po.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.po.smooth.spec}
+\alias{smooth.construct.ipo.smooth.spec}
+\alias{smooth.construct.dpo.smooth.spec}
+\alias{smooth.construct.cpop.smooth.spec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Constructor for SCOP-splines with positivity constraint
 }
 \description{This is a special method function
   for creating univariate smooths subject to a positivity constraint which is built by 
   the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed using monotonic P-splines. This smooth is specified via model terms suach as 
+  It is constructed using P-splines. This smooth is specified via model terms such as 
   \code{s(x,k,bs="po",m=2)}, 
   where \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis.
+  Increasing and positive SCOP-splines are specified by model terms like \code{s(x,bs="ipo")}.
+  Model terms \code{s(x,bs="dpo")} specify decreasing and positive SCOP-splines. Cyclic and positive splines are specified
+  by \code{s(x,bs="cpop")}.    
 
-  Note: Models that include this smooth should not have an intercept. See examples below. 
+  Note: Models that include positive-valued smooth should not have an intercept. See examples below. 
 }
 \usage{
 \method{smooth.construct}{po.smooth.spec}(object, data, knots)
+\method{smooth.construct}{ipo.smooth.spec}(object, data, knots)
+\method{smooth.construct}{dpo.smooth.spec}(object, data, knots)
+\method{smooth.construct}{cpop.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,7 +39,7 @@
 %\details{
 %%  ~~ If necessary, more details than the description above ~~
 %}
-\value{ An object of class \code{"po.smooth"}. 
+\value{ An object of class \code{"po.smooth"}, \code{"ipo.smooth"}, \code{"dpo.smooth"}, \code{"cpop.smooth"} 
 }
 \references{
 Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and Computing, 25(3), 543-559
@@ -58,8 +67,8 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 }
 \examples{
  
-##  SCOP-splines example with positivity constraint... 
-  ## simulating data...
+## example with positivity constraint... 
+## simulating data...
 \dontrun{
    require(scam)
    set.seed(3)
@@ -93,6 +102,21 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   b3 <- scam(y~s(x1,bs="ps")+s(x2,bs="ps"),data=dat) ## unconstrained model
   summary(b3)
   plot(b3,pages=1) 
+  
+  ## three-term example: decreasing positive, cyclic positive, piece-wise linear positive...  
+  set.seed(3)
+  n <- 200
+  x1 <- runif(n)*3-1
+  f1 <- exp(-1.3*x1)# decreasing positive smooth 
+  x2 <-  runif(200)*10
+  f2 <- sin(x2*2*pi/10)+1 ## cyclic positive
+  x3 <- f3 <- seq(0.34,1.9,length.out=n)  ## for piece-wise linear positive
+  ind <- x3 > 1
+  f3[!ind] <- 3*x3[!ind] -1 
+  f3[ind] <- -2*x3[ind] +4 
+  y <- f1+f2+f3 + rnorm(n)*.7
+  b <- scam(y ~ s(x1,bs="dpo") +s(x2,bs="cpop",k=7)+ s(x3,bs="po",m=0,k=5) -1 )
+  plot(b,pages=1) 
  } 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -59,39 +59,28 @@ Natalya Pya <nat.pya@gmail.com>
 \examples{
  \dontrun{
 ## tensor product `tescv' example 
-  ## simulating data...
-   set.seed(5)
-   n <- 30
-   x1 <- sort(runif(n))
-   x2 <- sort(2*runif(n)-1)
-   f1 <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) 
-        f1[i,j] <- sin(2*x1[i]) - 4*x2[j]^2
-   f1 <- as.vector(t(f1))
-   f <- (f1-min(f1))/(max(f1)-min(f1))
-   y <- f+rnorm(length(f))*0.1
-   x11 <-  matrix(0,n,n)
-   x11[,1:n] <- x1
-   x11 <- as.vector(t(x11))
-   x22 <- rep(x2,n)
-   dat <- list(x1=x11,x2=x22,y=y)
+require(scam)
+simu <- function(x,z) { sin(2*x) - 4*z^2 } 
+xs <-seq(0,1,length=30); zs <- seq(-1,1,length=30)
+pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
+truth <- matrix(simu(pr$x,pr$z),30,30)
+   
+set.seed(5)
+n <- 500
+x <- runif(n)
+z <- 2*runif(n)-1
+f <- simu(x,z)
+y <- f + rnorm(n)*.2
 ## fit model ...
-   b <- scam(y~s(x1,x2,k=c(10,10),bs="tescv",m=2),
-            family=gaussian(), data=dat)
-## plot results ...
-   par(mfrow=c(2,2),mar=c(4,4,2,2))
-   plot(b,se=TRUE)
-   plot(b,pers=TRUE, theta = 50, phi = 20) 
-   plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data")
-   x11()
-   vis.scam(b, theta = 50, phi = 20)
-   ## plotting the truth...
-   x11()
-   x1 <- seq(min(x1),max(x1),length.out=30)
-   x2 <-  seq(min(x2),max(x2),length.out=30)
-   f1 <- matrix(0,n,n)
-   for (i in 1:n) for (j in 1:n) f1[i,j] <- sin(2*x1[i]) - 4*x2[j]^2
-   persp(x1,x2,f1,theta = 50, phi = 20)  
+b <- scam(y~s(x,z,bs="tescv"))
+summary(b)
+old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
+plot(b,se=TRUE)
+plot(b,pers=TRUE,theta = 50, phi = 20);title("tescv")
+plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
+persp(xs,zs,truth,theta = 50, phi = 20);title("truth")
+par(old.par)  
+vis.scam(b,theta = 50, phi = 20) 
  }
 }
 

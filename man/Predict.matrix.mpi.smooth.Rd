@@ -2,6 +2,7 @@
 %\Rdversion{1.0}
 \alias{Predict.matrix.mpi.smooth}
 \alias{Predict.matrix.lmpi.smooth}
+\alias{Predict.matrix.lipl.smooth}
 \alias{Predict.matrix.mpd.smooth}
 \alias{Predict.matrix.cx.smooth}
 \alias{Predict.matrix.cv.smooth}
@@ -10,6 +11,9 @@
 \alias{Predict.matrix.mdcx.smooth}
 \alias{Predict.matrix.mdcv.smooth}
 \alias{Predict.matrix.po.smooth}
+\alias{Predict.matrix.ipo.smooth}
+\alias{Predict.matrix.dpo.smooth}
+\alias{Predict.matrix.cpopspline.smooth}
 \alias{Predict.matrix.miso.smooth}
 \alias{Predict.matrix.mifo.smooth}
 \alias{Predict.matrix.tedmd.smooth}
@@ -46,6 +50,7 @@
 \usage{
 \method{Predict.matrix}{mpi.smooth}(object, data)
 \method{Predict.matrix}{lmpi.smooth}(object, data)
+\method{Predict.matrix}{lipl.smooth}(object, data)
 \method{Predict.matrix}{miso.smooth}(object, data)
 \method{Predict.matrix}{mifo.smooth}(object, data)
 \method{Predict.matrix}{mpd.smooth}(object, data)
@@ -56,6 +61,9 @@
 \method{Predict.matrix}{mdcx.smooth}(object, data)
 \method{Predict.matrix}{mdcv.smooth}(object, data)
 \method{Predict.matrix}{po.smooth}(object, data)
+\method{Predict.matrix}{ipo.smooth}(object, data)
+\method{Predict.matrix}{dpo.smooth}(object, data)
+\method{Predict.matrix}{cpopspline.smooth}(object, data)
 \method{Predict.matrix}{mpdBy.smooth}(object, data)
 \method{Predict.matrix}{mpiBy.smooth}(object, data)
 \method{Predict.matrix}{cxBy.smooth}(object, data)

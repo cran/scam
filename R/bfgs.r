@@ -16,7 +16,7 @@ gcv.ubre_grad <- function(rho, G, env, control)
    y <- drop(G$y);  X <- G$X; gamma <- G$gamma
    S <- G$S;
    not.exp <- G$not.exp
-   q0 <- G$q0; q.f <- G$q.f
+  ## q0 <- G$q0; q.f <- G$q.f
    p.ident <- G$p.ident; n.terms <- G$n.terms
    family <- G$family; intercept <- G$intercept; offset <- G$offset;
    weights <- G$weights;  scale.known <- G$scale.known; sig2 <- G$sig2
@@ -260,7 +260,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
          alpha.max <- maxNstep/Newtlen
 
          ms <- max(abs(Nstep))
-         if (ms > maxNstep) { ## initialize step length, alpha
+         if (ms - maxNstep > .Machine$double.eps^.9) { ## if (ms > maxNstep), initialize step length, alpha
             alpha <- maxNstep/ms  
             alpha.max <- alpha*1.05
          } else {
@@ -282,7 +282,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
                        newslope <- sum(grad1 * Nstep) ## directional derivative
                        curv.condition <- TRUE
                        if (newslope < c2*initslope) {# the curvature condition (Wolfe 2) is not satisfied
-                              if (alpha == 1 && Newtlen < maxNstep)
+                              if (isTRUE(all.equal(alpha,1)) && Newtlen < maxNstep) ## if (alpha == 1 && Newtlen < maxNstep)
                                  {  ## alpha.max <- maxNstep/Newtlen
                                      for (kk in 1:40) ## repeat 
                                         {  old.alpha <- alpha
@@ -303,7 +303,7 @@ bfgs_gcv.ubre <- function(fn=gcv.ubre_grad, rho, ini.fd=TRUE, G, env,
                                                break
                                          } 
                                   }
-                               if ((alpha < 1) || (alpha>1 && (score1>score+c1*alpha*initslope)))
+                               if ((!isTRUE(all.equal(alpha,1)) && alpha < 1) || ((!isTRUE(all.equal(alpha,1)) && alpha>1) && (score1>score+c1*alpha*initslope))) ## if ((alpha < 1) || (alpha>1 && (score1>score+c1*alpha*initslope)))
                                   {   alpha.lo <- min(alpha, old.alpha)
                                       alpha.diff <- abs(old.alpha - alpha)
                                       if (alpha < old.alpha)

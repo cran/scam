@@ -48,7 +48,9 @@ For details see \code{\link{smooth.construct.mifo.smooth.spec}}.
 
 For details see \code{\link{smooth.construct.miso.smooth.spec}}. 
 
-\item SCOP-spline with positivity constraint: \code{bs="po"}. This reparameterizes the coefficients so that there are positive. For details see \code{\link{smooth.construct.po.smooth.spec}}. 
+\item SCOP-splines with positivity constraint: \code{bs="po"} constructs positive-valued smooths; \code{bs="ipo"} constructs increasing and positive smooths; \code{bs="dpo"} constructs decreasing and positive smooths; \code{bs="cpop"} constructs cyclic and positive smooths.
+
+The reparameterization of the coefficients is done to achieve their positivity. For details see \code{\link{smooth.construct.po.smooth.spec}}. 
 
 \item Decreasing/increasing SCOP-splines used with numeric 'by' variable: \code{bs="mpdBy"}, \code{bs="mpiBy"}. These work similar to \code{mpd.smooth.spec}, \code{mpi.smooth.spec},  but without applying an identifiability constraint ('zero intercept' constraint). Use when the smooth term has a numeric \code{by} variable  that takes more than one value.
  For details see \code{\link{smooth.construct.mpd.smooth.spec}}, \code{\link{smooth.construct.mpi.smooth.spec}}. 
@@ -71,7 +73,7 @@ These work similar to \code{mdcx.smooth.spec}, \code{mdcv.smooth.spec}, \code{mi
 
 \code{\link{smooth.construct.micv.smooth.spec}}. 
 
-\item Locally shape-constrained P-splines (LSCOP-splines): \code{bs="lmpi"}. Locally increasing splines that are monotone increasing up to a specified change point and become unconstrained beyond that point. For details see \code{\link{smooth.construct.lmpi.smooth.spec}}. 
+\item Locally shape-constrained P-splines (LSCOP-splines): \code{bs="lmpi"}, \code{bs="lipl"}. \code{bs="lmpi"} constructs locally increasing splines that are monotone increasing up to a specified change point and become unconstrained beyond that point. \code{bs="lipl"} works similarly, constructing a monotone increasing smooth up to a specified point but plateaus beyond it. For details see \code{\link{smooth.construct.lmpi.smooth.spec}}. 
 
 }
 

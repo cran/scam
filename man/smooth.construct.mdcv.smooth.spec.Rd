@@ -67,27 +67,26 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \examples{
   \dontrun{
 ## Monotone decreasing and concave SCOP-splines example 
-  ## simulating data...
-   require(scam)
-   set.seed(2)
-   n <- 100
-   x <- sort(runif(n))
-   f <- -x^4
-   y <- f+rnorm(n)*.2
-   dat <- data.frame(x=x,y=y)
- ## fit model ...
-   b <- scam(y~s(x,bs="mdcv"),family=gaussian(),data=dat)
+## simulating data...
+require(scam)
+set.seed(2)
+n <- 100
+x <- sort(runif(n))
+f <- -x^4
+y <- f+rnorm(n)*.2
+dat <- data.frame(x=x,y=y)
+## fit model ...
+b <- scam(y~s(x,bs="mdcv"),data=dat)
 
- ## fit unconstrained model ...
-   b1 <- scam(y~s(x,bs="ps"),family=gaussian(),data=dat)
- ## plot results ...
-   plot(x,y,xlab="x",ylab="y",cex=.5)
-   lines(x,f)          ## the true function
-   lines(x,b$fitted.values,col=2) ## mixed constrained fit 
-   lines(x,b1$fitted.values,col=3) ## unconstrained fit 
-
+## fit unconstrained model ...
+b1 <- scam(y~s(x,bs="ps"),data=dat)
+## plot results ...
+plot(x,y,xlab="x",ylab="y",cex=.5)
+lines(x,f)          ## the true function
+lines(x,b$fitted.values,col=2) ## mixed constrained fit 
+lines(x,b1$fitted.values,col=3) ## unconstrained fit 
   
- ## numeric 'by' variable example... 
+## numeric 'by' variable example... 
  set.seed(6)
  n <- 100
  x <- sort(runif(n))

@@ -1,12 +1,14 @@
 \name{smooth.construct.lmpi.smooth.spec}
 %\Rdversion{1.0}
 \alias{smooth.construct.lmpi.smooth.spec}
+\alias{smooth.construct.lipl.smooth.spec}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Locally shape-constrained P-spline based constructor (LSCOP-spline): locally increasing splines up to a change point. 
 }
 \description{\code{scam} can use locally shape-constrained smooths that are monotone increasing up to a specified change point and become unconstrained beyond that point. This smooth is specified via model terms like 
   \code{s(x,bs="lmpi",xt=list(xc=xc))}, where \code{xc} sets a change point. The construction of the smooths uses B-spline bases with mildly non-linear re-parametrization of the basis coefficients over the shape-constrained interval. The 'wiggliness' of the smooths is controlled by discrete penalties applied directly to the basis coefficients, in particular, by penalizing the squared differences between adjacent spline coefficients.
+\code{lipl.smooth.spec} works similarly to \code{lpmi.smooth.spec}, constructing a monotone increasing smooth up to a specified change point \code{xc} but plateaus beyond it.
 
  The method is build by the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
 
@@ -15,6 +17,7 @@
 
 \usage{
 \method{smooth.construct}{lmpi.smooth.spec}(object, data, knots)
+\method{smooth.construct}{lipl.smooth.spec}(object, data, knots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +30,7 @@
           If it is \code{NULL} then the knot locations are generated automatically.}
 }
 \details{
- A smooth term of the form  \code{s(x,k,bs="lmpi",xt=list(xc=xc),m=2)}, where  \code{xc} specifies a change point. \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis. The default is a cubic spline \code{m=2}. The smooth uses a first order difference penalty on the coefficients starting from the second coefficient over the constrained part, and a second order difference penalty (a second order P-spline penalty) over the unconstrained part. The first order difference penalty over the constrained part shares with a second order P-spline penalty the feature of 'smoothing towards a straight line'. 
+ A smooth term of the form  \code{s(x,k,bs="lmpi",xt=list(xc=xc),m=2)}, where  \code{xc} specifies a change point. \code{k} denotes the basis dimension and \code{m+1} is the order of the B-spline basis. The default is a cubic spline \code{m=2}. The smooth uses a first order difference penalty on the coefficients starting from the second coefficient over the constrained part, and a second order difference penalty (a second order P-spline penalty) over the unconstrained part. The first order difference penalty over the constrained part shares with a second order P-spline penalty the feature of 'smoothing towards a straight line'. \code{lipl.smooth.spec} smooth sets zero values for the coefficients beyond the change point, which keeps the coefficient values constant (no change in the B-spline's coefficients beyond \code{xc}).
 
 The default basis dimension is \code{k=10}. The basis dimensions for constrained and unconstrained parts are set
 proportionally to the share of each part from the total range of the covariate value, but with a minimum of 5 basis functions on each side.
@@ -96,6 +99,23 @@ plot(x,y,cex=.5)
 lines(x,f,lty=2); abline(v=xc,lty=2,col=2)
 lines(x,fitted(g),col=4,lwd=2)
 lines(x,fitted(b),col=2,lwd=1)
+
+## example with bs="lipl"...
+set.seed(5)
+n <- 200
+x <- sort(runif(n)*4-1)
+f <- 1.5*(1-exp(-2*x))
+xc <- 1.5
+y <- f+rnorm(n)*1.5
+b <- scam(y~s(x,bs="lipl",xt=list(xc=xc)))
+g <- scam(y~s(x,bs="ps")) ## unconstrained
+old.par <- par(mfrow=c(2,2))
+plot(x,y,cex=.5)
+lines(x,f,lty=2); abline(v=xc,lty=2,col="red")
+lines(x,fitted(b),col=2,lwd=2)
+plot(b,shade=TRUE)
+plot(g,shade=TRUE)
+par(old.par)
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

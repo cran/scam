@@ -55,8 +55,7 @@ f2 <- exp(-3*x2)/15  # monotone decreasing and convex smooth
 f <- f1+f2
 y <- f+ rnorm(n)*0.2
 dat <- data.frame(x1=x1,x2=x2,y=y)
-b <- scam(y~ s(x1,k=25,bs="mpi",m=2)+s(x2,k=25,bs="mdcx",m=2),
-    family=gaussian(link="identity"),data=dat)
+b <- scam(y~ s(x1,k=25,bs="mpi")+s(x2,k=25,bs="mdcx"),data=dat)
 plot(b,pages=1)
 scam.check(b)
  }

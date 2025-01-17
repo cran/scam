@@ -1,6 +1,16 @@
+1.2-18
+* smooth.construct: three univariate smoothers with positivity constraint added: 'ipo' increasing and positive, 'dpo' decreasing and positive, 'cpop' cyclic and positive. Thanks to Guillem Sala Fernandez for bringing this up.
+
+* smooth.construct: a locally shape-constrained smooth constructor added, 'lipl' constructs a univariate increasing smooth up to a specified change point and reaching a plateau beyond it. Thanks to Wenjin Wang. 
+
+* smooth.construct: univariate scope-splines can now allow piecewise linear spline construction. Thanks to Guillem.
+
+* bfgs_gcv: bug fixed with floating point number comparison. Thanks to Joe Robinson for flagging the bug.
+
+* s(): smooth terms can now allow 'fx' TRUE/FALSE input argument that indicates whether the term should be an unpenalized (fixed d.f.) regression spline as with the mgcv functions. Thanks to Luca Ehrminger for bringing this up.
+ 
 
 1.2-17
-
 * smooth.construct: a new shape-constrained smoother, 'lmpi', has been added. 'lmpi' is a locally increasing spline up to a given change point. In collaboration with Jens Lichter. Thanks
 
 * notExp: transformation function to ensure positivity of the scop-spline coefficients (for use in place of exp()) has been changed. It is now a softplus function, as implemented in PyTorch. Thanks to Jens Lichter for the suggestion. 
@@ -11,7 +21,6 @@
 
 
 1.2-16
-
 * scam-package.Rd: updated package details and descriptions to give a full overview of the current package functionality. DESCRIPTION updated as well.
 
 * predict: bug fixed with the prediction method when used on the original data, which occured after introducing extra centring constraints on univariate and bivariate scop-splines subject to monotonicity and convexity. Thanks to Steven Novick for reporting the bug. 
@@ -24,12 +33,11 @@
 
 
 1.2-15
-
 * scam, scam.fit.post: bug fixed when an AR1 error model used for the residuals for Gaussian-identity link models, some fitting results were wrongly extracted, standardized residuals are now correctly returned.
 
 *scam.check: a new style of producing QQ-plots of the the model residuals has been added in a similar way as in gam.check of mgcv package of Simon N Wood. qq.scam() routine, a clone of qq.gam(mgcv), has been supplemented to do so.
 
-* smooth.construct: i) bivariate shape constrained smooths: sum-to-zero contraint is now applied to the final tensor product model matrices after imposing the scop constraints (including scop identifiability constraint);
+* smooth.construct: i) bivariate shape constrained smooths with double monotonicity or convexity/concavity: sum-to-zero contraint is now applied to the final tensor product model matrices after imposing the scop constraints (including scop identifiability constraint);
                     ii) univariate dicreasing/increasing, convex/concave, mixed constraints: sum-to-zero contraint is now applied after imposing the scop constraints as well;
               iii) added two new smooth constructors, 'tismi' and 'tismd', which are tensor product interaction with increasing/decreasing  constraint along the first covariate and unconstrained along the second covariate.
 
