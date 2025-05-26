@@ -69,7 +69,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  
 ## example with positivity constraint... 
 ## simulating data...
-\dontrun{
+
    require(scam)
    set.seed(3)
    n <- 100
@@ -117,7 +117,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   y <- f1+f2+f3 + rnorm(n)*.7
   b <- scam(y ~ s(x1,bs="dpo") +s(x2,bs="cpop",k=7)+ s(x3,bs="po",m=0,k=5) -1 )
   plot(b,pages=1) 
- } 
+ 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

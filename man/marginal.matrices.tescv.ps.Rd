@@ -61,6 +61,6 @@ Natalya Pya <nat.pya@gmail.com>
 
 \code{\link{smooth.construct.tesmd2.smooth.spec}}
 }
-\keyword{models} \keyword{regression}%-- one or more ..
+\keyword{models} \keyword{regression} \keyword{internal} %-- one or more ..
 
 

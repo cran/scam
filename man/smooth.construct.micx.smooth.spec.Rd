@@ -65,7 +65,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 }
 \examples{
- \dontrun{
+
 ## Monotone increasing and convex SCOP-splines example 
   ## simulating data...
    set.seed(1)
@@ -101,7 +101,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  b1 <- scam(y~s(x,by=z),data=dat)
  plot(b1,shade=TRUE)
  summary(b1)
- }
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

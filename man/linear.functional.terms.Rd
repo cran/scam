@@ -51,6 +51,7 @@ b <- scam(y~s(X,by=L,k=20,bs="mpdBy"))
 par(mfrow=c(1,2))
 plot(b,shade=TRUE);lines(x,f,col=2); 
 ## compare with gam() of mgcv package...
+require(mgcv)
 g <- gam(y~s(X,by=L,k=20)) 
 plot(g,shade=TRUE);lines(x,f,col=2)
 

@@ -270,7 +270,6 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 
 }
 \examples{
-##=======
 ## Gaussian model, two smooth terms: unconstrained and increasing...
 ## simulating data...
 require(scam)
@@ -288,7 +287,7 @@ b
 summary(b)
 plot(b,pages=1,shade=TRUE)
 
-##=======
+
 ## Gaussian model, two smooth terms: increasing and mixed (decreasing and convex)...
 ## simulating data...
 set.seed(4)
@@ -304,8 +303,7 @@ b <- scam(y~ s(x1,bs="mpi")+s(x2, bs="mdcx"),data=dat)
 summary(b)
 plot(b,pages=1,scale=0,shade=TRUE)
 
-##=======
-\dontrun{
+
 ## using the extended Fellner-Schall method for smoothing parameter selection...
 b0 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="efs")
 summary(b0)
@@ -326,9 +324,8 @@ summary(b2)
 ## using nlm()...
 b3 <- scam(y~ s(x1,bs="mpi")+s(x2,bs="mdcx"),data=dat,optimizer="nlm")
 summary(b3)
-}
 
-##=======
+
 ## Poisson model ....
 ## simulating data...
 set.seed(2)
@@ -373,30 +370,6 @@ b1 <- scam(y~s(x1,bs="ps")+s(x2,k=15,bs="mpi",fx=TRUE)+s(x3,bs="ps",fx=TRUE),
           family=Gamma(link="log"),data=dat,optimizer=c("efs","bfgs"))  
 summary(b1)
 
-\dontrun{
-## bivariate example...
-simu <- function(x,z) -exp(4*x)/(1+exp(4*x))+2*sin(pi*z)
-xs <- seq(-1,3,length=30); zs <- seq(0,1,length=30)
-pr <- data.frame(x=rep(xs,30),z=rep(zs,rep(30,30)))
-truth <- matrix(simu(pr$x,pr$z),30,30)
-   
-set.seed(2)
-n <- 500
-x <- runif(n)*4-1
-z <- runif(n)
-f <- simu(x,z)
-y <- f + rnorm(n)*.2
-## fit model ...
-b <- scam(y~s(x,z,k=c(10,10),bs=c("tesmd1","ps")),optimizer="efs")
-summary(b)
-old.par <- par(mfrow=c(2,2),mar=c(4,4,2,2))
-plot(b,se=TRUE)
-plot(b,pers=TRUE,theta = 30, phi = 40);title("tesmd1")
-plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
-persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
-par(old.par)  
-vis.scam(b,theta = 30, phi = 40)  
-
 
 ## example with random effect smoother...
 set.seed(2)
@@ -435,7 +408,6 @@ b
 acf(residuals(b)) 
 ## but standardized are now fine...
 acf(b$std.rsd)
- }
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..

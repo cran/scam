@@ -58,7 +58,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 }
 \examples{
- \dontrun{
+
 ## Concave SCOP-splines example 
   ## simulating data...
    require(scam)
@@ -113,7 +113,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   b2 <- scam(y ~ fac+s(x,by=fac,bs="cv"),data=dat,optimizer="efs")  
   plot(b2,pages=1,scale=0,shade=TRUE)
   summary(b2)
-  x11()
   vis.scam(b2,theta=50,color="terrain")
 
  ## numeric 'by' variable example... 
@@ -132,7 +131,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  b1 <- scam(y~s(x,k=15,by=z),data=dat)
  plot(b1,shade=TRUE)
  summary(b1)
-  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

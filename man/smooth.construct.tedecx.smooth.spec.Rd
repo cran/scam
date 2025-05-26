@@ -51,7 +51,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \code{\link{smooth.construct.tedecv.smooth.spec}}
 }
 \examples{
- \dontrun{
+ 
 ## tensor product `tedecx' example 
 require(scam)
 simu <- function(x,z) { -exp(4*x)/(1+exp(4*x)) + 2*z^2   } 
@@ -75,7 +75,7 @@ plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
 persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
 par(old.par)  
 vis.scam(b,theta = 30, phi = 40)     
- }
+ 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

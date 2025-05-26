@@ -6,8 +6,11 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Locally shape-constrained P-spline based constructor (LSCOP-spline): locally increasing splines up to a change point. 
 }
-\description{\code{scam} can use locally shape-constrained smooths that are monotone increasing up to a specified change point and become unconstrained beyond that point. This smooth is specified via model terms like 
-  \code{s(x,bs="lmpi",xt=list(xc=xc))}, where \code{xc} sets a change point. The construction of the smooths uses B-spline bases with mildly non-linear re-parametrization of the basis coefficients over the shape-constrained interval. The 'wiggliness' of the smooths is controlled by discrete penalties applied directly to the basis coefficients, in particular, by penalizing the squared differences between adjacent spline coefficients.
+\description{Two types of LSCOP-splines are currently developed: smooths that are locally increasing up to a specified change point and become unconstrained beyond that point, \code{lmpi.smooth.spec}; and  smooths that are increasing up to a specified change point and plateauing beyond it, \code{lipl.smooth.spec}.
+
+\code{lmpi.smooth.spec} smooth is specified via model terms like 
+  \code{s(x,bs="lmpi",xt=list(xc=xc))}, where \code{xc} sets a change point. The construction of the smooths uses B-spline bases with mildly non-linear re-parametrization of the basis coefficients over the shape-constrained interval. The 'wiggliness' of the smooths is controlled by discrete penalties applied directly to the basis coefficients. 
+  
 \code{lipl.smooth.spec} works similarly to \code{lpmi.smooth.spec}, constructing a monotone increasing smooth up to a specified change point \code{xc} but plateaus beyond it.
 
  The method is build by the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 

@@ -65,8 +65,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 }
 \examples{
-  \dontrun{
-## Monotone decreasing SCOP-splines example... 
+ ## Monotone decreasing SCOP-splines example... 
   ## simulating data...
    require(scam)
    set.seed(3)
@@ -110,14 +109,12 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
  ## comparing with unconstrained fit...
  b3 <- scam(y ~ fac+s(x,by=fac),data=dat) 
- x11()
  plot(b3,pages=1,scale=0,shade=TRUE)
  summary(b3)
 
  ## Note that since in scam() as in mgcv::gam() when using factor 'by' variables, 'centering'
  ## constraints are applied to the smooths, which usually means that the 'by'
  ## factor variable should be included as a parametric term, as well. 
-
 
 ## numeric 'by' variable example...
 set.seed(3)
@@ -134,7 +131,7 @@ summary(b)
 b1 <- scam(y~s(x,k=15,by=z),data=dat)
 plot(b1,shade=TRUE)
 summary(b1)
-  }
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

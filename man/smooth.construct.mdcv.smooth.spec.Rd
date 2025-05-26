@@ -65,7 +65,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 
 }
 \examples{
-  \dontrun{
+
 ## Monotone decreasing and concave SCOP-splines example 
 ## simulating data...
 require(scam)
@@ -103,7 +103,6 @@ lines(x,b1$fitted.values,col=3) ## unconstrained fit
  plot(b1,shade=TRUE)
  summary(b1)
 
-  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

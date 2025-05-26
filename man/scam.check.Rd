@@ -44,7 +44,6 @@ Natalya Pya \email{nat.pya@gmail.com} based partly on \code{mgcv} by Simon N Woo
 }
 
 \examples{
- \dontrun{
 library(scam)
 set.seed(2)
 n <- 200
@@ -58,7 +57,7 @@ dat <- data.frame(x1=x1,x2=x2,y=y)
 b <- scam(y~ s(x1,k=25,bs="mpi")+s(x2,k=25,bs="mdcx"),data=dat)
 plot(b,pages=1)
 scam.check(b)
- }
+ 
 }
 
 \keyword{models} 

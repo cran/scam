@@ -55,7 +55,7 @@ Natalya Pya <nat.pya@gmail.com>
  \code{\link{smooth.construct.tesmi1.smooth.spec}}
 }
 \examples{
- \dontrun{
+\donttest{
 ## tensor product `tesmi2' example 
 require(scam)
 simu <- function(x,z) {2*sin(pi*x) +exp(4*z)/(1+exp(4*z)) }
@@ -98,7 +98,7 @@ vis.scam(b1,theta=50,phi=20);title("tesmi2, cyclic")
 plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
 persp(xs,zs,truth2,theta = 50, phi = 20);title("truth")
 par(old.par)    
- }
+} 
 }
 
 \keyword{models} \keyword{regression}%-- one or more ..

@@ -55,7 +55,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \code{\link{smooth.construct.tecxcx.smooth.spec}}
 }
 \examples{
- \dontrun{
+ \donttest{
 ## tensor product `tecxcv' example 
 ## simulating data...
 require(scam)

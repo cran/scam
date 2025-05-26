@@ -61,5 +61,5 @@ Natalya Pya <nat.pya@gmail.com>
 }
 \seealso{\code{\link{scam}}}
 
-\keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
+\keyword{models} \keyword{smooth} \keyword{regression} \keyword{internal} %-- one or more ...
 

@@ -62,7 +62,7 @@ and Hall/CRC Press
 \code{\link{smooth.construct.tesmi1.smooth.spec}}
 }
 \examples{
-  \dontrun{
+
 ## tensor product `tismi' example... 
 require(scam)
 test <- function(x,z){
@@ -91,7 +91,7 @@ par(old.par)
 plot(bi,pages=1,scheme=2)
 plot(bi,select=3,scheme=1,zlim=c(-5,5)) 
 
- }
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

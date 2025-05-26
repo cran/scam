@@ -54,7 +54,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \code{\link{smooth.construct.tesmd2.smooth.spec}}
 }
 \examples{
- \dontrun{
+  \donttest{
 ## tensor product `tesmd1' example 
 require(scam)
 simu <- function(x,z) { -exp(4*x)/(1+exp(4*x))+2*sin(pi*z) } 
@@ -101,7 +101,7 @@ plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
 persp(xs,zs,truth,theta = 30, phi = 40);title("truth")
 par(old.par)  
 vis.scam(b,theta = 30, phi = 40)    
-  }
+}
 } 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

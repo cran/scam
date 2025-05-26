@@ -56,7 +56,7 @@ Natalya Pya <nat.pya@gmail.com>
   \code{\link{smooth.construct.tescv.smooth.spec}}
 }
 \examples{
- \dontrun{
+ 
 ## tensor product `tescx' example 
 require(scam)
 simu <- function(x,z) { sin(x) + 2*z^2  } 
@@ -80,7 +80,7 @@ plot(y,b$fitted.values,xlab="Simulated data",ylab="Fitted data",pch=".",cex=3)
 persp(xs,zs,truth,theta = 50, phi = 20);title("truth")
 par(old.par)  
 vis.scam(b,theta = 50, phi = 20) 
- }
+
 }
 
 \keyword{models} \keyword{regression}%-- one or more ..

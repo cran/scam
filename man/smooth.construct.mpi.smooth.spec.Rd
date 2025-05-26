@@ -97,7 +97,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
    summary(b2)
    plot(b2,shade=TRUE)
 
-\dontrun{
+
 ## example with two terms...
    set.seed(0)
    n <- 200
@@ -145,7 +145,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
  ## comparing with unconstrained fit...
  b6 <- scam(y ~ fac+s(x,by=fac),data=dat) 
- x11()
  plot(b6,pages=1,scale=0,shade=TRUE)
  summary(b6)
  vis.scam(b6,theta=50,color="terrain")
@@ -165,7 +164,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
  b <- scam(y~s(x,by=z,bs="mpiBy"),data=dat)
  plot(b,shade=TRUE)
  summary(b)
- }
+
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

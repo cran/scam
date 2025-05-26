@@ -117,7 +117,6 @@ Natalya Pya <nat.pya@gmail.com> based partly on \code{mgcv} by Simon Wood
 \seealso{  \code{\link{scam}}, \code{\link{plot.scam}}}
 
 \examples{
-\dontrun{
 library(scam)
 set.seed(2)
 n <- 200
@@ -233,7 +232,7 @@ newd <- data.frame(x1=c(-2,-1),x2=c(0,1))
 Xp <- predict(b,newdata=newd,type="lpmatrix")
 fv <- Xp\%*\% b$beta.t
 fv
- }
+
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..

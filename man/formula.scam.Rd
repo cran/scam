@@ -29,7 +29,7 @@ print an appropriate description of the model.
 \seealso{  \code{\link{scam}}}
 
 
-\keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
+\keyword{models} \keyword{smooth} \keyword{regression} \keyword{internal} %-- one or more ...
 
 
 

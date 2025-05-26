@@ -79,7 +79,7 @@ b <- scam(y~fac+s(x,bs="mpi"))
 vis.scam(b,theta=-35,color="heat") # factor example
 
 # Example with "by" variable
-
+require(mgcv)
 z<-rnorm(80)*0.4   
 y<-as.numeric(fac)+log(x)*z+rnorm(80)*0.1
 b<-scam(y~fac+s(x,by=z))

@@ -131,6 +131,7 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
     
    G$var.summary <- var.summary
    G$family <- family
+   G$family <- fix.family(G$family) ## added in 1.2-19 to fix gaussian(link="log") initialization so that negative data does not make it fail
    
    if ((is.list(formula)&&(is.null(family$nlp)||family$nlp!=gp$nlp))||
         (!is.list(formula)&&!is.null(family$npl)&&(family$npl>1))) stop("incorrect number of linear predictors for family")
@@ -626,7 +627,8 @@ penalty_pident <- function(object)
    p.ident <- rep(FALSE,q) # initialize vector of parameter identifications
                       # with `TRUE' - for a parameter to be exponentiated, `FALSE' - otherwise
    off.terms <- rep(0,n.terms) # starting points for each term
-   for (i in 1:n.terms)
+   if (n.terms>0) 
+     for (i in 1:n.terms)
         off.terms[i] <- object$smooth[[i]]$first.para
  ##  below is not correct for getting off.terms when some smooths are unpenalized (having fx=TRUE)
  ##  off <- object$off
@@ -1687,6 +1689,7 @@ formula.scam <- function(x, ...)
 ## Copyright (c) Simon N. Wood 2008-2019 simon.wood@r-project.org
 
 ## gam.setup() has extra SCAM lines to update smooth$Zc matrix using 'del.index' to deal with identifiability: when two or more smooths have the same covariate... (c) natalya pya (2024) 
+## also SCAM stuff added on Zc, scam_1.2-15.
 
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
@@ -2190,6 +2193,20 @@ gam.setup <- function(formula,pterms,
   G
 } ## gam.setup
 
+## of (c) Simon N. Wood added in scam version 1.2-19 to fix gaussian(link="log") initialization so that negative data does not make it fail...
+
+fix.family <- function(fam) {
+## allows families to be patched...
+   if (fam$family[1]=="gaussian") { ## sensible starting values given link...
+     fam$initialize <- expression({
+     n <- rep.int(1, nobs)
+     if (family$link == "inverse") mustart <- y + (y==0)*sd(y)*.01 else
+     if (family$link == "log") mustart <- pmax(y,.01*sd(y)) else
+     mustart <- y
+     })
+  }
+  fam
+} ## fix.family
 
 clone.smooth.spec <- function(specb,spec) {
 ## produces a version of base smooth.spec, `specb', but with 
@@ -2428,7 +2445,7 @@ AR.resid <- function(rsd,rho=0,AR.start=NULL) {
 } ## AR.resid
 
 ###############################################################
-## loading functions, copied from mgcv() package of Simon Wood
+## loading functions, copied from mgcv() package of (c) Simon Wood
 #################################################################
 
 print.scam.version <- function()

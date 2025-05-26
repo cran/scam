@@ -69,7 +69,7 @@ plot(xx$x,d2$d[xx$ix],type="l",xlab=expression(x[2]),
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{models} \keyword{regression}%-- one or more ..
+\keyword{models} \keyword{regression}  %-- one or more ..
 
 
 

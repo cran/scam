@@ -73,8 +73,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   newd<- data.frame(x=-1,z=0)
   predict(m1,newd, type='terms')
 
-
-\dontrun{
   ## passing through 0 at 0...
   set.seed(2)
   n <- 100;
@@ -86,7 +84,6 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
   newd<- data.frame(x=0,z=0)
   predict(m2,newd, type='terms')
 
-    }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

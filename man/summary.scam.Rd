@@ -135,7 +135,7 @@ Natalya Pya <nat.pya@gmail.com> based on \code{mgcv} by Simon Wood
  \code{\link{scam}} 
 }
 \examples{
- \dontrun{
+
 ## simulating data...
 require(scam)
 n <- 200
@@ -154,7 +154,7 @@ b <- scam(y~s(x1,k=15,bs="cr")+s(x2,k=30,bs="mpi")+s(x3,k=30,bs="mpd"),
      data=dat)
 summary(b)
 plot(b,pages=1,shade=TRUE)  
- }  
+ 
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
 

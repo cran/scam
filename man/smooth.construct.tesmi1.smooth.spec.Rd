@@ -52,7 +52,7 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 \code{\link{smooth.construct.tesmi2.smooth.spec}}
 }
 \examples{
-  \dontrun{
+ \donttest{
 ## tensor product `tesmi1' example... 
 ## simulating data...
 require(scam)
@@ -97,7 +97,7 @@ vis.scam(b1,theta=40,phi=20);title("tesmi1, cyclic")
 plot(y,b1$fitted.values,xlab="Simulated data",ylab="Fitted data")
 persp(xs,zs,truth2,theta = 30, phi = 40);title("truth")
 par(old.par)   
- }
+} 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

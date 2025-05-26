@@ -1,12 +1,12 @@
 Package: scam
-Version: 1.2-18
+Version: 1.2-19
 Authors@R: person(given = "Natalya",
                       family = "Pya",
                       role = c("aut", "cre"),
                       email = "nat.pya@gmail.com")
 Maintainer: Natalya Pya <nat.pya@gmail.com>
 Title: Shape Constrained Additive Models
-Date: 2025-01-17
+Date: 2025-05-23
 Description: Generalized additive models under shape
         constraints on the component functions of the linear predictor.       
         Models can include multiple shape-constrained (univariate
@@ -18,13 +18,13 @@ Description: Generalized additive models under shape
         for an overview. A broad selection of shape-constrained 
         smoothers, linear functionals of smooths with shape constraints,
         and Gaussian models with AR1 residuals. 
-Depends: R (>= 2.15.0), mgcv (>= 1.8-2)
-Imports: methods, stats, graphics, Matrix, splines
+Depends: R (>= 3.6.0)
+Imports: mgcv (>= 1.8-2), methods, stats, graphics, Matrix, splines
 Suggests: nlme
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2025-01-17 12:46:50 UTC; natalya
+Packaged: 2025-05-23 13:10:35 UTC; natalya
 Author: Natalya Pya [aut, cre]
 Repository: CRAN
-Date/Publication: 2025-01-17 15:00:06 UTC
+Date/Publication: 2025-05-26 08:40:02 UTC

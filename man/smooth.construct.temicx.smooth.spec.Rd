@@ -51,7 +51,7 @@ Pya, N. and Wood, S.N. (2015) Shape constrained additive models. Statistics and 
 \code{\link{smooth.construct.tedmd.smooth.spec}}
 }
 \examples{
- \dontrun{
+ \donttest{
 ## tensor product `temicx' example 
 require(scam)
 simu <- function(x,z) { exp(4*x)/(1+exp(4*x)) +2*z^2 } 

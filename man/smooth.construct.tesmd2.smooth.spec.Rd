@@ -51,7 +51,7 @@ Natalya Pya <nat.pya@gmail.com>
 \seealso{
  \code{\link{smooth.construct.tesmd1.smooth.spec}}}
 \examples{
- \dontrun{
+  \donttest{
 ## tensor product `tesmd2' example 
 require(scam)
 simu <- function(x,z) { 2*sin(pi*x)-exp(4*z)/(1+exp(4*z))} 

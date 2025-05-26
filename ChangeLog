@@ -1,3 +1,15 @@
+
+1.2-19
+
+* gaussian(link="log") initialization fixed to prevent failures caused by negative data, using the fix.family patching function by (c) Simon N. Wood. Thanks to Ysaline Perraud for reporting the issue.
+
+* .Rd: description of available LSCOP-splines is clarified, ⁠\dontrun⁠ removed or replaced by \donttest in the examples.
+
+* penalty_pident: bug fixed when fitting a model with no smooth terms. Thanks to Leire Citores for flagging the bug.
+
+* Description: mgcv moved to Imports
+
+
 1.2-18
 * smooth.construct: three univariate smoothers with positivity constraint added: 'ipo' increasing and positive, 'dpo' decreasing and positive, 'cpop' cyclic and positive. Thanks to Guillem Sala Fernandez for bringing this up.
 

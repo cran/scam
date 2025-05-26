@@ -61,8 +61,9 @@ Pya, N. (2010) Additive models with shape constraints. PhD thesis. University of
 
 }
 \examples{
- 
+  
   ## Monotone increasing SCOP-spline examples with a finish at zero constraint...
+  require(scam)
   set.seed(53)
   n <- 100;x <- runif(n);z <- runif(n)
   pc <- max(x)

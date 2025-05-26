@@ -213,7 +213,9 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
  ## Sig[(q1+1):q.t,(q1+1):q.t] <- diag(1,q.t-q1)
   X <- X%*%Sig
   X <- X[,-c((q1+1):q.t)]
-    
+ ## or X is simly:
+ ## X <- X[,-c((q1+1):q.t)]%*%Sig1
+ 
   ## applying sum-to-zero (centering) constraint...
   cmx <- colMeans(X)
   X <- sweep(X,2,cmx) ## subtract cmx from columns 
