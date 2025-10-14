@@ -112,12 +112,12 @@ xc <- 1.5
 y <- f+rnorm(n)*1.5
 b <- scam(y~s(x,bs="lipl",xt=list(xc=xc)))
 g <- scam(y~s(x,bs="ps")) ## unconstrained
-old.par <- par(mfrow=c(2,2))
+old.par <- par(mfrow=c(1,2))
 plot(x,y,cex=.5)
 lines(x,f,lty=2); abline(v=xc,lty=2,col="red")
 lines(x,fitted(b),col=2,lwd=2)
+lines(x,fitted(g),col=3,lwd=2)
 plot(b,shade=TRUE)
-plot(g,shade=TRUE)
 par(old.par)
 
 }

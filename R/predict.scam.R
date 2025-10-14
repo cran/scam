@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2025). Provided under GPL 2.
 ## based on (c) Simon N Wood predict.gam(mgcv) ...
 
 
@@ -12,7 +12,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 #      == "response" - for fitted values
 #      == "terms"    - for individual terms on scale of linear predictor 
 #      == "iterms"   - exactly as "terms" except that se's include uncertainty about mean for unconstrained smooths
-#      == "lpmatrix" - for matrix mapping parameters to l.p.
+#      == "lpmatrix" - for matrix mapping parameters to linear predictor
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
 #  2. split up newdata into manageable blocks if too large
@@ -150,17 +150,26 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     if (nn[i]%in%mn && is.factor(object$model[,nn[i]])){ # then so should newdata[[i]] be 
        ## newdata[[i]]<-factor(newdata[[i]],levels=levels(object$model[,nn[i]])) # set prediction levels to fit levels
       levm <- levels(object$model[,nn[i]]) ## original levels
-      levn <- levels(factor(newdata[[i]])) ## new levels
+      ## need to avoid dropping NAs if they are a factor level in original model (from version 1.2-20)
+      levn <- if (any(is.na(levm))) levels(factor(newdata[[i]],exclude=NULL)) else levels(factor(newdata[[i]])) ## new levels
       if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
         msg <- paste("factor levels",paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
         warning(msg)
-      }
+        xlev <- !(newdata[[i]] %in% levm) & !is.na(newdata[[i]]) ## attribute marking extra (non-NA) levels in factor (from version 1.2-20)
+      } else xlev <- NULL
       ## set prediction levels to fit levels...
       if (is.matrix(newdata[[i]])) {
-        dum <- factor(newdata[[i]],levels=levm)
+        dum <- factor(newdata[[i]],levels=levm,exclude=NULL)
 	dim(dum) <- dim(newdata[[i]])
 	newdata[[i]] <- dum
-      } else newdata[[i]] <- factor(newdata[[i]],levels=levm)
+	if (!is.null(xlev)) {
+	  dim(xlev) <- dim(dum)
+	  attr(newdata[[i]],"xlev") <- xlev
+	}  
+      } else {
+        newdata[[i]] <- factor(newdata[[i]],levels=levm,exclude=NULL)
+	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev ## not used in this routine
+      }
     }
     if (type=="newdata") return(newdata)
 
@@ -205,54 +214,76 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     n.pterms <- length(term.labels)
     fit<-array(0,c(np,n.pterms+as.numeric(para.only==0)*n.smooth))
     if (se.fit) se<-fit
-    ColNames<-term.labels
+    ColNames <- term.labels
   } else { ## "response" or "link"
-    fit<-array(0,np)
-    if (se.fit) se<-fit
+    fit <- array(0,np)
+    if (se.fit) se <- fit
   }
-  stop<-0
+  stop <- 0
+
+  
+  # Terms <- delete.response(object$pterms)
+  ## from version 1.2-20...
+  Terms <- list(delete.response(object$pterms)) ## make into a list anyway, no need for making list for scam as only one linear predictor usedm but adding the line anyway to be consistenty with predict.gam
+  pterms <- list(object$pterms)
+  pstart <- 1
+  pind <- 1:object$nsdf ## index of parameteric coefficients
+  
 
   ####################################
   ## Actual prediction starts here...
   ####################################
 
- # Terms <- list(delete.response(object$pterms))
-  Terms <- delete.response(object$pterms)
-
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
   if (n.blocks > 0) for (b in 1:n.blocks){  # work through prediction blocks
-    start<-stop+1
-    stop<-start+b.size[b]-1
-    if (n.blocks==1) data <- newdata  else data<-newdata[start:stop,]
+    start <- stop+1
+    stop <- start+b.size[b]-1
+    if (n.blocks==1) data <- newdata  else data <- newdata[start:stop,]
     X <- matrix(0,b.size[b],nb)
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
-    ## implements safe prediction for parametric part as described in
-    ## http://developer.r-project.org/model-fitting-functions.txt
-    if (new.data.ok){
-      if (nd.is.mf) mf <- model.frame(data,xlev=object$xlevels) 
-      else {
-        mf <- model.frame(Terms,data,xlev=object$xlevels)
-        if (!is.null(cl <- attr(object$pterms,"dataClasses"))) .checkMFClasses(cl,mf)
-      } 
-       ## next line is just a work around to prevent a spurious warning (e.g. R 3.6) from
-       ## model.matrix if contrast relates to a term in mf which is not
-       ## part of Terms (model.matrix doc actually defines contrast w.r.t. mf,
-       ## not Terms)...
-        # Xp <- model.matrix(Terms,mf,contrasts=object$contrasts) 
-      oc <- if (length(object$contrasts)==0) object$contrasts else
-	      object$contrasts[names(object$contrasts)%in%attr(Terms,"term.labels")]
-      Xp <- model.matrix(Terms,mf,contrasts=oc)
-    } else {
-       Xp <- model.matrix(Terms,object$model)
-       mf <- newdata # needed in case of offset, below
-    }
+    for (i in 1:length(Terms)) { ## (versioin 1.2-20) loop for parametric components (actually only a single loop and only 1 linear predictor )
+      ## implements safe prediction for parametric part as described in
+      ## http://developer.r-project.org/model-fitting-functions.txt
+      if (new.data.ok){
+        if (nd.is.mf) mf <- model.frame(data,xlev=object$xlevels) else {
+          mf <- model.frame(Terms[[i]],data,xlev=object$xlevels)
+          if (!is.null(cl <- attr(pterms[[i]],"dataClasses"))) .checkMFClasses(cl,mf)
+        } 
+         ## next line is just a work around to prevent a spurious warning (e.g. R 3.6) from
+         ## model.matrix if contrast relates to a term in mf which is not
+         ## part of Terms[[i]] (model.matrix doc actually defines contrast w.r.t. mf,
+         ## not Terms[[i]])...
+         oc <- if (length(object$contrasts)==0) object$contrasts else
+   	        object$contrasts[names(object$contrasts)%in%attr(Terms[[i]],"term.labels")]
+         Xp <- model.matrix(Terms[[i]],mf,contrasts=oc)
+      } else {
+         Xp <- model.matrix(Terms[[i]],object$model)
+         mf <- newdata # needed in case of offset, below
+      }
+      if (!is.null(terms)||!is.null(exclude)) { ## work out which parts of Xp to zero
+        assign <- attr(Xp,"assign") ## assign[i] is the term to which Xp[,i] relates
+	if (min(assign)==0&&("(Intercept)"%in%exclude||(!is.null(terms)&&!"(Intercept)"%in%terms))) Xp[,which(assign==0)] <- 0
+	tlab <- attr(Terms[[i]],"term.labels")
+	ii <- which(assign%in%which(tlab%in%exclude))
+	if (length(ii)) Xp[,ii] <- 0
+	if (!is.null(terms)) {
+	  ii <- which(assign%in%which(!tlab%in%terms))
+	  if (length(ii)) Xp[,ii] <- 0
+	}   
+      }
+    ##  offi <- attr(Terms[[i]],"offset")
+    ##  if (is.null(offi)) offs[[i]] <- 0 else { ## extract offset
+    ##    offs[[i]] <- mf[[names(attr(Terms[[i]],"dataClasses"))[offi+1]]]
+    ##  }
     
-    if (object$nsdf) X[,1:object$nsdf]<-Xp
+      if (object$nsdf) X[,1:object$nsdf]<-Xp
+   } ## end of parametric loop
+
 
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
         klab <- object$smooth[[k]]$label
-        if ((is.null(terms)||(klab%in%terms))&&(is.null(exclude)||!(klab%in%exclude))) {
+        if ((is.null(terms)||(klab%in%terms))&&(is.null(exclude)||!(klab%in%exclude))) { ## if is.null(terms) & is.null(exclude)
           Xfrag <- PredictMat(object$smooth[[k]],data)	
           if (!is.matrix(Xfrag)) Xfrag <- matrix(Xfrag,nrow=nrow(data))
           ## added code specific for scam....
@@ -276,23 +307,26 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                    X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag %*%object$smooth[[k]]$Zc 
                 } else if (inherits(object$smooth[[k]], c("lipl.smooth"))) {## local scop-spline increasing up to given point and a plateau from it               
                    n.extra.col <- object$smooth[[k]]$n.zero.col ## ncol(Xfrag) - (object$smooth[[k]]$last.para-object$smooth[[k]]$first.para+1)
-                   ind.extra <- c((object$smooth[[k]]$last.para+1):(ncol(Xfrag)+1))
+                   ind.extra <- c((object$smooth[[k]]$last.para+1):(object$smooth[[k]]$last.para+n.extra.col))
+                   object$coefficients.t <- c(object$coefficients.t,rep(0,n.extra.col)) ## temporary solution, works only for a single smooth model
                    X <- cbind(X,matrix(0,nrow(X), n.extra.col))
-                   X[,object$smooth[[k]]$first.para:(object$smooth[[k]]$first.para+ncol(Xfrag)-1)] <- Xfrag                                   
+                  ## X[,object$smooth[[k]]$first.para:(object$smooth[[k]]$last.para)] <- cbind(X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para],matrix(0,nrow(X), n.extra.col))
+                   X[,object$smooth[[k]]$first.para:(object$smooth[[k]]$first.para+ncol(Xfrag)-2)] <- Xfrag[,2:ncol(Xfrag)]                                   
                } else ## unconstrainded smooths, 'by' constrained and local scop smooths...
                     X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
           Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
           if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
-        }
+        } ## end if is.null(terms) & is.null(exclude)
         if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- klab
     } ## smooths done
 
-    # Now have prediction matrix for this block, now do something with it
+    # Now have prediction matrix, X, for this block, need to do something with it...
     if (type=="lpmatrix") { 
-      if (inherits(object$smooth[[k]], c("lipl.smooth"))) {
-          H <- cbind(H,matrix(0,nrow(H), n.extra.col))
-          H[start:stop,] <- X
-      } else H[start:stop,] <- X
+      if (n.smooth) for (k in 1:n.smooth) { 
+           if (inherits(object$smooth[[k]], c("lipl.smooth"))) 
+                H <- cbind(H,matrix(0,nrow(H), n.extra.col))                
+      } 
+      H[start:stop,] <- X
       if (any.soff) s.offset <- rbind(s.offset,Xoff)
     } else if (type=="terms" ||type=="iterms") {
       ind <- 1:length(object$assign)
@@ -302,15 +336,15 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         ## CORRECTIONS FOR SCAM....
         fit[start:stop,i] <- as.matrix(X[,ii,drop=FALSE])%*%object$coefficients.t[ii]
         if (se.fit) se[start:stop,i] <-
-               sqrt(rowSums((as.matrix(X[,ii,drop=FALSE])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii,drop=FALSE])))
+               sqrt(pmax(0,rowSums((as.matrix(X[,ii,drop=FALSE])%*%object$Vp.t[ii,ii])*as.matrix(X[,ii,drop=FALSE]))))
       }
 
       if (n.smooth&&!para.only) { 
         for (k in 1:n.smooth) # work through the smooth terms 
-        { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
+        { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
 
           ## CORRECTED for SCAM ...
-          fit[start:stop,n.pterms+k]<-X[,first:last,drop=FALSE]%*%object$coefficients.t[first:last] + Xoff[,k]
+          fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
                if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",
                                "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth","cpopspline.smooth"))){
@@ -321,7 +355,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                       Vp <- object$Vp.t[c(1,first:last),c(1,first:last)] 
                       Vp[,1] <- rep(0,nrow(Vp))
                       Vp[1,] <- rep(0,ncol(Vp))
-                      se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%Vp)*X1))
+                      se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X1%*%Vp)*X1)))
                } else if (inherits(object$smooth[[k]], c("ipo.smooth","dpo.smooth"))){
                            if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- if  (inherits(object$smooth[[k]], c("dpo.smooth"))) c(t(X[,first:last]),1)
@@ -403,9 +437,9 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                               XZa <- t(qr.qty(qrA,t(X1)))[,2:ncol(X1)]
                        Ga <- XZa%*%RZaR%*%object$smooth[[k]]$Zc
                        Vp <- object$Vp.t[first:last,first:last]
-                       se[start:stop,n.pterms+k] <- sqrt(rowSums((Ga%*%Vp)*Ga))
+                       se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((Ga%*%Vp)*Ga)))
                } else if (inherits(object$smooth[[k]], c("miso.smooth", "mifo.smooth"))) { ## 'zero start' and passing through zero increasing constraint ...
-                       se[start:stop,n.pterms+k] <- sqrt(rowSums((X[,first:last,drop=FALSE]%*%object$Vp.t[first:last,first:last])*X[,first:last,drop=FALSE]))
+                       se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*%object$Vp.t[first:last,first:last])*X[,first:last,drop=FALSE])))
                } else { ## for local scop smooth terms, scop with'by' and unconstrained smooth terms..... 
                     if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
                       X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
@@ -414,33 +448,34 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                       X1[,first:last] <- X[,first:last,drop=FALSE]
                       se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
                     } else  se[start:stop,n.pterms+k] <- ## terms strictly centred
-                    sqrt(rowSums((X[,first:last,drop=FALSE]%*%object$Vp.t[first:last,first:last])*X[,first:last,drop=FALSE]))
+                    sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*%object$Vp.t[first:last,first:last])*X[,first:last,drop=FALSE])))
                  }         
           } ## end if (se.fit)
         } ## end # work through the smooth terms 
         colnames(fit) <- ColNames
         if (se.fit) colnames(se) <- ColNames
       } else { # para.only
-        if (para.only&&is.list(object$pterms)) { 
-            ## have to use term labels that match original data, or termplot fails 
-            ## to plot. This only applies for 'para.only==1' calls which are 
-            ## designed for use from termplot called from plot.gam
-            term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
-          }
-        colnames(fit) <- term.labels
-        if (se.fit) colnames(se) <- term.labels
-        if (para.only) { 
-           # retain only terms of order 1 - this is to make termplot work
-           order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order") #attr(object$pterms,"order")
-           term.labels <- term.labels[order==1]
-           ## fit <- as.matrix(as.matrix(fit)[,order==1])
-           fit <- fit[,order==1,drop=FALSE]
-           colnames(fit) <- term.labels
-           if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
-              se <- se[,order==1,drop=FALSE] 
-              colnames(se) <- term.labels } 
-           }
-        }
+         if (para.only&&is.list(object$pterms)) { 
+             ## have to use term labels that match original data, or termplot fails 
+             ## to plot. This only applies for 'para.only==1' calls which are 
+             ## designed for use from termplot called from plot.gam
+             term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
+         }
+         colnames(fit) <- term.labels
+         if (se.fit) colnames(se) <- term.labels
+         if (para.only) { 
+            # retain only terms of order 1 - this is to make termplot work
+            order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order") #attr(object$pterms,"order")
+            term.labels <- term.labels[order==1]
+            ## fit <- as.matrix(as.matrix(fit)[,order==1])
+            fit <- fit[,order==1,drop=FALSE]
+            colnames(fit) <- term.labels
+            if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
+               se <- se[,order==1,drop=FALSE] 
+               colnames(se) <- term.labels 
+            } 
+         }
+       }
        ##if (!is.null(terms)) { # return only terms requested via `terms'
        ## if (sum(!(terms %in%colnames(fit)))) 
        ## warning("non-existent terms requested - ignoring")
@@ -451,16 +486,18 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
        ##   if (se.fit) {se <- as.matrix(as.matrix(se)[,terms])
        ##   colnames(se) <- term.labels}
        ## }
-       ##}
-      
+       ##}      
     } else {# "link" or "response"
-        k<-attr(attr(object$model,"terms"),"offset")
+        k <- attr(attr(object$model,"terms"),"offset")
+        offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf) # (from version 1.2-20)
         ## CORRECTED for SCAM...
-        fit[start:stop]<-X%*%object$coefficients.t + rowSums(Xoff)
-        if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
-        if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp.t)*X))
+        fit[start:stop] <- X%*%object$coefficients.t + offs ## + rowSums(Xoff)
+       ## if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
+        if (se.fit) se[start:stop] <- sqrt(pmax(0,rowSums((X%*%object$Vp.t)*X)))
         if (type=="response") {# transform    
-           fam<-object$family;linkinv <- fam$linkinv;dmu.deta<-fam$mu.eta  
+           fam <- object$family
+           linkinv <- fam$linkinv
+           dmu.deta <- fam$mu.eta  
            if (se.fit) se[start:stop] <- se[start:stop]*abs(dmu.deta(fit[start:stop])) 
            fit[start:stop] <- linkinv(fit[start:stop])
         }
@@ -501,9 +538,14 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   rn <- rownames(newdata)
   if (type=="lpmatrix") { 
-    if (inherits(object$smooth[[k]], c("lipl.smooth"))) 
+    lipl.yes <- FALSE
+    if (n.smooth) for (k in 1:n.smooth) { 
+        if (inherits(object$smooth[[k]], c("lipl.smooth"))) {
              colnames(H[,-ind.extra]) <- names(object$coefficients)
-        else colnames(H) <- names(object$coefficients)
+             lipl.yes <- TRUE
+         } 
+    }
+    if (!lipl.yes) colnames(H) <- names(object$coefficients)
     rownames(H)<-rn
     if (!is.null(s.offset)) { 
       s.offset <- napredict(na.act,s.offset)
@@ -523,11 +565,11 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         fit <- napredict(na.act,fit)
         se <- napredict(na.act,se)
       }
-      H<-list(fit=fit,se.fit=se) 
+      H <- list(fit=fit,se.fit=se) 
     } else { 
-      H<-fit
+      H <- fit
       if (is.null(nrow(H))) names(H) <- rn else
-      rownames(H)<-rn
+      rownames(H) <- rn
       H <- napredict(na.act,H)
     }
   }

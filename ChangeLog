@@ -1,9 +1,17 @@
+1.2-20
+
+* predict.scam: predict now avoids dropping NAs if they are a factor level in original model
+
+* lipl.smooth.spec: bug fixed with constructing a locally shape-constrained smooth. Thanks to  Russell Millar. 
+                    Note: curretnly summary and predict methods work only for single smooth models  
+
+* residuals.scam, scam.check: added (randomized) quantile residuals as an alternative model checking tool. Thanks to Julien Mainguy for this helpful suggestion.
 
 1.2-19
 
 * gaussian(link="log") initialization fixed to prevent failures caused by negative data, using the fix.family patching function by (c) Simon N. Wood. Thanks to Ysaline Perraud for reporting the issue.
 
-* .Rd: description of available LSCOP-splines is clarified, ⁠\dontrun⁠ removed or replaced by \donttest in the examples.
+* .Rd: description of available LSCOP-splines is clarified, \dontrun removed or replaced by \donttest in the examples.
 
 * penalty_pident: bug fixed when fitting a model with no smooth terms. Thanks to Leire Citores for flagging the bug.
 

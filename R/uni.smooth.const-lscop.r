@@ -1,6 +1,6 @@
-## (c) Natalya Pya (2024). Provided under GPL 2.
+## (c) Natalya Pya (2025). Provided under GPL 2.
 ## routines for univariate local SCOP-spline construction, LSOP-spline, 
-## in collaboration with Jens Lichter and Thomas Kneib, University of Gottingen
+## in collaboration with Jens Lichter and Thomas Kneib, University of Gottingen, for a spline construction that is monotone increasing up until the change point 
 
 
 #####################################################
@@ -20,16 +20,17 @@ smooth.construct.lmpi.smooth.spec<- function(object, data, knots)
   if (m<1) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   q <- object$bs.dim 
- ## q1 <- q2 <- ceiling(q/2) ## basis dimention for each part 
+ ## q1 <- q2 <- ceiling(q/2) ## basis dimension for each part 
   xc <- object$xt$xc ## a change point
+  x <- data[[object$term]]  ## the data
   rg <- range(x)
   share <- (xc-rg[1])/(rg[2]-rg[1]) ## share of the x values up untill the change point
-  q1 <- max(ceiling(q*share),5) ## basis dimention for the constrained part 
+  q1 <- max(ceiling(q*share),5) ## basis dimension for the constrained part 
   q2 <- max((q-q1),5)   
   n <- length(x)
   nk <- q1+q2+1 ## number of knots 
   if (nk<=0) stop("k too small for m")
-  x <- data[[object$term]]  ## the data
+  
   xk <- knots[[object$term]] ## will be NULL if none supplied
   if (!is.null(xk)) ## if not NULL 
    stop(paste("'lmpi' smooth currenly does not work with user-supplied knots"))
@@ -162,12 +163,10 @@ Predict.matrix.lmpi.smooth<-function(object,data)
 ### increasing up until the change point, xc, and reaching a plateau from xc
 ######################################################
 
-
 smooth.construct.lipl.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing smooth
 ## xc specifies a change point
 ## scop-spline up until xc and a plateau from xc, 
-## using ceiling(q/2) basis functions for both parts
 { 
   m <- object$p.order[1]
   if (is.na(m)) m <- 2 ## default for cubic spline
@@ -176,6 +175,7 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
   q <- object$bs.dim 
  ## q1 <- q2 <- ceiling(q/2) ## basis dimention for each part 
   xc <- object$xt$xc ## a change point
+  x <- data[[object$term]]  ## the data
   rg <- range(x)
   share <- (xc-rg[1])/(rg[2]-rg[1]) ## share of the x values up untill the change point
   q1 <- max(ceiling(q*share),5) ## basis dimention for the constrained part 
@@ -183,7 +183,7 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
   n <- length(x)
   nk <- q1+q2+1 ## number of knots 
   if (nk<=0) stop("k too small for m")
-  x <- data[[object$term]]  ## the data
+ 
   xk <- knots[[object$term]] ## will be NULL if none supplied
   if (!is.null(xk)) ## if not NULL 
    stop(paste("'lipl' smooth currenly does not work with user-supplied knots"))
@@ -193,7 +193,7 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
   ## getting equally spaced knots from both sides of the change point...
   xk <- rep(NA,q1+q2+1+1)
   xk[(m+2):(q1+1)] <- seq(rg[1],xc,length=q1-m) ## inner knots for the  constrained part (to the left from the change point)
-  xk[(q1+1):(q1+q2-m+1)] <- seq(xc,rg[2],length=q2-m+1) ## inner knots for the unconstrained part (to the right from the change point), add one knot more than for the constrained part, as otherwise there 5 basis functions for the constrained part and only 3 for the unconstrained 
+  xk[(q1+1):(q1+q2-m+1)] <- seq(xc,rg[2],length=q2-m+1) ## inner knots for the unconstrained part (to the right from the change point), add one knot more than for the constrained part, as otherwise there more (min 5) basis functions for the constrained part and less (only 3) for the unconstrained 
   for (i in 1:(m+1)) ## outer knots on the left-hand-side of the x range
        xk[i] <- xk[m+2]-(m+2-i)*(xk[m+3]-xk[m+2])
   for (i in (q1+q2-m+2):(q1+q2+2)) ## outer knots on the right-hand-side of the x range
@@ -205,22 +205,27 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
 
   ## get model matrix...
   X <- splineDesign(xk,x,ord=m+2) 
-  Sig1 <- matrix(1,q1,q1)  ## coef summation matrix
-  Sig1[upper.tri(Sig1)] <- 0
-  q.t <- ncol(X) ## number of coefficients of the final lscop-spline, which is (q-2)
-  Sig <- matrix(0,q.t,q.t)
-  Sig[1:q1,1:q1] <- Sig1
- ## Sig[(q1+1):q.t,(q1+1):q.t] <- diag(1,q.t-q1)
+  q.t <- ncol(X) # number of coefficients of the final lscop-spline
+  Sig <- matrix(1,q.t,q.t)
+  Sig[upper.tri(Sig)] <-0
   X <- X%*%Sig
-  X <- X[,-c((q1+1):q.t)]
- ## or X is simly:
- ## X <- X[,-c((q1+1):q.t)]%*%Sig1
+  X <- X[,-c(1,q1:q.t)] # removing (zeroing the last (q.t-q1+1) spline coefficients) columns
+
+ ## Sig1 <- matrix(1,q1,q1)  # coef summation matrix
+ ## Sig1[upper.tri(Sig1)] <- 0
+ ## Sig <- matrix(0,q.t,q.t) 
+ ## Sig[1:q1,1:q1] <- Sig1
+ ## X <- X%*%Sig
+ ## X <- X[,-c((q1+1):q.t)]
  
-  ## applying sum-to-zero (centering) constraint...
   cmx <- colMeans(X)
-  X <- sweep(X,2,cmx) ## subtract cmx from columns 
+  X <- sweep(X,2,cmx) # subtract cmx from columns 
+
+  q1 <- q1-1 # since the last coefficient of the constrained part is zeroed as well 
   object$X <- X # the final model matrix
-  object$cmX <- c(cmx, rep(0,q.t-q1))
+ ## object$cmX <- rep(0,q.t)
+  
+  object$cmX <- c(0,cmx, rep(0,q.t-q1))
 
   object$P <- list()
   object$S <- list()
@@ -229,37 +234,36 @@ smooth.construct.lipl.smooth.spec<- function(object, data, knots)
   if (!object$fixed) 
   {
     ## making 1st order difference penalty for the constrained part and...
-  ##  P <- matrix(0,q.t-3,q.t) 
-  ##  d1 <- diff(diag(q1),difference=1)
-  ##  P[2:(q1),2:(q1+1)] <- d1
-  ##  d1 <- diff(diag(q.t-q1-1),difference=2)
-  ##  P[(q1+1):(q.t-3),(q1+2):q.t] <- d1
-    P <- matrix(0,q1-1,q1) 
-    d1 <- diff(diag(q1-1),difference=1)
-    P[2:(q1-1),2:(q1)] <- d1
-    object$P[[1]] <- P
-    object$S[[1]] <- crossprod(P)
+   ## P <- matrix(0,q1-1,q1) 
+   ## d1 <- diff(diag(q1-1),difference=1)
+   ## P[2:(q1-1),2:(q1)] <- d1
+   ## object$P[[1]] <- P
+   ## object$S[[1]] <- crossprod(P)
+   P <- diff(diag(q1-1),difference=1)
+   object$P[[1]] <- P
+   object$S[[1]] <- crossprod(P)
   }
-  object$p.ident <- c(FALSE,rep(TRUE,q1-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
+ ## object$p.ident <- c(FALSE,rep(TRUE,q1-1))  ## c(FALSE,rep(TRUE,q1-1)) ## p.ident is an indicator of which coefficients must be positive (exponentiated)
+  object$p.ident <- rep(TRUE,q1-1)
   object$n.zero.col <- q.t-q1 ## number of zeroed coeff/columns removed, needed to be added in predict and plot functions
   object$rank <- ncol(object$X)  # penalty rank
   object$null.space.dim <- 2 ##  ##m+1  # dim. of unpenalized space, 2 as the basis of a straight line is two-dimensional
   object$C <- matrix(0, 0, ncol(X)) # to have no other constraints 
   object$knots <- xk;
   object$m <- m;
-  object$df<-ncol(object$X)     # maximum DoF 
-  object$q1 <- q1 
-
+  object$df<- ncol(object$X)  # maximum DoF 
+  object$q1 <- q1    
+   
   class(object)<-"lipl.smooth"  # Give object a class
   object
 }
 
+## with "lipl", when outputting (model$coefficients) only the estimated smooth coefficients are printed, no 0's coefficients shown
 
 ## Prediction matrix for the `lipl` smooth class... 
 Predict.matrix.lipl.smooth<-function(object,data)
 ## prediction method function for the `mpi' smooth class
 { m <- object$m # spline order, m+1=3 default for cubic spline
-  q <- object$df 
   q1 <- object$q1 ## basis dimention for the constrained part 
   x <- data[[object$term]] 
   
@@ -280,11 +284,10 @@ Predict.matrix.lipl.smooth<-function(object,data)
      ind <- x > ul
      if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
   }
-  Sig1 <- matrix(1,q1,q1)  ## coef summation matrix
-  Sig1[upper.tri(Sig1)] <- 0
-  q.t <- ncol(X) ## number of coefficients of the final lscop-spline, which is (q-2)
-  Sig <- matrix(0,q.t,q.t)
-  Sig[1:q1,1:q1] <- Sig1
+  q.t <- ncol(X) ## number of coefficients of the final lscop-spline
+
+  Sig <- matrix(1,q.t,q.t)
+  Sig[upper.tri(Sig)] <-0
   X <- X%*%Sig 
   X <- sweep(X,2,object$cmX)
   X

@@ -1662,7 +1662,7 @@ D3notExp0 <- function(x) {
 
 logLik.scam <- function (object,...)
 {  # based on logLik.gam and logLik.glm 
-    sc.p <- as.numeric(object$scale.estimated)
+    sc.p <- as.numeric(object$scale.estimated) ## 1 or 0
     p <- sum(object$edf) + sc.p
     val <- p - object$aic/2
     #if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))

@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2025). Provided under GPL 2.
 ## based on (c) Simon N Wood plot.gam(mgcv)
 ## routines to produce plots for each smooth term of scam....
 
@@ -138,7 +138,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                            } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
                                   beta.c <- c(p,0)
                             } else if (inherits(x$smooth[[i]], c("lipl.smooth"))) {
-                                  beta.c <- c(p,rep(0,x$smooth[[i]]$n.zero.col))       
+                                  beta.c <- c(0,p,rep(0,x$smooth[[i]]$n.zero.col))       
                            } else beta.c <- c(0,p)
 
                         fit.c <- P$X%*%beta.c # fitted values for the SCOP-splines identifiability constraints
@@ -265,11 +265,14 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
                      Vp.c[-ind,-ind] <- Vp  
                    } else if (inherits(x$smooth[[i]], c("lipl.smooth"))) {
-                     Vp <- x$Vp.t[first:last, first:last] 
+                  ##   Vp <- x$Vp.t[first:last, first:last] 
+                     Vp <- x$Vp.t[c(1,first:last),c(1,first:last)]  
                      ind <- c((ncol(Vp)+1):(ncol(Vp)+ x$smooth[[i]]$n.zero.col))
                      ## adding rows and columns of 0's...
                      Vp.c <- matrix(0,nrow(Vp)+length(ind),ncol(Vp)+length(ind))
-                     Vp.c[-ind,-ind] <- Vp  
+                     Vp.c[-ind,-ind] <- Vp 
+                 Vp.c[,1] <- rep(0,nrow(Vp.c))
+                 Vp.c[1,] <- rep(0,ncol(Vp.c))     
                    } else if (inherits(x$smooth[[i]], c("mpdBy.smooth",  "cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) {
                       Vp.c <- x$Vp.t[first:last, first:last]      
                    } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {

@@ -1,10 +1,12 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2025). Provided under GPL 2.
 ## routines for checking scam()...
 ## based on gam.check routines (c) Simon N Wood
 ## (2024) qq.scam() added as a short version of qq.gam (c) Simon N Wood
+## (2025) randomized quantile residuals plots added 
 
 
-scam.check <- function(b,type=c("deviance","pearson","response"),old.style=FALSE, pch=".",
+scam.check <- function(b,type=c("deviance","rquantile","pearson","response"),old.style=FALSE, pch=".",
+                       setseed=NULL, ## setseed can be passed to get randomized quantile residuals
                        ## arguments passed to qq.scam():
 		       rep=0, level=.9, rl.col=3, rep.col="gray80", ...)
 ## takes a fitted scam object and produces some standard diagnostic plots
@@ -13,19 +15,27 @@ scam.check <- function(b,type=c("deviance","pearson","response"),old.style=FALSE
     sc.name<-b$method
     type <- match.arg(type)
     ylab <- paste(type,"residuals") 
-    resid <- residuals(b,type=type)
+    resid <- residuals(b,type=type, setseed=setseed)
 
-    if (old.style){
-       qqnorm(resid,pch=pch,ylab=ylab,...)
-       qqline(resid,col=rl.col,...)
-    } else
-       qq.scam(b, rep=rep, level=level, type=type, rl.col=rl.col, rep.col=rep.col, ...)
+    if (type == "rquantile"){ ## normal QQ plot for quantile residuals...
+       qqnorm(resid, main="Normal Q-Q plot", pch=pch, xlab = "theoretical quantiles",
+              ylab = "sample quantiles", 
+              plot.it = TRUE, 
+              frame.plot = TRUE)
+       qqline(resid,col=rl.col,...)      
+    } else { ## deviance residuals plots...
+       if (old.style){
+          qqnorm(resid,pch=pch,ylab=ylab,...)
+          qqline(resid,col=rl.col,...)
+       } else
+          qq.scam(b, rep=rep, level=level, type=type, rl.col=rl.col, rep.col=rep.col, ...)
+    }
     
     plot(b$linear.predictors,resid,main="Resids vs. linear pred.",
-         xlab="linear predictor",ylab="residuals",...);
-    hist(resid,xlab="Residuals",main="Histogram of residuals",...);
-    plot(fitted(b),b$y,xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
-    
+            xlab="linear predictor",ylab=ylab,...)  # ylab="residuals"
+    hist(resid,xlab=ylab,ylab="frequency", main="Histogram of residuals",...) # xlab="residuals"
+    plot(fitted(b),b$y,xlab="fitted values",ylab="response",main="Response vs. Fitted Values",...)
+   
     ## now summarize convergence information 
     cat("\nMethod:", b$method, "  Optimizer:", b$optimizer)
     if (b$optimizer[1] == "optim"){ 

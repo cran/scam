@@ -78,8 +78,6 @@ b <- scam(y ~ fac+s(x1,bs="mpi")+s(x2,bs="mpd")+s(x3))
 b1 <- scam(y ~ fac+s(x1,bs="mpi")+s(x2,bs="mpd"))
 anova(b,b1,test="F")
 
-## b2 <- scam(y ~ fac +s(x1)+s(x2)+te(x1,x2))
-
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
 
