@@ -133,7 +133,10 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                               # beta.c <- c(rep(0,length(x$smooth[[i]]$n.zero)),p)
                                 beta.c <- rep(0,length(p)+length(x$smooth[[i]]$n.zero))
                                 beta.c[-x$smooth[[i]]$n.zero] <- p
-                           } else if (inherits(x$smooth[[i]], c("mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth","micxBy.smooth","micvBy.smooth", "lmpi.smooth"))) {
+                           } else if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", 
+                                       "mdcv.smooth", "mdcx.smooth","micv.smooth","micx.smooth",
+                                       "mpdBy.smooth","cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth","mdcvBy.smooth",
+                                       "micxBy.smooth","micvBy.smooth", "lmpi.smooth"))) {
                                  beta.c <- p
                            } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
                                   beta.c <- c(p,0)
@@ -256,7 +259,8 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                  "mdcx.smooth", "micv.smooth", "micx.smooth","po.smooth",
                  "ipo.smooth","dpo.smooth","cpopspline.smooth",
                  "mifo.smooth","miso.smooth",
-                 "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth", "lipl.smooth")))
+                 "mpdBy.smooth", "cxBy.smooth", "mpiBy.smooth", "cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", 
+                 "micxBy.smooth", "micvBy.smooth", "lmpi.smooth", "lipl.smooth")))
          { ## univariate scop smooths...
                   if (inherits(x$smooth[[i]], c("miso.smooth","mifo.smooth"))) {
                      Vp <- x$Vp.t[first:last, first:last] 
@@ -273,7 +277,10 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                      Vp.c[-ind,-ind] <- Vp 
                  Vp.c[,1] <- rep(0,nrow(Vp.c))
                  Vp.c[1,] <- rep(0,ncol(Vp.c))     
-                   } else if (inherits(x$smooth[[i]], c("mpdBy.smooth",  "cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) {
+                   } else if (inherits(x$smooth[[i]], c("mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth", "mdcv.smooth",
+                        "mdcx.smooth", "micv.smooth", "micx.smooth",
+                        "mpdBy.smooth",  "cxBy.smooth","mpiBy.smooth","cvBy.smooth", "mdcxBy.smooth", "mdcvBy.smooth", 
+                        "micxBy.smooth", "micvBy.smooth", "lmpi.smooth"))) {
                       Vp.c <- x$Vp.t[first:last, first:last]      
                    } else if (inherits(x$smooth[[i]], c("dpo.smooth"))) {
                        Vp.c <- x$Vp.t[c(first:last,1),c(first:last,1)] 
@@ -304,7 +311,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
            } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",
                   "tesmi1.smooth","tesmi2.smooth",  "tismi.smooth", "tismd.smooth",
                   "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth", "tedecx.smooth",
-          "tedecv.smooth","tescx.smooth","tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) 
+                  "tedecv.smooth","tescx.smooth","tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) 
             { ## bivariate scop smooths...
                       XZa <- t(qr.qty(qrA,t(P$X)))[,2:ncol(P$X)]
                       Ga <- XZa%*%RZaR%*%x$smooth[[i]]$Zc ## if(!is.null(x$smooth[[i]]$Zc)) XZa%*%RZaR%*%x$smooth[[i]]$Zc else XZa%*%RZaR
@@ -461,7 +468,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
 } ## end plot.scam
 
 
-## NOTE: 'centering' constraints applied after the fit in plot.scam function to only "mpiBy.smooth","mpdBy.smooth","ipo.smooth", "dpo.smooth". maybe to apply it to other six 'by' scop-splines? although, short simulation study sisn't show issue with high correlation between the intercept and smooth coefficients... predict.scam() function includes coef. re-parametrization due to 'centering' constraint only for "ipo.smooth", "dpo.smooth".
+## NOTE: 'centering' constraints applied after the fit in plot.scam function to only "mpiBy.smooth","mpdBy.smooth","ipo.smooth", "dpo.smooth". maybe to apply it to other six 'by' scop-splines? although, short simulation study doesn't show issue with high correlation between the intercept and smooth coefficients... predict.scam() function includes coef. re-parametrization due to 'centering' constraint only for "ipo.smooth", "dpo.smooth".
 
 
 #######################################################################################

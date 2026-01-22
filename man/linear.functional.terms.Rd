@@ -6,7 +6,7 @@
 \title{Linear functionals of a smooth in GAMs}
 
 \description{Since \code{scam} uses the model setup  of \code{gam} of the \code{mgcv} package, in the same way as in \code{gam} \code{\link{scam}} allows the response variable to depend on linear 
-functionals of smooth terms in the s with additional shape constraints.
+functionals of smooth terms in the \code{s} with additional shape constraints.
 
 See \code{linear.functional.terms(mgcv)}.
 
@@ -79,9 +79,9 @@ plot(g,shade=TRUE);lines(x,f,col=2)
  ## simulate 200 functions and store in rows of L...
 set.seed(4)
 L <- matrix(NA,200,100) 
-for (i in 1:200) L[i,] <- rf(x=sort(2*runif(100)-1))  ## simulate the functional predictors
+for (i in 1:200) L[i,] <- rf(x=seq(-1,1,length=100))  ## simulate the functional predictors
 
-x <- sort(runif(100,-1,1)) ## evaluation points
+x <- seq(-1,1,length=100) ## evaluation points
 f2 <- function(x){4*x^2 } ## the coefficient function
 f <- f2(x) 
 plot(x,f ,type="l")

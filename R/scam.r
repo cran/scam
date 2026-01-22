@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2025). Provided under GPL 2.
+## (c) Natalya Pya (2012-2026). Provided under GPL 2.
 ## routines for fitting scam()...
 ## based on setup routines (c) Simon N Wood
 
@@ -1546,7 +1546,6 @@ scam.fit.post<- function(G, object,control) ##,sig2,offset,intercept, weights,sc
 } ## end of scam.fit.post
 
 
-
 ### the following three functions are for use in place of exp(beta)
 ### notExp(), from scam version 1.2-17, is a softplus function suggested by Jens Lichter, and as implemented in PyTorch, to ensure positivity when re-parameterizing scop-spline coefficients.
 ## 'for numerical stability the implementation reverts to the linear function when x*b > threshold
@@ -1589,8 +1588,6 @@ D3notExp <- function(x,b=1,threshold=20) {
   f[ind] <- b^2*exp(b*x[ind])*(1-exp(2*b*x[ind]))/(1+exp(b*x[ind]))^4
   f
 }
-
-
 
 ### the following three functions are for use in place of exp(beta)
 ### notExp0(), used up till scam version 1.2-16, is similar to that in R package mgcv() of Simon N Wood
@@ -1683,13 +1680,29 @@ formula.scam <- function(x, ...)
 }
 
 
+vcov.scam <- function(object, freq = FALSE, untransformed=FALSE, ...)
+## extracts the Bayesian posterior covariance matrix of the transformed 
+## (some exponentiated) parameters, object$Vp.t, or frequentist covariance matrix
+## of the transformed parameter estimators, object$Ve.t, from a fitted scam object, or
+## same for the un-transformed parameters, object$Ve, object$Vp
+{ if (freq)
+      vc <- if (untransformed) object$Ve else object$Ve.t
+    else { 
+      vc <- if (untransformed) object$Vp else object$Vp.t
+    }
+  name <- names(object$edf)
+  dimnames(vc) <- list(name, name)
+  vc
+}
+
 
 ###############################################################################################
 ## below are functions from mgcv package, copied as they are not exported by 'namespace:mgcv' 
 ## Copyright (c) Simon N. Wood 2008-2019 simon.wood@r-project.org
-
-## gam.setup() has extra SCAM lines to update smooth$Zc matrix using 'del.index' to deal with identifiability: when two or more smooths have the same covariate... (c) natalya pya (2024) 
+## gam.setup() has extra SCAM lines to update smooth$Zc matrix using 'del.index' to deal with 
+## identifiability: when two or more smooths have the same covariate... (c) natalya pya (2024) 
 ## also SCAM stuff added on Zc, scam_1.2-15.
+###############################################################################################
 
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
@@ -2443,26 +2456,6 @@ AR.resid <- function(rsd,rho=0,AR.start=NULL) {
   }
   rwMatrix(ar.stop,ar.row,ar.weight,rsd)
 } ## AR.resid
-
-###############################################################
-## loading functions, copied from mgcv() package of (c) Simon Wood
-#################################################################
-
-print.scam.version <- function()
-{ library(help=scam)$info[[1]] -> version
-  version <- version[pmatch("Version",version)]
-  um <- strsplit(version," ")[[1]]
-  version <- um[nchar(um)>0][2]
-  hello <- paste("This is scam ",version,".",sep="")
-  packageStartupMessage(hello)
-}
-
-
-.onAttach <- function(...) { 
-  print.scam.version()
-}
-
-##.onUnload <- function(libpath) library.dynam.unload("scam", libpath)
 
 
 

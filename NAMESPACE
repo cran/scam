@@ -1,21 +1,18 @@
 useDynLib(scam, .registration = TRUE, .fixes = "C_")
 
-export(scam, bfgs_gcv.ubre, 
-       derivative.scam, 
-       gcv.ubre_grad,
-       scam.check, scam.control,
-       scam.fit, 
-       plot.scam, predict.scam, 
-       print.scam,
+export(scam, anova.scam, 
+       bfgs_gcv.ubre, 
        check.analytical,
-       summary.scam, print.summary.scam, vis.scam,
-       anova.scam, print.anova.scam,
-       logLik.scam,
+       derivative.scam, 
        formula.scam,
-       residuals.scam,
+       gcv.ubre_grad,       
+       logLik.scam,     
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
        marginal.matrices.tescv.ps,
+       plot.scam, predict.scam, 
+       print.scam, print.anova.scam,
+       print.summary.scam,
        Predict.matrix.cv.smooth,
        Predict.matrix.cx.smooth,
        Predict.matrix.mdcv.smooth,
@@ -57,7 +54,11 @@ export(scam, bfgs_gcv.ubre,
        Predict.matrix.tecxcv.smooth,
        Predict.matrix.tismi.smooth,
        Predict.matrix.tismd.smooth,
+       residuals.scam,
        qq.scam,
+       scam.check, scam.control,
+       scam.fit,           
+       summary.scam,
        smooth.construct.cv.smooth.spec,
        smooth.construct.cx.smooth.spec,
        smooth.construct.mdcv.smooth.spec,
@@ -98,7 +99,8 @@ export(scam, bfgs_gcv.ubre,
        smooth.construct.tecxcx.smooth.spec,
        smooth.construct.tecxcv.smooth.spec,
        smooth.construct.tismi.smooth.spec,
-       smooth.construct.tismd.smooth.spec
+       smooth.construct.tismd.smooth.spec,
+       vis.scam, vcov.scam
 )
 
 ## importFrom(mgcv, gam,s,Predict.matrix,smoothCon,formula.gam,PredictMat,smooth.construct,
@@ -139,6 +141,7 @@ S3method(anova, scam)
 S3method(formula, scam)
 S3method(logLik, scam)
 S3method(print, anova.scam)
+S3method(vcov,scam)
 
 S3method(smooth.construct,mdcv.smooth.spec)
 S3method(smooth.construct,cv.smooth.spec)
@@ -223,9 +226,6 @@ S3method(Predict.matrix,tecxcx.smooth)
 S3method(Predict.matrix,tecxcv.smooth)
 S3method(Predict.matrix,tismi.smooth)
 S3method(Predict.matrix,tismd.smooth)
-
-
-
 
 
 

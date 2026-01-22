@@ -1,14 +1,21 @@
-1.2-20
 
+1.2-21
+* vcov.scam written and included, extracts the Bayesian posterior covariance matrix of the (un)transformed parameters or frequentist covariance matrix, see ?vcov.scam
+
+* emmeans-support: implemented the emmeans r package support, see example in ?scam.emmeans.support. Thanks to Julien Mainguy and Russell V. Lenth for the suggestion and help with implementation. 
+
+* brms support: modified prediction methods for the univariate smooth classes 'mpi', 'mpd', 'cv', 'cx', 'mdcv', 'mdcx', 'micv', and 'micx'  to support compatibility with the brms package (for use of the smooths in Bayesian regression via brms). Also, predict and plot methods were adjusted accordingly. Thanks to Florian Jaeger for brining this up. 
+
+
+1.2-20
 * predict.scam: predict now avoids dropping NAs if they are a factor level in original model
 
-* lipl.smooth.spec: bug fixed with constructing a locally shape-constrained smooth. Thanks to  Russell Millar. 
-                    Note: curretnly summary and predict methods work only for single smooth models  
+* lipl.smooth.spec: bug fixed with constructing a locally shape-constrained smooth. Thanks to  Russell Millar.                    
 
 * residuals.scam, scam.check: added (randomized) quantile residuals as an alternative model checking tool. Thanks to Julien Mainguy for this helpful suggestion.
 
-1.2-19
 
+1.2-19
 * gaussian(link="log") initialization fixed to prevent failures caused by negative data, using the fix.family patching function by (c) Simon N. Wood. Thanks to Ysaline Perraud for reporting the issue.
 
 * .Rd: description of available LSCOP-splines is clarified, \dontrun removed or replaced by \donttest in the examples.
@@ -128,7 +135,6 @@ Paul Rosenfield for reporting the bug.
 
 
 1.2-6
-
 * An AR1 error model has been added. This can be used for the residuals of Gaussian-identity link models only. Standardized residuals (approximately uncorrelated under correct model) returned in 'std.rsd'. 
 
 * vis.scam.Rd: Factor 'by' variable example with increasing smooths has been added.
@@ -152,16 +158,13 @@ Paul Rosenfield for reporting the bug.
 * fix to fitting and predicting models of the form y~1
 
 
-
 1.2-5
-
 * estimate.scam: Extended Fellner-Schall optimizer for smoothing parameter selection is now available using scam(...,optimizer="efs") as in gam(mgcv). But rather than minimizing REML (in gam(mgcv)) it minimizes GCV criterion.
 
 * bfgs_gcv.ubre: bug fixed to avoid zero eigenvalues. Thanks to Pierre Masselot for reporting the bug.
 
 
 1.2-4
-
 * scam.control: function added. This allows control of the numerical options for fitting a SCAM in the similar way as gam.control(mgcv). scam, scam.fit, estimate.scam, bfgs_gcv.ubre, gcv.ubre_grad, check.analytical routines were corrected to account for scam.control setting.
 
 * linear.functional.terms.Rd: examples corrected.
@@ -176,7 +179,6 @@ Paul Rosenfield for reporting the bug.
 
 
 1.2-3
-
 * scam.Rd: example with random effect corrected. Thank you to Alan Cobo-Lewis.  
 
 * smooth.construct: three tensor product smoothing constructors for bivariate functions subject to shape constraints were added: 'tecxcx','tecvcv', 'tecxcv'. Thanks to Leire Citores for bringing this up.
@@ -186,9 +188,7 @@ Paul Rosenfield for reporting the bug.
 * scam-package.Rd: updated content to be in sync with the actual package metadata in the DESCRIPTION file.
 
 
-
 1.2-2
-
 * print.scam, summary.scam: changed the printing info about edf, they are now rounded up.
 
 * logLik.scam: function added (clone of logLik.gam (mgcv)). Thanks to Jorge Guevara for raising a question about that.
@@ -203,7 +203,6 @@ Paul Rosenfield for reporting the bug.
 
 
 1.2-1
-
 * bfgs_gcv.ubre, estimate.scam: bug fix with supplying the value of 'gamma' which was overridden by a default 'gamma=1'. Thanks to Phil Boonstra for reporting the bug and providing an example.
 
 * smooth.construct: a univariate positively constrained smooth, 'po', was added.
@@ -212,7 +211,6 @@ Paul Rosenfield for reporting the bug.
 
 
 1.2-0
-
 * smooth.construct: six tensor product smoothing constructors for bivariate functions subject to shape constraints were added: 'temicx','temicv', 'tedecx', 'tedecv', 'tescx', 'tescv'. Thanks to Linda Mhalla for bringing this up.
 
 * anova.scam: added (clone of anova.gam (mgcv)). Thanks to Felix Meyer for raising a question about that.
@@ -220,9 +218,7 @@ Paul Rosenfield for reporting the bug.
 * plot.scam: fits are now centralized (by subscracting the mean of the smooth term)
 
 
-
 1.1-9
-
 * scam.r, bfgs.r, estimate.scam.r, check.analytical.r: corrected environmental variable
 
 * plot.scam: can now plot random effect smoother. Thanks to Ondřej Mikula for bringing up the issue.
@@ -237,7 +233,6 @@ Thanks to Ondřej Mikula for reporting the issue
 
 
 1.1-8
-
 * summary.scam: corrected dimension of the variance matrix Vb which sometimes sent an error
 
 * scam.fit: bug fix with coding the term 'QtQRER' needed for the fitting procedure
@@ -247,7 +242,6 @@ Thanks to Ondřej Mikula for reporting the issue
 
 
 1.1-7
-
 * bug fix in scam which could fail when the smoothing parameter values are supplied in 'sp'
           argument to 'scam'. ('sp' values supplied to the smooth term 's' are ignored by 'scam')
           Thanks to Noel G. Cadigan for reporting the bug.
@@ -255,9 +249,7 @@ Thanks to Ondřej Mikula for reporting the issue
 * References fixes in .Rd files
 
 
-
 1.1-6
-
 * Namespace, Description fixed
 
 * vis.scam: added, copied from vis.gam(mgcv) 
@@ -283,17 +275,13 @@ works only for univariate smooths at the moment, with finite differencing approx
 * extrapolate.uni.scam: this function has been removed from the package since predict.scam does linear extrapolation
 
 
-
 1.1-5
-
 * Predict.matrix.**.smooth 
 
 For all univariate and bivariate SCOP-splines Prediction method now allows prediction outside range of knots, and use linear extrapolation in this case
 
 
-
 1.1-4
-
 * scam.fit: svd replaced with QR + svd if needed approach, 
   large number of O(nq^2) products that were not needed removed, removal of multiple un-necessary loops.
 

@@ -287,8 +287,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           Xfrag <- PredictMat(object$smooth[[k]],data)	
           if (!is.matrix(Xfrag)) Xfrag <- matrix(Xfrag,nrow=nrow(data))
           ## added code specific for scam....
-          if (inherits(object$smooth[[k]], c("mpi.smooth","mpic.smooth","mpd.smooth", "cv.smooth", "cx.smooth",
-                 "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth",  
+          if (inherits(object$smooth[[k]], c("mpic.smooth", ## "mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth",
+                 "po.smooth",  ## "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth",
                  "ipo.smooth","cpopspline.smooth",
                  "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
                  "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
@@ -312,7 +312,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                    X <- cbind(X,matrix(0,nrow(X), n.extra.col))
                   ## X[,object$smooth[[k]]$first.para:(object$smooth[[k]]$last.para)] <- cbind(X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para],matrix(0,nrow(X), n.extra.col))
                    X[,object$smooth[[k]]$first.para:(object$smooth[[k]]$first.para+ncol(Xfrag)-2)] <- Xfrag[,2:ncol(Xfrag)]                                   
-               } else ## unconstrainded smooths, 'by' constrained and local scop smooths...
+               } else ## unconstrainded smooths, 'by' constrained, local scop smooths, increasing/decreasing, convex/concave, and mixed constr...
                     X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
           Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
           if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
@@ -346,8 +346,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           ## CORRECTED for SCAM ...
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients.t[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-               if (inherits(object$smooth[[k]], c("mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",
-                               "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth","po.smooth","cpopspline.smooth"))){
+               if (inherits(object$smooth[[k]], c("po.smooth","cpopspline.smooth" ## "mpi.smooth","mpd.smooth","cv.smooth", "cx.smooth",
+                                                  ))){ ## "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth"
                       if (nrow(X)==1) # prediction vector if prediction is made for only one value of covariates
                               X1 <- c(1,t(X[,first:last]))
                           else 

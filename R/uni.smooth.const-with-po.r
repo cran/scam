@@ -81,8 +81,43 @@ smooth.construct.mpi.smooth.spec<- function(object, data, knots)
 
 
 ## Prediction matrix for the `mpi` smooth class... 
-
 Predict.matrix.mpi.smooth<-function(object,data)
+## prediction method function for the `mpi' smooth class
+## change in version 1.2-21: no need to add the first column of the matrix 
+## (dropped in the smooth construction)
+{ m <- object$m # spline order, m+1=3 default for cubic spline
+  q <- object$df +1
+ # Sig <- matrix(as.numeric(rep(1:q,q)>=rep(1:q,each=q)),q,q) ## coef summation matrix
+  Sig <- matrix(1,q,q)  ## coef summation matrix
+  Sig[upper.tri(Sig)] <-0
+  ## find spline basis inner knot range...
+  ll <- object$knots[m+2];ul <- object$knots[length(object$knots)-m-1]
+  x <- data[[object$term]]
+  n <- length(x)
+  ind <- x<=ul & x>=ll ## data in range
+  if (sum(ind)==n) { ## all in range
+     X <- spline.des(object$knots,x,m+2)$design
+     X <- X%*%Sig 
+  } else { ## some extrapolation needed 
+     ## matrix mapping coefs to value and slope at end points...
+     D <- spline.des(object$knots,c(ll,ll,ul,ul),m+2,c(0,1,0,1))$design
+     X <- matrix(0,n,ncol(D)) ## full predict matrix
+     if (sum(ind)> 0)  X[ind,] <- spline.des(object$knots,x[ind],m+2)$design ## interior rows
+     ## Now add rows for linear extrapolation...
+     ind <- x < ll 
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
+     ind <- x > ul
+     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ul)%*%D[3:4,]
+     X <- X%*%Sig 
+  ## X <- sweep(X,2,c(0,object$cmX))
+  }
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
+  X
+}
+
+
+Predict.matrix.mpi0.smooth<-function(object,data)
 ## prediction method function for the `mpi' smooth class
 { m <- object$m # spline order, m+1=3 default for cubic spline
   q <- object$df +1
@@ -113,6 +148,8 @@ Predict.matrix.mpi.smooth<-function(object,data)
   X <- sweep(X,2,c(0,object$cmX))
   X
 }
+
+
 
 ####################################################################################################
 ### Adding monotone increasing SCOP-spline construction without applying identifiability constraints
@@ -492,10 +529,11 @@ smooth.construct.mpd.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `mpd` smooth class 
-
+## Prediction matrix for the `mpd` smooth class...
 Predict.matrix.mpd.smooth<-function(object,data)
 ## prediction method function for the `mpd' smooth class
+## change in version 1.2-21: dropping the first column of the matrix 
+## (no need to bring it back)
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
   q <- object$df +1
   # elements of matrix Sigma for decreasing smooth...
@@ -525,7 +563,9 @@ Predict.matrix.mpd.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX)) 
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ##X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -737,7 +777,9 @@ Predict.matrix.mdcv.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -952,7 +994,9 @@ Predict.matrix.mdcx.smooth<-function(object,data)
      X <- X%*%Sig 
    ##  X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+ ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -1069,7 +1113,8 @@ Predict.matrix.mdcxBy.smooth<-function(object,data)
 
 
 ################################################################
-### Adding monotone increasing & concave SCOP-spline construction ################################################################
+### Adding monotone increasing & concave SCOP-spline construction 
+################################################################
 
 smooth.construct.micv.smooth.spec<- function(object, data, knots)
 ## construction of the monotone increasing and concave smooth
@@ -1179,7 +1224,9 @@ Predict.matrix.micv.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -1365,7 +1412,6 @@ smooth.construct.micx.smooth.spec<- function(object, data, knots)
 }
 
 ## Prediction matrix for the `micx` smooth class... 
-
 Predict.matrix.micx.smooth<-function(object,data)
 ## prediction method function for the `micx` smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
@@ -1396,7 +1442,9 @@ Predict.matrix.micx.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -1466,7 +1514,6 @@ smooth.construct.micxBy.smooth.spec<- function(object, data, knots)
 
 
 ## Prediction matrix for the `micxBy` smooth class... 
-
 Predict.matrix.micxBy.smooth<-function(object,data)
 ## prediction method function for the `micxBy` smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
@@ -1505,7 +1552,7 @@ Predict.matrix.micxBy.smooth<-function(object,data)
 ###########################################################
 
 ###########################################################
-### Adding concave SCOP-spline construction *************
+### Adding concave SCOP-spline construction 
 ###########################################################
 
 smooth.construct.cv.smooth.spec<- function(object, data, knots)
@@ -1575,8 +1622,7 @@ smooth.construct.cv.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `cv` smooth class******************
-
+## Prediction matrix for the `cv` smooth class...
 Predict.matrix.cv.smooth<-function(object,data)
 ## prediction method function for the `cv' smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
@@ -1608,7 +1654,9 @@ Predict.matrix.cv.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -1681,8 +1729,7 @@ smooth.construct.cvBy.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `cvBy` smooth class******************
-
+## Prediction matrix for the `cvBy` smooth class...
 Predict.matrix.cvBy.smooth<-function(object,data)
 ## prediction method function for the `cvBy' smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
@@ -1719,7 +1766,7 @@ Predict.matrix.cvBy.smooth<-function(object,data)
 
 
 ###########################################################
-### Adding convex SCOP-spline construction *************
+### Adding convex SCOP-spline construction 
 ##########################################################
 
 smooth.construct.cx.smooth.spec<- function(object, data, knots)
@@ -1789,8 +1836,7 @@ smooth.construct.cx.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `cx` smooth class *************************
-
+## Prediction matrix for the `cx` smooth class...
 Predict.matrix.cx.smooth<-function(object,data)
 ## prediction method function for the `cx' smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline
@@ -1822,7 +1868,9 @@ Predict.matrix.cx.smooth<-function(object,data)
      X <- X%*%Sig 
     ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- sweep(X,2,c(0,object$cmX))
+  ## X <- sweep(X,2,c(0,object$cmX))
+  X <- X[,-1]
+  X <- sweep(X,2,object$cmX)
   X
 }
 
@@ -1892,8 +1940,7 @@ smooth.construct.cxBy.smooth.spec<- function(object, data, knots)
 }
 
 
-## Prediction matrix for the `cxBy` smooth class *************************
-
+## Prediction matrix for the `cxBy` smooth class...
 Predict.matrix.cxBy.smooth<-function(object,data)
 ## prediction method function for the `cxBy' smooth class
 { m <- object$m+1; # spline order, m+1=3 default for cubic spline

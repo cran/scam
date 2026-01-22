@@ -10,6 +10,293 @@
 ## only with freq=T/F....
 ###########################################################
 
+
+########################################################################
+##### function to get all the summary information of the fitted scam....
+########################################################################
+
+model.matrix.scam <- function(object,...)
+{ if (!inherits(object,"scam")) stop("`object' is not of class \"scam\"")
+  predict(object,type="lpmatrix",...)
+}
+
+
+summary.scam <- function (object,dispersion = NULL,freq = FALSE,...) 
+{
+    pinv <- function(V, M, rank.tol = 1e-06) {
+      ## a local pseudoinverse function
+        D <- eigen(V,symmetric=TRUE)
+        M1<-length(D$values[D$values>rank.tol*D$values[1]])
+        if (M>M1) M<-M1 # avoid problems with zero eigen-values
+  
+        if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-1
+        D$values<- 1/D$values
+        if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-0
+        res <- D$vectors%*%(D$values*t(D$vectors))  ##D$u%*%diag(D$d)%*%D$v
+        attr(res,"rank") <- M
+        res
+    } ## end of pinv
+    
+     p.table <- pTerms.table <- s.table <- NULL
+    if (freq) covmat <- object$Ve.t  else covmat <- object$Vp.t
+    name <- names(object$coefficients.t)
+   # name <- names(object$edf)
+    dimnames(covmat) <- list(name, name)
+    covmat.unscaled <- covmat/object$sig2
+    est.disp <- object$scale.estimated
+    
+    if (!is.null(dispersion)) {
+        covmat <- dispersion * covmat.unscaled
+        object$Ve.t <- object$Ve.t*dispersion/object$sig2 ## freq
+        object$Vp.t <- object$Vp.t*dispersion/object$sig2 ## Bayes
+        est.disp <- FALSE
+    }
+    else dispersion <- object$sig2
+
+
+    ## Now the individual parameteric coefficient p-values...
+    ## (copied from mgcv-1.8-34 (c) Simon N Wood) ============
+
+    se <- diag(covmat)^0.5
+    residual.df<-length(object$y)-sum(object$edf)
+    if (sum(object$nsdf) > 0) { # individual parameters
+      if (length(object$nsdf)>1) { ## several linear predictors (not used in scam!)
+        pstart <- attr(object$nsdf,"pstart")
+        ind <- rep(0,0)
+        for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) ind <- 
+            c(ind,pstart[i]:(pstart[i]+object$nsdf[i]-1))
+      } else { pstart <- 1;ind <- 1:object$nsdf} ## only one lp
+      p.coeff <- object$coefficients[ind]
+      p.se <- se[ind]
+      p.t<-p.coeff/p.se
+      if (!est.disp) {
+        p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
+        p.table <- cbind(p.coeff, p.se, p.t, p.pv)   
+        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))
+      } else {
+        p.pv <- 2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
+        p.table <- cbind(p.coeff, p.se, p.t, p.pv)
+        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
+      }    
+    } else {p.coeff <- p.t <- p.pv <- array(0,0)}
+
+    ## Next the p-values for parametric terms, so that factors are treated whole... 
+     
+    pterms <- if (is.list(object$pterms)) object$pterms else list(object$pterms)
+   if (!is.list(object$assign)) object$assign <- list(object$assign)
+   npt <- length(unlist(lapply(pterms,attr,"term.labels")))
+   if (npt>0)  pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0,npt)
+   term.labels <- rep("",0)
+   k <- 0 ## total term counter
+   for (j in 1:length(pterms)) {
+     tlj <- attr(pterms[[j]],"term.labels") 
+     nt <- length(tlj)
+     if (j>1 && nt>0) tlj <- paste(tlj,j-1,sep=".")
+     term.labels <- c(term.labels,tlj)
+     if (nt>0) { # individual parametric terms
+       np <- length(object$assign[[j]])
+       ind <- pstart[j] - 1 + 1:np 
+       Vb <- covmat[ind,ind,drop=FALSE]
+       bp <- array(object$coefficients[ind],np)
+    
+       for (i in 1:nt) { 
+         k <- k + 1
+         ind <- object$assign[[j]]==i
+         b <- bp[ind];V <- Vb[ind,ind]
+         ## pseudo-inverse needed in case of truncation of parametric space 
+         if (length(b)==1) { 
+           V <- 1/V 
+           pTerms.df[k] <- nb <- 1      
+           pTerms.chi.sq[k] <- V*b*b
+         } else {
+           V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
+           pTerms.df[k] <- nb <- attr(V,"rank")      
+           pTerms.chi.sq[k] <- t(b)%*%V%*%b
+         }
+         if (!est.disp)
+         pTerms.pv[k] <- pchisq(pTerms.chi.sq[k],df=nb,lower.tail=FALSE)
+         else
+         pTerms.pv[k] <- pf(pTerms.chi.sq[k]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
+       } ## for (i in 1:nt)
+     } ## if (nt>0)
+   }
+
+   if (npt) {
+     attr(pTerms.pv,"names") <- term.labels
+     if (!est.disp) {      
+       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
+        dimnames(pTerms.table) <- list(term.labels, c("df", "Chi.sq", "p-value"))
+     } else {
+       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq/pTerms.df, pTerms.pv)   
+        dimnames(pTerms.table) <- list(term.labels, c("df", "F", "p-value"))
+     }
+   } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}    
+    ## ================================
+
+    ## Now deal with the smooth terms....
+
+    m <- length(object$smooth)  # number of smooth terms
+    df <- edf1 <-edf <- s.pv <- chi.sq <- array(0, m)
+    if (m > 0) { # form test statistics for each smooth
+      if (!freq) { ## Bayesian p-values required 
+        sub.samp <- max(1000,2*length(object$coefficients)) 
+        if (nrow(object$model)>sub.samp) { ## subsample to get X for p-values calc.
+          seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+          if (inherits(seed,"try-error")) {
+            runif(1)
+            seed <- get(".Random.seed",envir=.GlobalEnv)
+          }
+          kind <- RNGkind(NULL)
+          RNGkind("default","default")
+          set.seed(11) ## ensure repeatability
+          ind <- sample(1:nrow(object$model),sub.samp,replace=FALSE)  ## sample these rows from X
+          X <- predict(object,object$model[ind,],type="lpmatrix")
+          RNGkind(kind[1],kind[2])
+          assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+        } else { ## don't need to subsample 
+          X <- model.matrix(object)
+          }
+        X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
+    
+       } ## end if (!freq)
+
+     for (i in 1:m) { ## loop through smooths
+        start <- object$smooth[[i]]$first.para
+        stop <- object$smooth[[i]]$last.para
+            
+        if (freq) { ## use frequentist cov matrix 
+          V <- object$Ve.t[start:stop,start:stop,drop=FALSE] 
+        } else V <- object$Vp.t[start:stop,start:stop,drop=FALSE] ## Bayesian
+      
+        p <- object$coefficients.t[start:stop] # transposed parameters of a smooth
+            
+        edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
+        ## extract alternative edf estimate for this smooth, if possible...
+        ## edf1 is not done for scam output value...
+        if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop])   
+       
+        if (freq) {
+           M1 <- object$smooth[[i]]$df
+           M <- min(M1, ceiling(2 * sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
+           V <- pinv(V, M)  # get rank M pseudoinverse of V
+           chi.sq[i] <- t(p) %*% V %*% p
+           df[i] <- attr(V, "rank")
+        }  else { ## Better founded alternatives...
+           Xt <- X[, start:stop,drop=FALSE]
+           if (object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
+             res <- reTest.scam(object,i)
+           } else { ## Inverted Nychka interval statistics
+             ## df[i] <- min(ncol(Xt),edf1[i])
+             if (est.disp) rdf <- residual.df else rdf <- -1
+             res <- testStat(p,Xt,V,min(ncol(Xt),edf1[i]),type=0,res.df = rdf) ## was type=p.type
+           }
+           df[i] <- res$rank
+           chi.sq[i] <- res$stat
+           s.pv[i] <- res$pval 
+        }
+        names(chi.sq)[i]<- object$smooth[[i]]$label
+  
+        if (freq) {
+          if (!est.disp)
+            s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
+            else
+              s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
+         #     ## p-values are meaningless for very small edf. Need to set to NA
+         #     if (df[i] < 0.1) s.pv[i] <- NA
+        }
+        ## p-values are meaningless for very small edf. Need to set to NA  
+        if (df[i] < 0.1) {
+               s.pv[i] <- NA 
+               chi.sq[i] <- NA
+           }
+      }
+
+      ## rounding output values of edf, df and chi.sq...
+      edf <- round(edf,digits=4)
+      df <- round(df,digits=4)
+      chi.sq <- round(chi.sq,digits=4)    
+
+      if (!est.disp) {
+        if (freq) {
+          s.table <- cbind(edf, df, chi.sq, s.pv)      
+          dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "Chi.sq", "p-value"))
+        } else {
+            s.table <- cbind(edf, df, chi.sq, s.pv)      
+            dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
+          }
+     } else {
+       if (freq) {
+           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+           dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "F", "p-value"))
+        } else {
+           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+           dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
+          }
+       }
+   }
+   w <- as.numeric(object$prior.weights)
+   mean.y <- sum(w*object$y)/sum(w)
+   w <- sqrt(w)
+   nobs <- nrow(object$model)
+   r.sq<- 1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df)
+   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
+   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
+       s.pv=s.pv,scale=dispersion,r.sq=round(r.sq,digits=4),family=object$family,formula=object$formula,n=nobs,
+       dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
+       pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
+       pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
+       sp=object$sp,dgcv.ubre=object$dgcv.ubre,termcode=object$termcode,
+       gcv.ubre=object$gcv.ubre,optimizer=object$optimizer,rank=object$rank,np=length(object$coefficients))
+
+    class(ret) <- "summary.scam"
+    ret
+}  ## end summary.scam
+
+
+##### print.summary.scam .....
+print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3), 
+         signif.stars = getOption("show.signif.stars"),...) 
+## print method for scam, a clone of print.summary.gam of mgcv()
+{
+    print(x$family)
+    cat("Formula:\n")
+    print(x$formula)
+    if (length(x$p.coeff) > 0) {
+        cat("\nParametric coefficients:\n")
+        printCoefmat(x$p.table, digits = digits, signif.stars = signif.stars, 
+            na.print = "NA", ...)
+    }
+    cat("\n")
+    if (x$m > 0) {
+        cat("Approximate significance of smooth terms:\n")
+        printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, 
+            has.Pvalue = TRUE, na.print = "NA", cs.ind = 1, ...)
+    }
+   # cat("\n")
+   if (!is.null(x$rank) && x$rank< x$np) cat("Rank: ",x$rank,"/",x$np,"\n",sep="") 
+    cat("\nR-sq.(adj) = ", formatC(x$r.sq, digits = 4, width = 5))
+    if (length(x$dev.expl) > 0) 
+        cat("   Deviance explained = ", formatC(x$dev.expl * 
+            100, digits = 3, width = 4), "%\n", sep = "")
+    if (length(x$sp.criterion) > 0) 
+        cat( x$method," score = ", formatC(x$sp.criterion, digits = 5), 
+            sep = "")
+    cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
+        flag = "-"), "  n = ", x$n, "\n", sep = "")
+    if ((x$optimizer[1] == "bfgs") && x$m>0){
+               if (x$termcode!= 1) {
+                   dgcv.ubre <- max(abs(x$dgcv.ubre)*max(abs(log(x$sp)),1)/max(abs(x$gcv.ubre),1))
+                  cat("\nBFGS termination condition:\n", dgcv.ubre,"\n",sep = "")
+               }   
+    }
+    cat("\n")
+    invisible(x)
+}
+   
+
+
+
+
 ##### mgcv::: smoothTest (c) Simon N. Wood 
 smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
 ## Forms Cox, Koh, etc type test statistic, and
@@ -346,250 +633,6 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 } ## end of testStat
 
 
-
-
-########################################################################
-##### function to get all the summary information of the fitted scam....
-########################################################################
-
-model.matrix.scam <- function(object,...)
-{ if (!inherits(object,"scam")) stop("`object' is not of class \"scam\"")
-  predict(object,type="lpmatrix",...)
-}
-
-
-summary.scam <- function (object,dispersion = NULL,freq = FALSE,...) 
-{
-    pinv <- function(V, M, rank.tol = 1e-06) {
-      ## a local pseudoinverse function
-        D <- eigen(V,symmetric=TRUE)
-        M1<-length(D$values[D$values>rank.tol*D$values[1]])
-        if (M>M1) M<-M1 # avoid problems with zero eigen-values
-  
-        if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-1
-        D$values<- 1/D$values
-        if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-0
-        res <- D$vectors%*%(D$values*t(D$vectors))  ##D$u%*%diag(D$d)%*%D$v
-        attr(res,"rank") <- M
-        res
-    } ## end of pinv
-    
-     p.table <- pTerms.table <- s.table <- NULL
-    if (freq) covmat <- object$Ve.t  else covmat <- object$Vp.t
-    name <- names(object$coefficients.t)
-   # name <- names(object$edf)
-    dimnames(covmat) <- list(name, name)
-    covmat.unscaled <- covmat/object$sig2
-    est.disp <- object$scale.estimated
-    
-    if (!is.null(dispersion)) {
-        covmat <- dispersion * covmat.unscaled
-        object$Ve.t <- object$Ve.t*dispersion/object$sig2 ## freq
-        object$Vp.t <- object$Vp.t*dispersion/object$sig2 ## Bayes
-        est.disp <- FALSE
-    }
-    else dispersion <- object$sig2
-
-
-    ## Now the individual parameteric coefficient p-values...
-    ## (copied from mgcv-1.8-34 (c) Simon N Wood) ============
-
-    se <- diag(covmat)^0.5
-    residual.df<-length(object$y)-sum(object$edf)
-    if (sum(object$nsdf) > 0) { # individual parameters
-      if (length(object$nsdf)>1) { ## several linear predictors (not used in scam!)
-        pstart <- attr(object$nsdf,"pstart")
-        ind <- rep(0,0)
-        for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) ind <- 
-            c(ind,pstart[i]:(pstart[i]+object$nsdf[i]-1))
-      } else { pstart <- 1;ind <- 1:object$nsdf} ## only one lp
-      p.coeff <- object$coefficients[ind]
-      p.se <- se[ind]
-      p.t<-p.coeff/p.se
-      if (!est.disp) {
-        p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
-        p.table <- cbind(p.coeff, p.se, p.t, p.pv)   
-        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))
-      } else {
-        p.pv <- 2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
-        p.table <- cbind(p.coeff, p.se, p.t, p.pv)
-        dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
-      }    
-    } else {p.coeff <- p.t <- p.pv <- array(0,0)}
-
-    ## Next the p-values for parametric terms, so that factors are treated whole... 
-     
-    pterms <- if (is.list(object$pterms)) object$pterms else list(object$pterms)
-   if (!is.list(object$assign)) object$assign <- list(object$assign)
-   npt <- length(unlist(lapply(pterms,attr,"term.labels")))
-   if (npt>0)  pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0,npt)
-   term.labels <- rep("",0)
-   k <- 0 ## total term counter
-   for (j in 1:length(pterms)) {
-     tlj <- attr(pterms[[j]],"term.labels") 
-     nt <- length(tlj)
-     if (j>1 && nt>0) tlj <- paste(tlj,j-1,sep=".")
-     term.labels <- c(term.labels,tlj)
-     if (nt>0) { # individual parametric terms
-       np <- length(object$assign[[j]])
-       ind <- pstart[j] - 1 + 1:np 
-       Vb <- covmat[ind,ind,drop=FALSE]
-       bp <- array(object$coefficients[ind],np)
-    
-       for (i in 1:nt) { 
-         k <- k + 1
-         ind <- object$assign[[j]]==i
-         b <- bp[ind];V <- Vb[ind,ind]
-         ## pseudo-inverse needed in case of truncation of parametric space 
-         if (length(b)==1) { 
-           V <- 1/V 
-           pTerms.df[k] <- nb <- 1      
-           pTerms.chi.sq[k] <- V*b*b
-         } else {
-           V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
-           pTerms.df[k] <- nb <- attr(V,"rank")      
-           pTerms.chi.sq[k] <- t(b)%*%V%*%b
-         }
-         if (!est.disp)
-         pTerms.pv[k] <- pchisq(pTerms.chi.sq[k],df=nb,lower.tail=FALSE)
-         else
-         pTerms.pv[k] <- pf(pTerms.chi.sq[k]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
-       } ## for (i in 1:nt)
-     } ## if (nt>0)
-   }
-
-   if (npt) {
-     attr(pTerms.pv,"names") <- term.labels
-     if (!est.disp) {      
-       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
-        dimnames(pTerms.table) <- list(term.labels, c("df", "Chi.sq", "p-value"))
-     } else {
-       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq/pTerms.df, pTerms.pv)   
-        dimnames(pTerms.table) <- list(term.labels, c("df", "F", "p-value"))
-     }
-   } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}    
-    ## ================================
-
-    ## Now deal with the smooth terms....
-
-    m <- length(object$smooth)  # number of smooth terms
-    df <- edf1 <-edf <- s.pv <- chi.sq <- array(0, m)
-    if (m > 0) { # form test statistics for each smooth
-      if (!freq) { ## Bayesian p-values required 
-        sub.samp <- max(1000,2*length(object$coefficients)) 
-        if (nrow(object$model)>sub.samp) { ## subsample to get X for p-values calc.
-          seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-          if (inherits(seed,"try-error")) {
-            runif(1)
-            seed <- get(".Random.seed",envir=.GlobalEnv)
-          }
-          kind <- RNGkind(NULL)
-          RNGkind("default","default")
-          set.seed(11) ## ensure repeatability
-          ind <- sample(1:nrow(object$model),sub.samp,replace=FALSE)  ## sample these rows from X
-          X <- predict(object,object$model[ind,],type="lpmatrix")
-          RNGkind(kind[1],kind[2])
-          assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
-        } else { ## don't need to subsample 
-          X <- model.matrix(object)
-          }
-        X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
-    
-       } ## end if (!freq)
-
-     for (i in 1:m) { ## loop through smooths
-        start <- object$smooth[[i]]$first.para
-        stop <- object$smooth[[i]]$last.para
-            
-        if (freq) { ## use frequentist cov matrix 
-          V <- object$Ve.t[start:stop,start:stop,drop=FALSE] 
-        } else V <- object$Vp.t[start:stop,start:stop,drop=FALSE] ## Bayesian
-      
-        p <- object$coefficients.t[start:stop] # transposed parameters of a smooth
-            
-        edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
-        ## extract alternative edf estimate for this smooth, if possible...
-        ## edf1 is not done for scam output value...
-        if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop])   
-       
-        if (freq) {
-           M1 <- object$smooth[[i]]$df
-           M <- min(M1, ceiling(2 * sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
-           V <- pinv(V, M)  # get rank M pseudoinverse of V
-           chi.sq[i] <- t(p) %*% V %*% p
-           df[i] <- attr(V, "rank")
-        }  else { ## Better founded alternatives...
-           Xt <- X[, start:stop,drop=FALSE]
-           if (object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
-             res <- reTest.scam(object,i)
-           } else { ## Inverted Nychka interval statistics
-             ## df[i] <- min(ncol(Xt),edf1[i])
-             if (est.disp) rdf <- residual.df else rdf <- -1
-             res <- testStat(p,Xt,V,min(ncol(Xt),edf1[i]),type=0,res.df = rdf) ## was type=p.type
-           }
-           df[i] <- res$rank
-           chi.sq[i] <- res$stat
-           s.pv[i] <- res$pval 
-        }
-        names(chi.sq)[i]<- object$smooth[[i]]$label
-  
-        if (freq) {
-          if (!est.disp)
-            s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
-            else
-              s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
-         #     ## p-values are meaningless for very small edf. Need to set to NA
-         #     if (df[i] < 0.1) s.pv[i] <- NA
-        }
-        ## p-values are meaningless for very small edf. Need to set to NA  
-        if (df[i] < 0.1) {
-               s.pv[i] <- NA 
-               chi.sq[i] <- NA
-           }
-      }
-
-      ## rounding output values of edf, df and chi.sq...
-      edf <- round(edf,digits=4)
-      df <- round(df,digits=4)
-      chi.sq <- round(chi.sq,digits=4)    
-
-      if (!est.disp) {
-        if (freq) {
-          s.table <- cbind(edf, df, chi.sq, s.pv)      
-          dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "Chi.sq", "p-value"))
-        } else {
-            s.table <- cbind(edf, df, chi.sq, s.pv)      
-            dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
-          }
-     } else {
-       if (freq) {
-           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
-           dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "F", "p-value"))
-        } else {
-           s.table <- cbind(edf, df, chi.sq/df, s.pv)      
-           dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
-          }
-       }
-   }
-   w <- as.numeric(object$prior.weights)
-   mean.y <- sum(w*object$y)/sum(w)
-   w <- sqrt(w)
-   nobs <- nrow(object$model)
-   r.sq<- 1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df)
-   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
-   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
-       s.pv=s.pv,scale=dispersion,r.sq=round(r.sq,digits=4),family=object$family,formula=object$formula,n=nobs,
-       dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
-       pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
-       pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
-       sp=object$sp,dgcv.ubre=object$dgcv.ubre,termcode=object$termcode,
-       gcv.ubre=object$gcv.ubre,optimizer=object$optimizer,rank=object$rank,np=length(object$coefficients))
-
-    class(ret) <- "summary.scam"
-    ret
-}  ## end summary.scam
-
-   
 ################## mgcv::: pinvXVX
 ## (c) Simon N. Wood 
 
@@ -658,46 +701,6 @@ eigXVX <- function (X, V, rank = NULL, tol = .Machine$double.eps^0.5)
     list(values = ed$values[ind], vectors = vec[, ind], rank = rank)
 }
 
-
-##### print.summary.scam .....
-print.summary.scam <- function (x, digits = max(3, getOption("digits") - 3), 
-         signif.stars = getOption("show.signif.stars"),...) 
-## print method for scam, a clone of print.summary.gam of mgcv()
-{
-    print(x$family)
-    cat("Formula:\n")
-    print(x$formula)
-    if (length(x$p.coeff) > 0) {
-        cat("\nParametric coefficients:\n")
-        printCoefmat(x$p.table, digits = digits, signif.stars = signif.stars, 
-            na.print = "NA", ...)
-    }
-    cat("\n")
-    if (x$m > 0) {
-        cat("Approximate significance of smooth terms:\n")
-        printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, 
-            has.Pvalue = TRUE, na.print = "NA", cs.ind = 1, ...)
-    }
-   # cat("\n")
-   if (!is.null(x$rank) && x$rank< x$np) cat("Rank: ",x$rank,"/",x$np,"\n",sep="") 
-    cat("\nR-sq.(adj) = ", formatC(x$r.sq, digits = 4, width = 5))
-    if (length(x$dev.expl) > 0) 
-        cat("   Deviance explained = ", formatC(x$dev.expl * 
-            100, digits = 3, width = 4), "%\n", sep = "")
-    if (length(x$sp.criterion) > 0) 
-        cat( x$method," score = ", formatC(x$sp.criterion, digits = 5), 
-            sep = "")
-    cat("  Scale est. = ", formatC(x$scale, digits = 5, width = 8, 
-        flag = "-"), "  n = ", x$n, "\n", sep = "")
-    if ((x$optimizer[1] == "bfgs") && x$m>0){
-               if (x$termcode!= 1) {
-                   dgcv.ubre <- max(abs(x$dgcv.ubre)*max(abs(log(x$sp)),1)/max(abs(x$gcv.ubre),1))
-                  cat("\nBFGS termination condition:\n", dgcv.ubre,"\n",sep = "")
-               }   
-    }
-    cat("\n")
-    invisible(x)
-}
 
 
 

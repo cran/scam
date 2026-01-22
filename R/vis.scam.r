@@ -91,7 +91,7 @@ vis.scam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="h
   #attr(newd,"row.names") <- row.names
   newd[[view[1]]]<-v1
   newd[[view[2]]]<-v2
-  # call predict.gam to get predictions.....
+  # call predict.scam to get predictions.....
   if (type=="link") zlab<-paste("linear predictor")
   else if (type=="response") zlab<-type
   else stop("type must be \"link\" or \"response\"")
