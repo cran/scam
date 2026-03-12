@@ -1,5 +1,5 @@
-
-## BFGS for GCV/UBRE minimization 
+## (c) Natalya Pya (2012-2026). Provided under GPL 2.
+## routines for smoothing parameter selection using BFGS for GCV/UBRE minimization 
 ## with modifications on convergence control, scaling, etc...
 
 
@@ -62,7 +62,8 @@ gcv.ubre_grad <- function(rho, G, env, control)
    ## calculating the derivative of tr(A) w.r.t. log(sp)
    d2link.dlink <- b$d2link.mu/b$dlink.mu
    a1 <- as.numeric(y.mu*d2link.dlink)    # a constant for updating the derivative of z
-   a2 <- as.numeric(b$w^2*(b$dvar.mu*b$dlink.mu+2*b$Var*b$d2link.mu)) # a constant for updating the derivative of w
+  ## a2 <- as.numeric(b$w^2*(b$dvar.mu*b$dlink.mu+2*b$Var*b$d2link.mu)) # a constant for updating the derivative of w
+   a2 <- as.numeric(b$w1^2*(b$dvar.mu*b$dlink.mu+2*b$Var*b$d2link.mu)) # a constant for updating the derivative of w (corrected in scam_1.2-22)
    eta.rho <- matrix(0,n,n.pen) # define derivatives of the linear predictor
    N_rho <- matrix(0,q,n.pen) # define diagonal elements of N_j
    w.rho <- matrix(0,n,n.pen) # define derivatives of the diagonal elements of W

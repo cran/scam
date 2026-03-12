@@ -1,4 +1,12 @@
 
+1.2-22
+* prediction methods for univariate shape-cosntrained smooth classes: bug fixed for datasets whose size is one, and one more than a multiple of 1000 (e.g., 1001; 2001; 30,001). Thanks to Dan Kutner and Giampiero Marra for flagging the bug.
+
+* gcv.ubre_grad: corrected constant for updating the derivative of w. Thanks to Yuwei Jiang.
+
+* derivative.smooth routine removed
+
+
 1.2-21
 * vcov.scam written and included, extracts the Bayesian posterior covariance matrix of the (un)transformed parameters or frequentist covariance matrix, see ?vcov.scam
 

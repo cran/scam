@@ -1,4 +1,4 @@
-## (c) Natalya Pya (2012-2024). Provided under GPL 2.
+## (c) Natalya Pya (2012-2026). Provided under GPL 2.
 ## routines for univariate SCOP-spline construction 
 ## with sum-to-zero identifiability constraints (2023)
 
@@ -111,7 +111,8 @@ Predict.matrix.mpi.smooth<-function(object,data)
      X <- X%*%Sig 
   ## X <- sweep(X,2,c(0,object$cmX))
   }
-  X <- X[,-1]
+  ## X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -564,7 +565,7 @@ Predict.matrix.mpd.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX)) 
   }
   ##X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -778,7 +779,7 @@ Predict.matrix.mdcv.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX))
   }
   ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -995,7 +996,7 @@ Predict.matrix.mdcx.smooth<-function(object,data)
    ##  X <- sweep(X,2,c(0,object$cmX))
   }
  ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -1225,7 +1226,7 @@ Predict.matrix.micv.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX))
   }
   ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -1443,7 +1444,7 @@ Predict.matrix.micx.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX))
   }
   ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -1655,7 +1656,7 @@ Predict.matrix.cv.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX))
   }
   ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
@@ -1869,7 +1870,7 @@ Predict.matrix.cx.smooth<-function(object,data)
     ## X <- sweep(X,2,c(0,object$cmX))
   }
   ## X <- sweep(X,2,c(0,object$cmX))
-  X <- X[,-1]
+  X <- as.matrix(X[,-1,drop=FALSE])
   X <- sweep(X,2,object$cmX)
   X
 }
