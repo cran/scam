@@ -1,17 +1,27 @@
 \name{smooth.construct.tedmd.smooth.spec}
 % \Rdversion{1.0}
 \alias{smooth.construct.tedmd.smooth.spec}
-\title{Tensor product smoothing constructor for bivariate function subject to double monotone decreasing
-       constraint 
+\title{Tensor product smoothing constructor for bivariate functions
+with monotonicity constraints: decreasing in both covariates 
 }
-\description{This is a special method function
-  for creating tensor product bivariate smooths subject to double monotone decreasing constraints which is built by 
-  the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed from a pair of single penalty marginal smooths which are represented using the B-spline basis functions.  
-  This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tedmd",m=c(2,2))}, 
-  where \code{q1} and \code{q2} denote the basis dimensions for the marginal smooths.
+\description{
+This is a special method function for constructing tensor product
+bivariate smooths that are monotonically decreasing in both covariates.
+It is called by the \code{mgcv} constructor function for smooth terms,
+\code{smooth.construct}.
+The tensor product smooth is constructed from a pair of marginal
+smooths, each with a single penalty and represented using B-spline
+basis functions.
+The smooth is specified using model terms such as
+\code{s(x1, x2, k = c(q1, q2), bs = "tedmd", m = c(2, 2))},
+where \code{q1} and \code{q2} denote the basis dimensions of the
+marginal smooths.
 
-  From \code{scam} version 1.2-15, the sum-to-zero contraint is now applied to all bivariate SCOP-splines after imposing the scop-constraints (including scop identifiability constraint). This simply shifts the smooth vertically, leaving the shape of the smooths unchanged.
+Starting with \code{scam} version 1.2-15, the sum-to-zero constraint
+is applied to this smoother after imposing the SCOP
+constraints, including the SCOP identifiability constraint.
+This adjustment shifts the smooth vertically without changing
+its shape.
  }
 
 \usage{

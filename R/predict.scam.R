@@ -290,7 +290,7 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
           if (inherits(object$smooth[[k]], c("mpic.smooth", ## "mpi.smooth", "mpd.smooth", "cv.smooth", "cx.smooth",
                  "po.smooth",  ## "mdcv.smooth","mdcx.smooth","micv.smooth","micx.smooth",
                  "ipo.smooth","cpopspline.smooth",
-                 "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth",
+                 "tedmi.smooth","tedmd.smooth","temicx.smooth","temicv.smooth", "tedecx.smooth", "teid.smooth", "tedi.smooth", 
                  "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag[,2:ncol(Xfrag)]
             else if (inherits(object$smooth[[k]], c("dpo.smooth"))) 
@@ -399,8 +399,9 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                                   Vp[1,] <- rep(0,ncol(Vp))
                                }
                              se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((Ga%*%Vp)*Ga)))                                                       
-               } else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth","tesmi1.smooth",
-                                    "tismi.smooth","tismd.smooth","tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth",
+               } else if (inherits(object$smooth[[k]], c("tedmi.smooth","tedmd.smooth","tesmi1.smooth", "teid.smooth", "tedi.smooth", 
+                                    "tismi.smooth","tismd.smooth","tesmi2.smooth", "tesmd1.smooth", "tesmd2.smooth","temicx.smooth",
+                                    "temicv.smooth",
                                    "tedecx.smooth", "tedecv.smooth", "tescx.smooth", 
                                    "tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) {
                       # X0 - model matrix of the original data....
@@ -416,7 +417,8 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                       R <- qr.R(qrX)
                       qrA <- qr(t(A))
                       q <- ncol(X0)
-                      if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth","tedmdc.smooth", "temicx.smooth",
+                      if (inherits(object$smooth[[k]], c("tedmi.smooth", "tedmd.smooth","tedmdc.smooth", "teid.smooth", "tedi.smooth", 
+                            "temicx.smooth",
                             "temicv.smooth", "tedecx.smooth","tedecv.smooth", "tecvcv.smooth",
                             "tecxcx.smooth","tecxcv.smooth"))) { # get RZaR for double monotonicity...
                             R <- R[-1,]
@@ -576,6 +578,14 @@ predict.scam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   if ((type=="terms"||type=="iterms")&&attr(object$terms,"intercept")==1) attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 } ## end predict.scam
+
+
+
+model.matrix.scam <- function(object,...)
+{ if (!inherits(object,"scam")) stop("`object' is not of class \"scam\"")
+  predict(object,type="lpmatrix",...)
+}
+
 
 
 ################################

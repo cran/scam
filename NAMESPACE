@@ -10,6 +10,7 @@ export(scam, anova.scam,
        marginal.matrices.tesmi1.ps,
        marginal.matrices.tesmi2.ps,
        marginal.matrices.tescv.ps,
+       model.matrix.scam,
        plot.scam, predict.scam, 
        print.scam, print.anova.scam,
        print.summary.scam,
@@ -54,6 +55,8 @@ export(scam, anova.scam,
        Predict.matrix.tecxcv.smooth,
        Predict.matrix.tismi.smooth,
        Predict.matrix.tismd.smooth,
+       Predict.matrix.teid.smooth,
+       Predict.matrix.tedi.smooth,
        residuals.scam,
        qq.scam,
        scam.check, scam.control,
@@ -100,6 +103,8 @@ export(scam, anova.scam,
        smooth.construct.tecxcv.smooth.spec,
        smooth.construct.tismi.smooth.spec,
        smooth.construct.tismd.smooth.spec,
+       smooth.construct.teid.smooth.spec,
+       smooth.construct.tedi.smooth.spec,
        vis.scam, vcov.scam
 )
 
@@ -140,6 +145,7 @@ S3method(residuals, scam)
 S3method(anova, scam)
 S3method(formula, scam)
 S3method(logLik, scam)
+S3method(model.matrix,scam)
 S3method(print, anova.scam)
 S3method(vcov,scam)
 
@@ -184,6 +190,8 @@ S3method(smooth.construct, tecxcx.smooth.spec)
 S3method(smooth.construct, tecxcv.smooth.spec)
 S3method(smooth.construct, tismi.smooth.spec)
 S3method(smooth.construct, tismd.smooth.spec)
+S3method(smooth.construct, teid.smooth.spec)
+S3method(smooth.construct, tedi.smooth.spec)
 
 S3method(Predict.matrix,cv.smooth)
 S3method(Predict.matrix,cx.smooth)
@@ -226,6 +234,7 @@ S3method(Predict.matrix,tecxcx.smooth)
 S3method(Predict.matrix,tecxcv.smooth)
 S3method(Predict.matrix,tismi.smooth)
 S3method(Predict.matrix,tismd.smooth)
-
+S3method(Predict.matrix,teid.smooth)
+S3method(Predict.matrix,tedi.smooth)
 
 

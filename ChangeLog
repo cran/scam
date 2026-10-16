@@ -1,10 +1,16 @@
 
+1.2-23
+* smooth.construct: added two new bivariate smoothers with monotonicity constraints: 'tedi', decreasing in the first covariate and increasing in the second, and 'teid', increasing in the first covariate and decreasing in the second. Thanks to Andrew Richards for suggesting these additions.
+
+* 'model.matrix.scam' added to obtain the model matrix from a fitted 'scam' object
+
+
 1.2-22
 * prediction methods for univariate shape-cosntrained smooth classes: bug fixed for datasets whose size is one, and one more than a multiple of 1000 (e.g., 1001; 2001; 30,001). Thanks to Dan Kutner and Giampiero Marra for flagging the bug.
 
 * gcv.ubre_grad: corrected constant for updating the derivative of w. Thanks to Yuwei Jiang.
 
-* derivative.smooth routine removed
+* derivative.smooth routine removed as replaced by derivative.scam previously
 
 
 1.2-21
@@ -12,7 +18,7 @@
 
 * emmeans-support: implemented the emmeans r package support, see example in ?scam.emmeans.support. Thanks to Julien Mainguy and Russell V. Lenth for the suggestion and help with implementation. 
 
-* brms support: modified prediction methods for the univariate smooth classes 'mpi', 'mpd', 'cv', 'cx', 'mdcv', 'mdcx', 'micv', and 'micx'  to support compatibility with the brms package (for use of the smooths in Bayesian regression via brms). Also, predict and plot methods were adjusted accordingly. Thanks to Florian Jaeger for brining this up. 
+* brms support: modified prediction methods for the univariate smooth classes 'mpi', 'mpd', 'cv', 'cx', 'mdcv', 'mdcx', 'micv', and 'micx'  to support compatibility with the brms package (for use of the smooths in Bayesian regression via brms). Also, predict and plot methods were adjusted accordingly. Thanks to Florian Jaeger for bringing this up. 
 
 
 1.2-20

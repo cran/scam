@@ -341,6 +341,9 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    best$smooth <- object$smooth <- G$smooth
    best$model <- object$model <- G$mf
 
+   object$K <- best$K ## K, P: from version 1.2-23, needed for calculating edf of sp
+   object$P <- best$P
+   
    object$R <- best$R
    if (is.null(object$R)){
       if (object$optimizer[2] == "newton"){ 
@@ -390,6 +393,8 @@ scam <- function(formula, family=gaussian(), data=list(), gamma=1, sp=NULL,
    object$coefficients.t <- best$beta.t
    object$beta <- best$beta
    object$beta.t <- best$beta.t
+  ## object$dbeta.rho <- best$dbeta.rho
+   
    object$pterms <- G$pterms
    object$terms <- G$terms
    object$assign <- G$assign
@@ -1357,10 +1362,10 @@ scam.fit <- function(G,sp, etastart=NULL, mustart=NULL, env=env,
      assign("sp.last",sp,envir=env)
   } ### end if (!EMPTY) 
 
- list(L=L,C1diag=C1diag,E=E,iter=iter, old.beta=betaold, gcv=dev*nobs/(nobs-gamma *trA)^2, sp=sp,
+ list(L=L,C1diag=C1diag,E=E, old.beta=betaold, gcv=dev*nobs/(nobs-gamma *trA)^2, sp=sp,
       mu=mu,X=G$X,y=drop(G$y), X1=X1,beta=beta,beta.t=beta.t,iv=iv,S=S,S.t=S.t,rS=rS,
       P=P,K=K, C2diag=C2diag, KtILQ1R= KtILQ1R, KtIQ1R=KtIQ1R, ## XC1=XC1, XC2=XC2,
-      dlink.mu=dlink.mu,Var=Var, abs.w=drop(abs.w),
+      dlink.mu=dlink.mu,Var=Var, abs.w=drop(abs.w), g.deriv=g.deriv,
       link=link,w=as.numeric(w),w1=drop(w1),d2link.mu=d2link.mu,wX1=wX1,I.plus=I.plus,
       dvar.mu=dvar.mu,d2var.mu=d2var.mu,deviance=dev,scale.est=scale.est,
       ok1=ok1,alpha=as.numeric(alpha),d3link.mu=d3link.mu,eta=eta,iter=iter,
@@ -2456,8 +2461,6 @@ AR.resid <- function(rsd,rho=0,AR.start=NULL) {
   }
   rwMatrix(ar.stop,ar.row,ar.weight,rsd)
 } ## AR.resid
-
-
 
 
 

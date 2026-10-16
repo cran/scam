@@ -2,15 +2,26 @@
 %\Rdversion{1.0}
 \alias{smooth.construct.tedmi.smooth.spec}
 
-\title{Tensor product smoothing constructor for bivariate function subject to double monotone increasing
-       constraint 
+\title{Tensor product smoothing constructor for bivariate functions
+with monotonicity constraints: increasing in both covariates
 }
-\description{This is a special method function
-  for creating tensor product bivariate smooths subject to double monotone increasing constraints which is built by 
-  the \code{mgcv} constructor function for smooth terms, \code{smooth.construct}. 
-  It is constructed from a pair of single penalty marginal smooths which are represented using the B-spline basis functions.  
-  This tensor product is specified by model terms such as \code{s(x1,x2,k=c(q1,q2),bs="tedmi",m=c(2,2))}, 
-  where \code{q1} and \code{q2} denote the basis dimensions for the marginal smooths.
+\description{This is a special method function for constructing tensor product
+bivariate smooths that are monotonically increasing in both covariates.
+It is called by the \code{mgcv} constructor function for smooth terms,
+\code{smooth.construct}.
+The tensor product smooth is constructed from a pair of marginal
+smooths, each with a single penalty and represented using B-spline
+basis functions.
+The smooth is specified using model terms such as
+\code{s(x1, x2, k = c(q1, q2), bs = "tedmi", m = c(2, 2))},
+where \code{q1} and \code{q2} denote the basis dimensions of the
+marginal smooths.
+
+Starting with \code{scam} version 1.2-15, the sum-to-zero constraint
+is applied to this smoother after imposing the SCOP
+constraints, including the SCOP identifiability constraint.
+This adjustment shifts the smooth vertically without changing
+its shape.
 }
 \usage{
 \method{smooth.construct}{tedmi.smooth.spec}(object, data, knots)
@@ -64,7 +75,7 @@ truth <- matrix(simu(pr$x,pr$z),30,30)
 set.seed(2)
 n <- 500
 x <- runif(n)*4-1
-z <- runif(n)-1
+z <- runif(n)
 f <- simu(x,z)
 y <- f + rnorm(n)*.1
 ## fit model ...

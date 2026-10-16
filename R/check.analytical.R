@@ -2,8 +2,6 @@
 
 
 check.analytical <- function(object,data, del=1e-6,control){
-
-    # require(mgcv)
      G<-gam(object$formula,object$family,data,fit=FALSE)
      n.terms <- length(G$smooth)  # number of smooths in the model
      n <- nrow(G$X)
@@ -28,8 +26,6 @@ check.analytical <- function(object,data, del=1e-6,control){
      assign("start",object$coefficients,envir=env)
      assign("dbeta.start",object$dbeta.rho,envir=env)
      assign("sp.last",object$sp,envir=env)
-
-
      sp1 <- rep(0,n.pen)
      sp <- object$sp
      dgcv.ubre.check <- rep(0,n.pen)
@@ -42,9 +38,7 @@ check.analytical <- function(object,data, del=1e-6,control){
           else gcv.ubre1 <- m1$gcv
           dgcv.ubre.check[j] <- (gcv.ubre1-object$gcv)/del # finite difference derivative
        }
-
       check.grad <- 100*(object$dgcv.ubre - dgcv.ubre.check)/dgcv.ubre.check
-
    list(dgcv.ubre.fd=dgcv.ubre.check,check.grad=check.grad)
 }
 

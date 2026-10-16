@@ -106,7 +106,7 @@ Residual auto-correlation with a simple AR1 correlation structure can be dealt w
 }
 \value{The function returns an object of class \code{"scam"} with the following elements (this agrees with \code{gamObject}):
 
-\item{aic}{AIC of the fitted model: the degrees of freedom used to calculate this are the effective degrees of freedom of the model, and the likelihood is evaluated at the maximum of the penalized likelihood, not at the MLE.}
+\item{aic}{AIC of the fitted model: the degrees of freedom used to calculate are the effective degrees of freedom of the model; the likelihood is evaluated at the maximum of the penalized likelihood, not at the MLE.}
 
 \item{assign}{Array whose elements indicate which model term (listed in
            \code{pterms}) each parameter relates to: applies only to non-smooth terms.}

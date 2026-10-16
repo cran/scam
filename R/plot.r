@@ -192,7 +192,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                        }                       
          }
         ## dealing with bivariate shape-constrained smooths...
-        if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth",
+        if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth", "tesmi1.smooth", "teid.smooth", "tedi.smooth", 
                       "tismi.smooth", "tismd.smooth",  
                       "tesmi2.smooth","tesmd1.smooth",
                       "tesmd2.smooth","temicx.smooth", "temicv.smooth","tedecx.smooth","tedecv.smooth","tescx.smooth",
@@ -216,8 +216,9 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                   ##   { ## no re-parametrization for beta coeffs for smooth interaction...
                   ##      beta.a <- beta
                   ##   }  else
-                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth","tedmdc.smooth", "temicx.smooth", "temicv.smooth",     
-                         "tedecx.smooth", "tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
+                     if (inherits(x$smooth[[i]], c("tedmi.smooth","tedmd.smooth","tedmdc.smooth", "temicx.smooth", 
+                                                                                     "teid.smooth",  "tedi.smooth", 
+                       "temicv.smooth", "tedecx.smooth","tedecv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth")))
                      { # get `beta.a' for bivariate smooths s.t. double monotonicity...
                          R <- R[-1,]
                          RZa <- t(qr.qty(qrA,t(R)))[,2:q] 
@@ -308,7 +309,7 @@ plot.scam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,sca
                            Ga <- XZa%*%RZaR                                         
                            se.fit <- sqrt(pmax(0,rowSums((Ga%*%Vp.c)*Ga)))    
                      } else se.fit <- sqrt(rowSums((P$X%*%Vp.c)*P$X))                    
-           } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth",
+           } else if (inherits(x$smooth[[i]], c("tedmi.smooth", "tedmd.smooth", "teid.smooth", "tedi.smooth",  
                   "tesmi1.smooth","tesmi2.smooth",  "tismi.smooth", "tismd.smooth",
                   "tesmd1.smooth", "tesmd2.smooth","temicx.smooth", "temicv.smooth", "tedecx.smooth",
                   "tedecv.smooth","tescx.smooth","tescv.smooth","tecvcv.smooth","tecxcx.smooth","tecxcv.smooth"))) 
